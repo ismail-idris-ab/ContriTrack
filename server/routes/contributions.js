@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const { storage: cloudinaryStorage } = require('../utils/cloudinary');
 const Contribution = require('../models/Contribution');
 const Pledge = require('../models/Pledge');
 const Group  = require('../models/Group');
@@ -20,15 +21,7 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Multer config — store images in /uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${req.user._id}-${Date.now()}${ext}`);
-  },
-});
-
+// Multer config — store uploads in Cloudinary
 const fileFilter = (req, file, cb) => {
   const allowedExts = /\.(jpeg|jpg|png|gif|webp|pdf)$/i;
   const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
@@ -38,7 +31,7 @@ const fileFilter = (req, file, cb) => {
   cb(new Error('Only image files and PDFs are allowed'));
 };
 
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ storage: cloudinaryStorage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // POST /api/contributions — upload proof of payment
 router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res) => {
@@ -76,7 +69,7 @@ router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res
       month: parsedMonth,
       year: parsedYear,
       note: safeNote,
-      proofImage: req.file.filename,
+      proofImage: req.file.path,
     };
     if (groupId) data.group = groupId;
 

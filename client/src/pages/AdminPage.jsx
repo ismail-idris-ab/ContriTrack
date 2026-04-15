@@ -105,7 +105,7 @@ function ContributionsTab() {
   const openModal = (c) => {
     if (!c.proofImage) return;
     setModal({
-      proofUrl: `/uploads/${c.proofImage}`,
+      proofUrl: c.proofImage,
       memberName: c.user?.name,
       month, year,
       submittedDate: c.createdAt,

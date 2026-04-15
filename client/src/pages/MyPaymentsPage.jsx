@@ -27,7 +27,7 @@ export default function MyPaymentsPage() {
   const openModal = (p) => {
     if (!p.proofImage) return;
     setModal({
-      proofUrl: `/uploads/${p.proofImage}`,
+      proofUrl: p.proofImage,
       month: p.month, year: p.year,
       submittedDate: p.createdAt,
       status: p.status,

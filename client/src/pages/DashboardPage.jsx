@@ -314,7 +314,7 @@ export default function DashboardPage() {
   const openModal = (m) => {
     if (!m.contribution?.proofImage) return;
     setModal({
-      proofUrl: `/uploads/${m.contribution.proofImage}`,
+      proofUrl: m.contribution.proofImage,
       memberName: m.name,
       month, year,
       submittedDate: m.contribution.createdAt,
