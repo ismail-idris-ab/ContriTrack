@@ -30,7 +30,9 @@ import NotificationsPage from './pages/NotificationsPage';
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!user.emailVerified) return <Navigate to="/verify-email" replace />;
+  return children;
 }
 
 function PublicRoute({ children }) {

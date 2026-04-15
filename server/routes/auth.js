@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
-const { sendPasswordResetEmail, sendVerificationEmail } = require('../utils/mailer');
+const { sendPasswordResetEmail, sendOtpEmail } = require('../utils/mailer');
 const Notification = require('../models/Notification');
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,18 +51,19 @@ router.post('/register', authLimiter, async (req, res) => {
     const count = await User.countDocuments();
     const role = count === 0 ? 'admin' : 'member';
 
-    // Generate email verification token
-    const rawToken    = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    // Generate 6-digit OTP
+    const otp       = String(Math.floor(100000 + Math.random() * 900000));
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
 
     const user = await User.create({
       name: trimmedName, email, password, role,
-      emailVerificationToken: hashedToken,
+      emailOtp:        hashedOtp,
+      emailOtpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
     });
 
-    // Fire-and-forget verification email
-    sendVerificationEmail(user, rawToken).catch(err =>
-      console.error('[register] verification email error:', err.message)
+    // Fire-and-forget OTP email
+    sendOtpEmail(user, otp).catch(err =>
+      console.error('[register] OTP email error:', err.message)
     );
 
     // Welcome notification
@@ -268,46 +269,62 @@ router.post('/reset-password/:token', async (req, res) => {
   }
 });
 
-// POST /api/auth/send-verification — (re)send email verification link
+// POST /api/auth/send-verification — generate and (re)send a 6-digit OTP
 router.post('/send-verification', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.emailVerified) return res.status(400).json({ message: 'Email is already verified' });
 
-    const rawToken    = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const otp       = String(Math.floor(100000 + Math.random() * 900000));
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
 
-    user.emailVerificationToken = hashedToken;
+    user.emailOtp        = hashedOtp;
+    user.emailOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
 
-    sendVerificationEmail(user, rawToken).catch(err =>
-      console.error('[send-verification] email error:', err.message)
+    sendOtpEmail(user, otp).catch(err =>
+      console.error('[send-verification] OTP email error:', err.message)
     );
 
-    res.json({ message: 'Verification email sent. Check your inbox.' });
+    res.json({ message: 'A 6-digit code has been sent to your email.' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// GET /api/auth/verify-email/:token — consume token and mark email verified
-router.get('/verify-email/:token', async (req, res) => {
-  try {
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+// POST /api/auth/verify-email — verify the 6-digit OTP
+router.post('/verify-email', protect, async (req, res) => {
+  const { otp } = req.body;
 
-    const user = await User.findOne({ emailVerificationToken: hashedToken });
-    if (!user) {
-      return res.status(400).json({ message: 'Verification link is invalid or has already been used.' });
+  if (!otp || String(otp).trim().length !== 6) {
+    return res.status(400).json({ message: 'Please enter the 6-digit code.' });
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.emailVerified) return res.status(400).json({ message: 'Email is already verified.' });
+
+    if (!user.emailOtp || !user.emailOtpExpires) {
+      return res.status(400).json({ message: 'No verification code found. Request a new one.' });
     }
 
-    user.emailVerified           = true;
-    user.emailVerificationToken  = null;
+    if (new Date() > user.emailOtpExpires) {
+      return res.status(400).json({ message: 'Code has expired. Request a new one.' });
+    }
+
+    const hashedInput = crypto.createHash('sha256').update(String(otp).trim()).digest('hex');
+    if (hashedInput !== user.emailOtp) {
+      return res.status(400).json({ message: 'Incorrect code. Please try again.' });
+    }
+
+    user.emailVerified   = true;
+    user.emailOtp        = null;
+    user.emailOtpExpires = null;
     await user.save();
 
-    // Redirect to client with success flag
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    res.redirect(`${clientUrl}/verify-email?success=1`);
+    res.json({ message: 'Email verified successfully.' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

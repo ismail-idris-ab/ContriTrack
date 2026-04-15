@@ -26,7 +26,7 @@ export default function RegisterPage() {
     try {
       const { data } = await api.post('/auth/register', form);
       login(data);
-      navigate('/dashboard');
+      navigate('/verify-email?new=1');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {

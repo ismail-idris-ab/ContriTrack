@@ -7,14 +7,17 @@ function makeTransporter() {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     return null;
   }
+  const port   = Number(process.env.SMTP_PORT) || 465;
+  const secure = port === 465; // SSL for 465, STARTTLS for 587
   return nodemailer.createTransport({
     host:   process.env.SMTP_HOST,
-    port:   Number(process.env.SMTP_PORT) || 587,
-    secure: Number(process.env.SMTP_PORT) === 465,
+    port,
+    secure,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    tls: { rejectUnauthorized: false },
   });
 }
 
@@ -134,39 +137,37 @@ async function sendPasswordResetEmail(user, token) {
 }
 
 /**
- * Send an email-verification email.
+ * Send a 6-digit OTP for email verification.
  * @param {{ name: string, email: string }} user
- * @param {string} token  — the raw verification token
+ * @param {string} otp  — the plain 6-digit code
  */
-async function sendVerificationEmail(user, token) {
-  const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
-  const verifyUrl = `${serverUrl}/api/auth/verify-email/${token}`;
-
+async function sendOtpEmail(user, otp) {
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px 20px">
       <div style="background:#0f0f14;border-radius:12px;padding:20px 24px;margin-bottom:24px">
         <span style="font-size:20px;font-weight:700;color:#d4a017;letter-spacing:-0.01em">ContriTrack</span>
       </div>
       <h2 style="font-size:22px;font-weight:700;color:#14141e;margin:0 0 12px">Verify your email address</h2>
-      <p style="color:#44445a;font-size:14px;line-height:1.6;margin:0 0 20px">
+      <p style="color:#44445a;font-size:14px;line-height:1.6;margin:0 0 24px">
         Hi <strong>${user.name}</strong>,<br>
-        Thanks for signing up! Please verify your email address by clicking the button below.
+        Enter this code on the ContriTrack verification page to activate your account.
+        It expires in <strong>10 minutes</strong>.
       </p>
-      <a href="${verifyUrl}"
-         style="display:inline-block;background:#d4a017;color:#0f0f14;font-weight:700;font-size:15px;
-                padding:12px 28px;border-radius:8px;text-decoration:none;margin-bottom:24px">
-        Verify Email
-      </a>
-      <p style="color:#8888a4;font-size:13px;margin:0 0 8px">
-        Or copy and paste this URL:<br>
-        <a href="${verifyUrl}" style="color:#d4a017;word-break:break-all">${verifyUrl}</a>
+
+      <div style="background:#f5f2eb;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px">
+        <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#8888a4;text-transform:uppercase;letter-spacing:0.08em">Your verification code</p>
+        <p style="margin:0;font-size:40px;font-weight:800;letter-spacing:0.18em;color:#0f0f14;font-family:monospace">${otp}</p>
+      </div>
+
+      <p style="color:#8888a4;font-size:13px;margin:0 0 4px">
+        If you didn't create a ContriTrack account, you can safely ignore this email.
       </p>
       <hr style="border:none;border-top:1px solid #e8e4dc;margin:24px 0">
       <p style="color:#8888a4;font-size:12px;margin:0">This is an automated message from ContriTrack. Please do not reply.</p>
     </div>
   `;
 
-  await sendMail({ to: user.email, subject: 'Verify your ContriTrack email address', html });
+  await sendMail({ to: user.email, subject: 'Your ContriTrack verification code', html });
 }
 
-module.exports = { sendMail, sendStatusNotification, sendPasswordResetEmail, sendVerificationEmail };
+module.exports = { sendMail, sendStatusNotification, sendPasswordResetEmail, sendOtpEmail };
