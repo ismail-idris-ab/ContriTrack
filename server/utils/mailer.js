@@ -139,7 +139,8 @@ async function sendPasswordResetEmail(user, token) {
  * @param {string} token  — the raw verification token
  */
 async function sendVerificationEmail(user, token) {
-  const verifyUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email/${token}`;
+  const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
+  const verifyUrl = `${serverUrl}/api/auth/verify-email/${token}`;
 
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px 20px">

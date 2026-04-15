@@ -5,8 +5,14 @@ require('dotenv').config();
 
 const app = express();
 
+// Trust the first proxy (fixes express-rate-limit IPv6 key generation)
+app.set('trust proxy', 1);
+
 // Middleware
-app.use(cors({ origin: process.env.FRONTEND_URL }));
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true,
+}));
 app.use(express.json());
 
 // Routes
@@ -21,6 +27,9 @@ app.use('/api/penalties',     require('./routes/penalties'));
 app.use('/api/reports',       require('./routes/reports'));
 app.use('/api/exports',       require('./routes/exports'));
 app.use('/api/notifications', require('./routes/notifications'));
+
+// Health check — Render pings this to confirm the server is up
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // Connect to MongoDB and start server
 const PORT = process.env.PORT || 5000;
