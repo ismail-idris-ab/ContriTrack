@@ -1,0 +1,316 @@
+const express = require('express');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
+const User = require('../models/User');
+const { protect } = require('../middleware/auth');
+const { sendPasswordResetEmail, sendVerificationEmail } = require('../utils/mailer');
+const Notification = require('../models/Notification');
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const generateToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+// Rate limit: max 10 attempts per 15 min per IP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many attempts, please try again in 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// POST /api/auth/register
+router.post('/register', authLimiter, async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  if (typeof password !== 'string' || password.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  }
+
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ message: 'Invalid email address' });
+  }
+
+  const trimmedName = name.trim();
+  if (trimmedName.length < 2) {
+    return res.status(400).json({ message: 'Name must be at least 2 characters' });
+  }
+
+  try {
+    const exists = await User.findOne({ email: email.toLowerCase().trim() });
+    if (exists) return res.status(400).json({ message: 'Email already registered' });
+
+    // First registered user becomes admin
+    const count = await User.countDocuments();
+    const role = count === 0 ? 'admin' : 'member';
+
+    // Generate email verification token
+    const rawToken    = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    const user = await User.create({
+      name: trimmedName, email, password, role,
+      emailVerificationToken: hashedToken,
+    });
+
+    // Fire-and-forget verification email
+    sendVerificationEmail(user, rawToken).catch(err =>
+      console.error('[register] verification email error:', err.message)
+    );
+
+    // Welcome notification
+    Notification.create({
+      user:  user._id,
+      type:  'system',
+      title: 'Welcome to ContriTrack!',
+      body:  'Start by joining or creating a savings circle.',
+      link:  '/groups',
+    }).catch(() => {});
+
+    res.status(201).json({
+      _id:          user._id,
+      name:         user.name,
+      email:        user.email,
+      role:         user.role,
+      emailVerified: user.emailVerified,
+      subscription: { plan: user.subscription?.plan || 'free', status: user.subscription?.status || 'active' },
+      token: generateToken(user._id),
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/login
+router.post('/login', authLimiter, async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    res.json({
+      _id:          user._id,
+      name:         user.name,
+      email:        user.email,
+      role:         user.role,
+      emailVerified: user.emailVerified,
+      phone:        user.phone,
+      subscription: { plan: user.subscription?.plan || 'free', status: user.subscription?.status || 'active' },
+      token: generateToken(user._id),
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/auth/me
+router.get('/me', protect, (req, res) => {
+  res.json(req.user);
+});
+
+// PATCH /api/auth/profile — update name, email, phone
+router.patch('/profile', protect, async (req, res) => {
+  const { name, email, phone } = req.body;
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (name !== undefined) {
+      const trimmed = String(name).trim();
+      if (trimmed.length < 2) {
+        return res.status(400).json({ message: 'Name must be at least 2 characters' });
+      }
+      user.name = trimmed;
+    }
+
+    if (email !== undefined) {
+      const trimmedEmail = String(email).trim().toLowerCase();
+      if (!emailRegex.test(trimmedEmail)) {
+        return res.status(400).json({ message: 'Invalid email address' });
+      }
+      if (trimmedEmail !== user.email) {
+        const exists = await User.findOne({ email: trimmedEmail, _id: { $ne: user._id } });
+        if (exists) return res.status(400).json({ message: 'Email already in use' });
+        user.email = trimmedEmail;
+      }
+    }
+
+    if (phone !== undefined) {
+      const digits = String(phone).replace(/\D/g, '');
+      if (digits.length > 15) {
+        return res.status(400).json({ message: 'Phone number must be 15 digits or fewer' });
+      }
+      user.phone = digits;
+    }
+
+    await user.save();
+
+    res.json({
+      _id:   user._id,
+      name:  user.name,
+      email: user.email,
+      phone: user.phone,
+      role:  user.role,
+      avatar: user.avatar,
+      subscription: { plan: user.subscription?.plan || 'free', status: user.subscription?.status || 'active' },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PATCH /api/auth/password — change password
+router.patch('/password', protect, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'currentPassword and newPassword are required' });
+  }
+  if (typeof newPassword !== 'string' || newPassword.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  }
+
+  try {
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Re-fetch with password since protect strips it
+    const fullUser = await User.findById(req.user._id);
+    const match = await fullUser.matchPassword(currentPassword);
+    if (!match) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    fullUser.password = newPassword;
+    await fullUser.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/forgot-password — request a reset link
+router.post('/forgot-password', authLimiter, async (req, res) => {
+  const { email } = req.body;
+
+  // Always return 200 so we don't leak whether an account exists
+  const successResponse = { message: 'If that email exists, a reset link has been sent.' };
+
+  if (!email) return res.status(200).json(successResponse);
+
+  try {
+    const user = await User.findOne({ email: String(email).toLowerCase().trim() });
+    if (!user) return res.status(200).json(successResponse);
+
+    // Generate raw token and store its SHA-256 hash
+    const rawToken    = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    user.resetPasswordToken   = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    // Fire-and-forget — never let email failure expose user existence
+    sendPasswordResetEmail(user, rawToken).catch((err) =>
+      console.error('[forgot-password] email error:', err.message)
+    );
+
+    res.status(200).json(successResponse);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/reset-password/:token — consume reset token and set new password
+router.post('/reset-password/:token', async (req, res) => {
+  const { newPassword } = req.body;
+
+  if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  }
+
+  try {
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken:   hashedToken,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Reset link is invalid or has expired.' });
+    }
+
+    user.password              = newPassword;
+    user.resetPasswordToken    = null;
+    user.resetPasswordExpires  = null;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successfully. You can now log in.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/send-verification — (re)send email verification link
+router.post('/send-verification', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.emailVerified) return res.status(400).json({ message: 'Email is already verified' });
+
+    const rawToken    = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    user.emailVerificationToken = hashedToken;
+    await user.save();
+
+    sendVerificationEmail(user, rawToken).catch(err =>
+      console.error('[send-verification] email error:', err.message)
+    );
+
+    res.json({ message: 'Verification email sent. Check your inbox.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/auth/verify-email/:token — consume token and mark email verified
+router.get('/verify-email/:token', async (req, res) => {
+  try {
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+    const user = await User.findOne({ emailVerificationToken: hashedToken });
+    if (!user) {
+      return res.status(400).json({ message: 'Verification link is invalid or has already been used.' });
+    }
+
+    user.emailVerified           = true;
+    user.emailVerificationToken  = null;
+    await user.save();
+
+    // Redirect to client with success flag
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    res.redirect(`${clientUrl}/verify-email?success=1`);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+module.exports = router;
