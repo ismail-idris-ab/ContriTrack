@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 /* ─── Static data ─────────────────────────────────────────────── */
 
@@ -321,6 +322,7 @@ const dashMembers = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [members, setMembers]           = useState(12);
   const [contribution, setContribution] = useState(10000);
   const [activeTooltip, setActiveTooltip] = useState(null);
@@ -648,9 +650,9 @@ export default function LandingPage() {
 
           {/* CTAs */}
           <div className="animate-fade-up" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', animationDelay: '0.18s' }}>
-            <button onClick={() => navigate('/register')} className="btn-gold btn-gold-pulse"
+            <button onClick={() => navigate(user ? '/groups' : '/register?intent=create')} className="btn-gold btn-gold-pulse"
               style={{ padding: '14px 28px', fontSize: 15 }}>
-              Start Free — Create Your First Circle
+              {user ? 'Create Your Circle Now' : 'Start Free — Create Your First Circle'}
             </button>
             <button onClick={() => scrollTo('how-it-works')}
               style={{ padding: '14px 22px', background: 'transparent',
@@ -1232,10 +1234,19 @@ export default function LandingPage() {
               </div>
             </div>
             <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid rgba(0,0,0,0.06)',
-              fontSize: 13, color: 'var(--ct-text-3)', textAlign: 'center' }}>
-              That's{' '}
-              <span style={{ color: 'var(--ct-emerald)', fontWeight: 700 }}>{fmt(yearlyTotal)}</span>
-              {' '}moving through your circle every year — ContriTrack ensures every naira is accounted for.
+              textAlign: 'center' }}>
+              <p style={{ fontSize: 13, color: 'var(--ct-text-3)', marginBottom: 20 }}>
+                That's{' '}
+                <span style={{ color: 'var(--ct-emerald)', fontWeight: 700 }}>{fmt(yearlyTotal)}</span>
+                {' '}moving through your circle every year — ContriTrack ensures every naira is accounted for.
+              </p>
+              <button
+                onClick={() => navigate(user ? '/groups' : '/register?intent=create')}
+                className="btn-gold btn-gold-pulse"
+                style={{ padding: '14px 32px', fontSize: 15 }}
+              >
+                {user ? 'Create Your Circle Now' : 'Start Tracking Your Circle — Free'}
+              </button>
             </div>
           </div>
         </div>

@@ -102,7 +102,7 @@ function CircleSwitcher() {
         <span style={{
           fontSize: 12.5, fontWeight: 600,
           color: activeGroup ? '#a07010' : '#888',
-          maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          maxWidth: 'min(130px, 30vw)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {name}
         </span>
@@ -230,15 +230,15 @@ export default function Topbar({ onMenuClick }) {
   }, [user]);
 
   return (
-    <div style={{
+    <div className="ct-topbar" style={{
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       background: 'var(--ct-card)',
       borderBottom: '1px solid rgba(0,0,0,0.07)',
       boxShadow: '0 1px 0 rgba(0,0,0,0.04)',
-      padding: '0 28px',
-      height: 66,
+      padding: '0 24px',
+      height: 62,
       flexShrink: 0,
       fontFamily: 'var(--font-sans)',
       gap: 16,
@@ -263,7 +263,7 @@ export default function Topbar({ onMenuClick }) {
         <div key={location.pathname} className="topbar-title" style={{ minWidth: 0 }}>
           <h1 style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 20, fontWeight: 700,
+            fontSize: 18, fontWeight: 700,
             color: 'var(--ct-text-1)',
             margin: 0,
             letterSpacing: '-0.02em',
@@ -273,7 +273,7 @@ export default function Topbar({ onMenuClick }) {
             {page.title}
           </h1>
           {page.sub && (
-            <p style={{
+            <p className="topbar-subtitle" style={{
               fontSize: 11.5,
               color: 'var(--ct-text-3)',
               margin: '2px 0 0',
@@ -297,7 +297,7 @@ export default function Topbar({ onMenuClick }) {
 
         {/* Admin badge */}
         {user?.role === 'admin' && (
-          <span style={{
+          <span className="topbar-admin-badge" style={{
             background: 'rgba(212,160,23,0.10)',
             border: '1.5px solid rgba(212,160,23,0.22)',
             color: '#a07010',

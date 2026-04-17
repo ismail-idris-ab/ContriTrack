@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { GroupProvider } from './context/GroupContext';
 import { ToastProvider } from './context/ToastContext';
@@ -37,7 +37,8 @@ function PrivateRoute({ children }) {
 
 function PublicRoute({ children }) {
   const { user } = useAuth();
-  return !user ? children : <Navigate to="/dashboard" replace />;
+  if (!user) return children;
+  return <Navigate to="/dashboard" replace />;
 }
 
 function AdminRoute({ children }) {
@@ -87,6 +88,92 @@ function EmailVerificationBanner() {
   );
 }
 
+// ─── Bottom Navigation (mobile only) ─────────────────────────────────────────
+function BottomNav({ onMoreClick }) {
+  const { pathname } = useLocation();
+
+  const items = [
+    {
+      path: '/dashboard', label: 'Home',
+      icon: (
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+        </svg>
+      ),
+    },
+    {
+      path: '/groups', label: 'Circles',
+      icon: (
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/>
+          <path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/>
+        </svg>
+      ),
+    },
+    {
+      path: '/upload', label: 'Upload', primary: true,
+      icon: (
+        <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+        </svg>
+      ),
+    },
+    {
+      path: '/members', label: 'Members',
+      icon: (
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"/>
+        </svg>
+      ),
+    },
+    {
+      label: 'More', action: true,
+      icon: (
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <nav className="md:hidden bottom-nav">
+      {items.map((item) => {
+        if (item.primary) {
+          const active = pathname === item.path;
+          return (
+            <Link key={item.path} to={item.path} className="bottom-nav-item">
+              <div className={`bottom-nav-upload${active ? ' active' : ''}`}>
+                {item.icon}
+              </div>
+              <span className="bottom-nav-label" style={{ color: active ? 'var(--ct-gold)' : '#9898b8' }}>
+                {item.label}
+              </span>
+            </Link>
+          );
+        }
+        if (item.action) {
+          return (
+            <button key="more" onClick={onMoreClick} className="bottom-nav-item bottom-nav-btn">
+              <div className="bottom-nav-icon">{item.icon}</div>
+              <span className="bottom-nav-label">{item.label}</span>
+            </button>
+          );
+        }
+        const active = pathname === item.path;
+        return (
+          <Link key={item.path} to={item.path} className="bottom-nav-item">
+            <div className={`bottom-nav-icon${active ? ' active' : ''}`}>{item.icon}</div>
+            <span className="bottom-nav-label" style={{ color: active ? 'var(--ct-gold)' : '#9898b8', fontWeight: active ? 700 : 500 }}>
+              {item.label}
+            </span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -100,7 +187,7 @@ function AppLayout() {
           onClick={() => setMobileOpen(false)}
         >
           <div className="w-[240px] h-full" onClick={e => e.stopPropagation()}>
-            <Sidebar onNavigate={() => setMobileOpen(false)} />
+            <Sidebar onNavigate={() => setMobileOpen(false)} isMobile />
           </div>
         </div>
       )}
@@ -114,10 +201,13 @@ function AppLayout() {
       <div className="flex flex-col flex-1 min-h-screen overflow-hidden">
         <Topbar onMenuClick={() => setMobileOpen(true)} />
         <EmailVerificationBanner />
-        <main className="flex-1 overflow-y-auto p-6 md:p-8" style={{ background: 'var(--ct-page)' }}>
+        <main className="flex-1 overflow-y-auto main-content" style={{ background: 'var(--ct-page)' }}>
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <BottomNav onMoreClick={() => setMobileOpen(true)} />
     </div>
   );
 }

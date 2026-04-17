@@ -63,9 +63,39 @@ export default function MembersPage() {
   const [trustLoading, setTrustLoading] = useState(false);
   const [trustLocked, setTrustLocked] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [roleConfirm, setRoleConfirm] = useState(null); // { member, newRole }
+  const [roleChanging, setRoleChanging] = useState(false);
   const { activeGroup } = useGroup();
   const { user } = useAuth();
   const { showToast } = useToast();
+
+  // Am I a group admin?
+  const isGroupAdmin = members.some(m => m._id === user?._id && m.role === 'admin');
+
+  const handleRoleChange = async () => {
+    if (!roleConfirm || !activeGroup) return;
+    setRoleChanging(true);
+    try {
+      await api.patch(
+        `/groups/${activeGroup._id}/members/${roleConfirm.member._id}/role`,
+        { role: roleConfirm.newRole }
+      );
+      setMembers(prev => prev.map(m =>
+        m._id === roleConfirm.member._id ? { ...m, role: roleConfirm.newRole } : m
+      ));
+      showToast(
+        roleConfirm.newRole === 'admin'
+          ? `${roleConfirm.member.name} is now an admin`
+          : `${roleConfirm.member.name} is now a member`,
+        'success'
+      );
+      setRoleConfirm(null);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to update role', 'error');
+    } finally {
+      setRoleChanging(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -392,6 +422,7 @@ export default function MembersPage() {
                         <th>Status</th>
                         <th style={{ textAlign: 'right' }}>Amount</th>
                         <th className="hidden md:table-cell">Role</th>
+                        {isGroupAdmin && <th style={{ width: 48 }} />}
                       </tr>
                     </thead>
                     <tbody>
@@ -467,6 +498,54 @@ export default function MembersPage() {
                                 <span style={{ fontSize: 12.5, color: 'var(--ct-text-4)' }}>Member</span>
                               )}
                             </td>
+
+                            {/* Role action (admins only, can't change own role) */}
+                            {isGroupAdmin && (
+                              <td>
+                                {m._id !== user?._id && (
+                                  <button
+                                    onClick={() => setRoleConfirm({
+                                      member: m,
+                                      newRole: m.role === 'admin' ? 'member' : 'admin',
+                                    })}
+                                    title={m.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                                    style={{
+                                      width: 30, height: 30, borderRadius: 8,
+                                      border: '1.5px solid rgba(0,0,0,0.08)',
+                                      background: '#faf9f6',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      cursor: 'pointer', color: 'var(--ct-text-3)',
+                                      transition: 'all 0.15s',
+                                    }}
+                                    onMouseEnter={e => {
+                                      e.currentTarget.style.borderColor = m.role === 'admin' ? 'rgba(225,29,72,0.3)' : 'rgba(212,160,23,0.4)';
+                                      e.currentTarget.style.background = m.role === 'admin' ? 'rgba(225,29,72,0.06)' : 'rgba(212,160,23,0.08)';
+                                      e.currentTarget.style.color = m.role === 'admin' ? 'var(--ct-rose)' : 'var(--ct-gold)';
+                                    }}
+                                    onMouseLeave={e => {
+                                      e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)';
+                                      e.currentTarget.style.background = '#faf9f6';
+                                      e.currentTarget.style.color = 'var(--ct-text-3)';
+                                    }}
+                                  >
+                                    {m.role === 'admin' ? (
+                                      /* shield-minus */
+                                      <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        <line x1="9" y1="12" x2="15" y2="12"/>
+                                      </svg>
+                                    ) : (
+                                      /* shield-plus */
+                                      <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        <line x1="12" y1="9" x2="12" y2="15"/>
+                                        <line x1="9" y1="12" x2="15" y2="12"/>
+                                      </svg>
+                                    )}
+                                  </button>
+                                )}
+                              </td>
+                            )}
                           </tr>
                         );
                       })}
@@ -477,6 +556,92 @@ export default function MembersPage() {
             </>
           )}
         </>
+      )}
+
+      {/* ─── Role Change Confirmation Modal ─── */}
+      {roleConfirm && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 500,
+            background: 'rgba(10,10,16,0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20,
+          }}
+          onClick={() => !roleChanging && setRoleConfirm(null)}
+        >
+          <div
+            className="animate-fade-up"
+            style={{
+              background: '#fff', borderRadius: 18, padding: '32px 32px 28px',
+              maxWidth: 380, width: '100%',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
+              position: 'relative',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div style={{
+              width: 52, height: 52, borderRadius: 14, margin: '0 auto 18px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: roleConfirm.newRole === 'admin'
+                ? 'rgba(212,160,23,0.10)' : 'rgba(225,29,72,0.08)',
+              color: roleConfirm.newRole === 'admin' ? 'var(--ct-gold)' : 'var(--ct-rose)',
+            }}>
+              <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+
+            <h3 style={{
+              fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 700,
+              color: 'var(--ct-text-1)', textAlign: 'center', marginBottom: 10,
+              letterSpacing: '-0.01em',
+            }}>
+              {roleConfirm.newRole === 'admin' ? 'Make Admin?' : 'Remove Admin?'}
+            </h3>
+            <p style={{
+              fontSize: 13.5, color: 'var(--ct-text-3)', textAlign: 'center',
+              lineHeight: 1.65, marginBottom: 26,
+            }}>
+              {roleConfirm.newRole === 'admin' ? (
+                <><strong style={{ color: 'var(--ct-text-2)' }}>{roleConfirm.member.name}</strong> will be able to verify contributions, manage members, and edit this circle.</>
+              ) : (
+                <><strong style={{ color: 'var(--ct-text-2)' }}>{roleConfirm.member.name}</strong> will lose admin access and return to a regular member.</>
+              )}
+            </p>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setRoleConfirm(null)}
+                disabled={roleChanging}
+                style={{
+                  flex: 1, padding: '11px', borderRadius: 10,
+                  border: '1.5px solid rgba(0,0,0,0.1)', background: '#faf9f6',
+                  color: 'var(--ct-text-2)', fontSize: 13.5, fontWeight: 600,
+                  cursor: roleChanging ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font-sans)', transition: 'all 0.15s',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRoleChange}
+                disabled={roleChanging}
+                style={{
+                  flex: 1, padding: '11px', borderRadius: 10, border: 'none',
+                  background: roleConfirm.newRole === 'admin' ? 'var(--ct-gold)' : 'var(--ct-rose)',
+                  color: roleConfirm.newRole === 'admin' ? '#0f0e0a' : '#fff',
+                  fontSize: 13.5, fontWeight: 700,
+                  cursor: roleChanging ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font-sans)', transition: 'all 0.15s',
+                  opacity: roleChanging ? 0.7 : 1,
+                }}
+              >
+                {roleChanging ? 'Saving…' : roleConfirm.newRole === 'admin' ? 'Make Admin' : 'Remove Admin'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

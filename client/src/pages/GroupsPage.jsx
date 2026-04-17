@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
@@ -56,9 +57,18 @@ export default function GroupsPage() {
   const { user } = useAuth();
   const toast = useToast();
   const { groups, activeGroup, selectGroup, loadGroups } = useGroup();
+  const [searchParams] = useSearchParams();
 
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
+
+  // Auto-open create form when navigated here with ?action=create
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      setShowCreate(true);
+      setShowJoin(false);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [leavingId, setLeavingId] = useState(null);
 
   // Create form
@@ -145,8 +155,9 @@ export default function GroupsPage() {
     if (!createForm.name.trim()) return setCreateError('Group name is required');
     setCreating(true);
     try {
-      await api.post('/groups', createForm);
+      const { data: newGroup } = await api.post('/groups', createForm);
       await loadGroups();
+      selectGroup(newGroup);
       setShowCreate(false);
       setCreateForm({ name: '', description: '', contributionAmount: '' });
     } catch (err) {

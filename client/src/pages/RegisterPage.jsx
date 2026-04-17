@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 const fields = [
   { label: 'Full Name',      name: 'name',     type: 'text',     placeholder: 'John Doe' },
@@ -12,6 +13,9 @@ const fields = [
 export default function RegisterPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const intent = searchParams.get('intent');
+
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -166,9 +170,14 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <p style={{ fontSize: 13, textAlign: 'center', color: 'var(--ct-text-3)', marginTop: 24 }}>
+          <GoogleSignInButton intent={intent} onError={setError} />
+
+          <p style={{ fontSize: 13, textAlign: 'center', color: 'var(--ct-text-3)', marginTop: 16 }}>
             Already have an account?{' '}
-            <Link to="/login" style={{ color: 'var(--ct-gold)', fontWeight: 700, textDecoration: 'none' }}>
+            <Link
+              to={intent ? `/login?intent=${intent}` : '/login'}
+              style={{ color: 'var(--ct-gold)', fontWeight: 700, textDecoration: 'none' }}
+            >
               Sign in
             </Link>
           </p>

@@ -93,6 +93,21 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   to { transform: rotate(360deg); }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes successPop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.96); }
   to   { opacity: 1; transform: scale(1); }
@@ -208,6 +223,13 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   border: 1px solid var(--ct-border-2);
   box-shadow: var(--ct-shadow);
   overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 767px) {
+  .ct-table-wrap {
+    overflow-x: auto;
+  }
 }
 
 .ct-table {
@@ -421,6 +443,13 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 ::-webkit-scrollbar-thumb { background: #ccc8c0; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #b0aca4; }
 
+/* Dark scrollbar for sidebar nav */
+.sidebar-nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.07) transparent; }
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.13); }
+
 /* ─── Topbar page title fade ─────────────────────── */
 @keyframes titleFadeIn {
   from { opacity: 0; transform: translateX(-6px); }
@@ -429,4 +458,127 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 .topbar-title {
   animation: titleFadeIn 0.25s ease both;
+}
+
+/* ─── Bottom Navigation (mobile) ─────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  display: flex;
+  align-items: stretch;
+  z-index: 100;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.07);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+  padding: 6px 0;
+  position: relative;
+}
+
+.bottom-nav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.bottom-nav-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #9898b8;
+  transition: all 0.16s ease;
+}
+
+.bottom-nav-icon.active {
+  color: var(--ct-gold);
+  background: rgba(212, 160, 23, 0.10);
+}
+
+.bottom-nav-upload {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--ct-gold);
+  color: #0f0e0a;
+  box-shadow: 0 4px 16px rgba(212, 160, 23, 0.38);
+  transition: all 0.18s ease;
+  margin-top: -10px;
+}
+
+.bottom-nav-upload.active {
+  background: var(--ct-gold-light);
+  box-shadow: 0 6px 20px rgba(212, 160, 23, 0.50);
+}
+
+.bottom-nav-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  color: #9898b8;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* ─── Main content padding ───────────────────────── */
+.main-content {
+  padding: 28px;
+}
+
+@media (max-width: 767px) {
+  .main-content {
+    padding: 16px 14px 80px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .main-content {
+    padding: 22px;
+  }
+}
+
+/* ─── Mobile topbar ──────────────────────────────── */
+@media (max-width: 767px) {
+  .topbar-subtitle {
+    display: none !important;
+  }
+  .topbar-admin-badge {
+    display: none !important;
+  }
+  .topbar-user-name {
+    display: none !important;
+  }
+  /* Reduce topbar padding on mobile */
+  .ct-topbar {
+    padding: 0 12px !important;
+    height: 54px !important;
+  }
+}
+
+/* ─── Responsive stat grid ───────────────────────── */
+@media (max-width: 639px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }

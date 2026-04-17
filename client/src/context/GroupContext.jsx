@@ -22,10 +22,24 @@ export function GroupProvider({ children }) {
     try {
       const { data } = await api.get('/groups/mine');
       setGroups(data);
-      // If activeGroup is stale (deleted/left), clear it
-      if (activeGroup && !data.find(g => g._id === activeGroup._id)) {
-        selectGroup(null);
-      }
+
+      setActiveGroup(prev => {
+        // If current active group was deleted/left, fall back
+        const stillExists = prev && data.find(g => g._id === prev._id);
+        if (stillExists) {
+          // Keep it fresh with latest server data
+          const fresh = data.find(g => g._id === prev._id);
+          localStorage.setItem('activeGroup', JSON.stringify(fresh));
+          return fresh;
+        }
+        // No active group — auto-select the first one
+        if (data.length > 0) {
+          localStorage.setItem('activeGroup', JSON.stringify(data[0]));
+          return data[0];
+        }
+        localStorage.removeItem('activeGroup');
+        return null;
+      });
     } catch (err) {
       console.error('Failed to load groups', err);
     } finally {

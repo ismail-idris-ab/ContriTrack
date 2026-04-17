@@ -233,7 +233,7 @@ function NavSection({ label }) {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-export default function Sidebar({ onNavigate }) {
+export default function Sidebar({ onNavigate, isMobile }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [logoutHovered, setLogoutHovered] = useState(false);
@@ -291,7 +291,7 @@ export default function Sidebar({ onNavigate }) {
       }} />
 
       {/* Brand */}
-      <div style={{ padding: '22px 16px 16px', position: 'relative', flexShrink: 0 }}>
+      <div style={{ padding: '22px 16px 16px', position: 'relative', flexShrink: 0, display: isMobile ? 'none' : undefined }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <div style={{
@@ -330,13 +330,18 @@ export default function Sidebar({ onNavigate }) {
       </div>
 
       {/* Nav */}
-      <nav style={{
-        flex: 1,
-        padding: '2px 8px 4px',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
+      <nav
+        className="sidebar-nav"
+        style={{
+          flex: 1,
+          padding: '2px 8px 4px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minHeight: 0,
+        }}
+      >
         {NAV_GROUPS.map((group, gi) => (
           <div key={group.label}>
             <NavSection label={group.label} />

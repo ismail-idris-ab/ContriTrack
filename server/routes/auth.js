@@ -99,6 +99,12 @@ router.post('/login', authLimiter, async (req, res) => {
 
   try {
     const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    // Google-only accounts cannot use password login
+    if (user && user.authProvider === 'google' && !user.password) {
+      return res.status(401).json({ message: 'This account uses Google Sign-In. Please use the "Continue with Google" button.' });
+    }
+
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -115,6 +121,76 @@ router.post('/login', authLimiter, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/google
+router.post('/google', authLimiter, async (req, res) => {
+  const { accessToken } = req.body;
+  if (!accessToken) return res.status(400).json({ message: 'Google access token is required' });
+
+  try {
+    // Verify the access token and fetch user info from Google
+    const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!googleRes.ok) {
+      return res.status(401).json({ message: 'Invalid Google token. Please try again.' });
+    }
+    const payload = await googleRes.json();
+    const { email, name, sub: googleId, picture } = payload;
+
+    if (!email) return res.status(400).json({ message: 'Could not retrieve email from Google account' });
+
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Check if a local account with this email already exists — link it
+      user = await User.findOne({ email: email.toLowerCase() });
+      if (user) {
+        user.googleId = googleId;
+        user.authProvider = 'google';
+        if (!user.avatar && picture) user.avatar = picture;
+        await user.save();
+      } else {
+        // Brand new user via Google
+        const count = await User.countDocuments();
+        const role = count === 0 ? 'admin' : 'member';
+
+        user = await User.create({
+          name,
+          email: email.toLowerCase(),
+          googleId,
+          authProvider: 'google',
+          emailVerified: true,
+          avatar: picture || '',
+          role,
+        });
+
+        Notification.create({
+          user:  user._id,
+          type:  'system',
+          title: 'Welcome to ContriTrack!',
+          body:  'Start by joining or creating a savings circle.',
+          link:  '/groups',
+        }).catch(() => {});
+      }
+    }
+
+    res.json({
+      _id:          user._id,
+      name:         user.name,
+      email:        user.email,
+      role:         user.role,
+      emailVerified: user.emailVerified,
+      phone:        user.phone || '',
+      avatar:       user.avatar || '',
+      subscription: { plan: user.subscription?.plan || 'free', status: user.subscription?.status || 'active' },
+      token: generateToken(user._id),
+    });
+  } catch (err) {
+    console.error('[google auth]', err.message);
+    res.status(401).json({ message: 'Google authentication failed. Please try again.' });
   }
 });
 
