@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /upload
+Disallow: /members
+Disallow: /my-payments
+Disallow: /groups
+Disallow: /pledges
+Disallow: /subscription
+Disallow: /profile
+Disallow: /payouts
+Disallow: /penalties
+Disallow: /reports
+Disallow: /whatsapp
+Disallow: /overview
+Disallow: /notifications
+Disallow: /admin
+Disallow: /verify-email
+
+Sitemap: https://contritrack.vercel.app/sitemap.xml

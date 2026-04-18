@@ -82,7 +82,8 @@ router.get('/', protect, globalAdminOnly, async (req, res) => {
 
     res.json(members);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[members]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -110,7 +111,8 @@ router.patch('/:id/role', protect, adminOnly, async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[members]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

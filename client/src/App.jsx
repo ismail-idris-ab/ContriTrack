@@ -1,32 +1,49 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { GroupProvider } from './context/GroupContext';
 import { ToastProvider } from './context/ToastContext';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import DashboardPage from './pages/DashboardPage';
-import UploadPage from './pages/UploadPage';
-import MyPaymentsPage from './pages/MyPaymentsPage';
-import MembersPage from './pages/MembersPage';
-import AdminPage from './pages/AdminPage';
-import LandingPage from './pages/LandingPage';
-import GroupsPage from './pages/GroupsPage';
-import PledgePage from './pages/PledgePage';
-import PricingPage from './pages/PricingPage';
-import SubscriptionPage from './pages/SubscriptionPage';
-import ProfilePage from './pages/ProfilePage';
-import PayoutPage from './pages/PayoutPage';
-import PenaltyPage from './pages/PenaltyPage';
-import ReportPage from './pages/ReportPage';
-import WhatsAppPage from './pages/WhatsAppPage';
-import OverviewPage from './pages/OverviewPage';
-import VerifyEmailPage from './pages/VerifyEmailPage';
-import NotificationsPage from './pages/NotificationsPage';
+
+// Lazy-load every page so each route gets its own JS chunk
+const LoginPage         = lazy(() => import('./pages/LoginPage'));
+const RegisterPage      = lazy(() => import('./pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'));
+const DashboardPage     = lazy(() => import('./pages/DashboardPage'));
+const UploadPage        = lazy(() => import('./pages/UploadPage'));
+const MyPaymentsPage    = lazy(() => import('./pages/MyPaymentsPage'));
+const MembersPage       = lazy(() => import('./pages/MembersPage'));
+const AdminPage         = lazy(() => import('./pages/AdminPage'));
+const LandingPage       = lazy(() => import('./pages/LandingPage'));
+const GroupsPage        = lazy(() => import('./pages/GroupsPage'));
+const PledgePage        = lazy(() => import('./pages/PledgePage'));
+const PricingPage       = lazy(() => import('./pages/PricingPage'));
+const SubscriptionPage  = lazy(() => import('./pages/SubscriptionPage'));
+const ProfilePage       = lazy(() => import('./pages/ProfilePage'));
+const PayoutPage        = lazy(() => import('./pages/PayoutPage'));
+const PenaltyPage       = lazy(() => import('./pages/PenaltyPage'));
+const ReportPage        = lazy(() => import('./pages/ReportPage'));
+const WhatsAppPage      = lazy(() => import('./pages/WhatsAppPage'));
+const OverviewPage      = lazy(() => import('./pages/OverviewPage'));
+const VerifyEmailPage   = lazy(() => import('./pages/VerifyEmailPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const NotFoundPage      = lazy(() => import('./pages/NotFoundPage'));
+
+// Minimal spinner shown during lazy-load
+function PageLoader() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+      <div style={{
+        width: 28, height: 28, borderRadius: '50%',
+        border: '3px solid rgba(212,160,23,0.2)',
+        borderTopColor: 'var(--ct-gold)',
+        animation: 'spin 0.7s linear infinite',
+      }} />
+    </div>
+  );
+}
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -79,6 +96,7 @@ function EmailVerificationBanner() {
         </Link>
         <button
           onClick={dismiss}
+          aria-label="Dismiss email verification banner"
           style={{ background: 'none', border: 'none', color: '#52526e', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 2 }}
         >
           ×
@@ -96,7 +114,7 @@ function BottomNav({ onMoreClick }) {
     {
       path: '/dashboard', label: 'Home',
       icon: (
-        <svg width={20} height={20} viewBox="0 0 24 24" fill="currentColor">
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
         </svg>
       ),
@@ -104,7 +122,7 @@ function BottomNav({ onMoreClick }) {
     {
       path: '/groups', label: 'Circles',
       icon: (
-        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/>
           <path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/>
         </svg>
@@ -113,7 +131,7 @@ function BottomNav({ onMoreClick }) {
     {
       path: '/upload', label: 'Upload', primary: true,
       icon: (
-        <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+        <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
         </svg>
       ),
@@ -121,7 +139,7 @@ function BottomNav({ onMoreClick }) {
     {
       path: '/members', label: 'Members',
       icon: (
-        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"/>
         </svg>
       ),
@@ -129,7 +147,7 @@ function BottomNav({ onMoreClick }) {
     {
       label: 'More', action: true,
       icon: (
-        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
         </svg>
       ),
@@ -137,12 +155,12 @@ function BottomNav({ onMoreClick }) {
   ];
 
   return (
-    <nav className="md:hidden bottom-nav">
+    <nav className="md:hidden bottom-nav" aria-label="Mobile navigation">
       {items.map((item) => {
         if (item.primary) {
           const active = pathname === item.path;
           return (
-            <Link key={item.path} to={item.path} className="bottom-nav-item">
+            <Link key={item.path} to={item.path} className="bottom-nav-item" aria-label={item.label} aria-current={active ? 'page' : undefined}>
               <div className={`bottom-nav-upload${active ? ' active' : ''}`}>
                 {item.icon}
               </div>
@@ -154,7 +172,7 @@ function BottomNav({ onMoreClick }) {
         }
         if (item.action) {
           return (
-            <button key="more" onClick={onMoreClick} className="bottom-nav-item bottom-nav-btn">
+            <button key="more" onClick={onMoreClick} aria-label="Open navigation menu" aria-expanded="false" className="bottom-nav-item bottom-nav-btn">
               <div className="bottom-nav-icon">{item.icon}</div>
               <span className="bottom-nav-label">{item.label}</span>
             </button>
@@ -162,7 +180,7 @@ function BottomNav({ onMoreClick }) {
         }
         const active = pathname === item.path;
         return (
-          <Link key={item.path} to={item.path} className="bottom-nav-item">
+          <Link key={item.path} to={item.path} className="bottom-nav-item" aria-label={item.label} aria-current={active ? 'page' : undefined}>
             <div className={`bottom-nav-icon${active ? ' active' : ''}`}>{item.icon}</div>
             <span className="bottom-nav-label" style={{ color: active ? 'var(--ct-gold)' : '#9898b8', fontWeight: active ? 700 : 500 }}>
               {item.label}
@@ -185,6 +203,9 @@ function AppLayout() {
         <div
           className="fixed inset-0 bg-black/50 z-[200] md:hidden"
           onClick={() => setMobileOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
         >
           <div className="w-[240px] h-full" onClick={e => e.stopPropagation()}>
             <Sidebar onNavigate={() => setMobileOpen(false)} isMobile />
@@ -201,8 +222,10 @@ function AppLayout() {
       <div className="flex flex-col flex-1 min-h-screen overflow-hidden">
         <Topbar onMenuClick={() => setMobileOpen(true)} />
         <EmailVerificationBanner />
-        <main className="flex-1 overflow-y-auto main-content" style={{ background: 'var(--ct-page)' }}>
-          <Outlet />
+        <main id="main-content" className="flex-1 overflow-y-auto main-content" style={{ background: 'var(--ct-page)' }}>
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 
@@ -215,20 +238,36 @@ function AppLayout() {
 function AppRoutes() {
   return (
     <BrowserRouter>
+      {/* Skip-to-content link for keyboard/screen-reader users */}
+      <a
+        href="#main-content"
+        style={{
+          position: 'absolute', top: -40, left: 0, zIndex: 9999,
+          background: 'var(--ct-gold)', color: '#0f0e0a',
+          padding: '8px 16px', fontWeight: 700, textDecoration: 'none',
+          borderRadius: '0 0 8px 0', fontSize: 13,
+          transition: 'top 0.15s',
+        }}
+        onFocus={e => { e.currentTarget.style.top = '0'; }}
+        onBlur={e => { e.currentTarget.style.top = '-40px'; }}
+      >
+        Skip to main content
+      </a>
+
       <Routes>
-        <Route path="/"                        element={<LandingPage />} />
-        <Route path="/pricing"                 element={<PricingPage />} />
-        <Route path="/login"                   element={<PublicRoute><LoginPage /></PublicRoute>} />
-        <Route path="/register"                element={<PublicRoute><RegisterPage /></PublicRoute>} />
-        <Route path="/forgot-password"         element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-        <Route path="/reset-password/:token"   element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
-        <Route path="/verify-email"            element={<VerifyEmailPage />} />
+        <Route path="/"                        element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+        <Route path="/pricing"                 element={<Suspense fallback={<PageLoader />}><PricingPage /></Suspense>} />
+        <Route path="/login"                   element={<Suspense fallback={<PageLoader />}><PublicRoute><LoginPage /></PublicRoute></Suspense>} />
+        <Route path="/register"                element={<Suspense fallback={<PageLoader />}><PublicRoute><RegisterPage /></PublicRoute></Suspense>} />
+        <Route path="/forgot-password"         element={<Suspense fallback={<PageLoader />}><PublicRoute><ForgotPasswordPage /></PublicRoute></Suspense>} />
+        <Route path="/reset-password/:token"   element={<Suspense fallback={<PageLoader />}><PublicRoute><ResetPasswordPage /></PublicRoute></Suspense>} />
+        <Route path="/verify-email"            element={<Suspense fallback={<PageLoader />}><VerifyEmailPage /></Suspense>} />
 
         <Route element={<PrivateRoute><AppLayout /></PrivateRoute>}>
-          <Route path="/dashboard"   element={<DashboardPage />} />
-          <Route path="/upload"      element={<UploadPage />} />
-          <Route path="/members"     element={<MembersPage />} />
-          <Route path="/my-payments" element={<MyPaymentsPage />} />
+          <Route path="/dashboard"    element={<DashboardPage />} />
+          <Route path="/upload"       element={<UploadPage />} />
+          <Route path="/members"      element={<MembersPage />} />
+          <Route path="/my-payments"  element={<MyPaymentsPage />} />
           <Route path="/groups"       element={<GroupsPage />} />
           <Route path="/pledges"      element={<PledgePage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
@@ -237,12 +276,13 @@ function AppRoutes() {
           <Route path="/penalties"    element={<PenaltyPage />} />
           <Route path="/reports"      element={<ReportPage />} />
           <Route path="/whatsapp"     element={<WhatsAppPage />} />
-          <Route path="/overview"       element={<OverviewPage />} />
+          <Route path="/overview"     element={<OverviewPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/admin"        element={<AdminRoute><AdminPage /></AdminRoute>} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* 404 — shown for any unknown URL instead of silently redirecting */}
+        <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );

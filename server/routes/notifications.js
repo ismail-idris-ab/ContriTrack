@@ -27,7 +27,8 @@ router.get('/', protect, async (req, res) => {
 
     res.json({ notifications, unreadCount, hasMore });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[notifications]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -43,7 +44,8 @@ router.patch('/:id/read', protect, async (req, res) => {
     if (!n) return res.status(404).json({ message: 'Notification not found' });
     res.json(n);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[notifications]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -54,7 +56,8 @@ router.patch('/read-all', protect, async (req, res) => {
     await Notification.updateMany({ user: req.user._id, read: false }, { read: true });
     res.json({ message: 'All notifications marked as read' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[notifications]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -69,7 +72,8 @@ router.delete('/:id', protect, async (req, res) => {
     if (!n) return res.status(404).json({ message: 'Notification not found' });
     res.json({ message: 'Deleted' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[notifications]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

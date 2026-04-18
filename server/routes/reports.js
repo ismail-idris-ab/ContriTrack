@@ -118,7 +118,8 @@ router.get('/monthly', protect, requireFeature('reports'), async (req, res) => {
       members,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[reports]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -170,7 +171,8 @@ router.get('/yearly', protect, requireFeature('reports'), async (req, res) => {
       months: monthlyData,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[reports]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -220,7 +222,8 @@ router.post('/remind', protect, requireFeature('reminders'), async (req, res) =>
       unpaidCount: unpaidMembers.length,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[reports]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

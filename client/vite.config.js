@@ -10,4 +10,16 @@ export default defineConfig({
       '/uploads': 'http://localhost:5000',
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split vendor libs from app code so repeat visitors cache them separately
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-axios': ['axios'],
+          'vendor-oauth': ['@react-oauth/google'],
+        },
+      },
+    },
+  },
 });

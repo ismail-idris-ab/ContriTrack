@@ -118,7 +118,8 @@ router.post('/initialize', protect, async (req, res) => {
       accessCode:       response.data.access_code,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[subscription]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -167,7 +168,8 @@ router.get('/verify/:reference', protect, async (req, res) => {
       currentPeriodEnd: periodEnd,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[subscription]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -289,7 +291,8 @@ router.post('/cancel', protect, async (req, res) => {
 
     res.json({ message: 'Subscription cancelled. Your plan remains active until the end of the billing period.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[subscription]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

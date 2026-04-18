@@ -36,7 +36,8 @@ router.get('/', protect, requireFeature('penaltyTracking'), async (req, res) => 
 
     res.json(penalties);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[penalties]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -54,7 +55,8 @@ router.get('/mine', protect, async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(penalties);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[penalties]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -93,7 +95,8 @@ router.post('/', protect, requireFeature('penaltyTracking'), async (req, res) =>
     await penalty.populate('issuedBy', 'name');
     res.status(201).json(penalty);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[penalties]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -126,7 +129,8 @@ router.patch('/:id/status', protect, requireFeature('penaltyTracking'), async (r
     await penalty.populate('issuedBy', 'name');
     res.json(penalty);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[penalties]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -147,7 +151,8 @@ router.delete('/:id', protect, requireFeature('penaltyTracking'), async (req, re
     await penalty.deleteOne();
     res.json({ message: 'Penalty deleted' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[penalties]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

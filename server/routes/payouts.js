@@ -42,7 +42,8 @@ router.get('/', protect, async (req, res) => {
 
     res.json({ payouts, group: { _id: group._id, name: group.name, contributionAmount: group.contributionAmount, memberCount: group.members.length } });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[payouts]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -112,7 +113,8 @@ router.post('/rotation', protect, async (req, res) => {
     if (err.code === 11000) {
       return res.status(400).json({ message: 'Duplicate slot: a member can only receive once per month in this group' });
     }
-    res.status(500).json({ message: err.message });
+    console.error('[payouts]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -180,7 +182,8 @@ router.post('/generate', protect, async (req, res) => {
 
     res.status(201).json(populated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[payouts]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -227,7 +230,8 @@ router.patch('/:id/status', protect, async (req, res) => {
 
     res.json(payout);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[payouts]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -253,7 +257,8 @@ router.delete('/:id', protect, async (req, res) => {
     await payout.deleteOne();
     res.json({ message: 'Payout slot removed' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[payouts]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

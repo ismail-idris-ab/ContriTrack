@@ -123,7 +123,8 @@ router.get('/monthly', protect, requireFeature('exports'), async (req, res) => {
     const csv = buildCsv(headers, rows);
     sendCsv(res, `${group.name.replace(/\s+/g, '_')}_${monthName}_${targetYear}.csv`, csv);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[exports]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -179,7 +180,8 @@ router.get('/yearly', protect, requireFeature('exports'), async (req, res) => {
     const csv = buildCsv(headers, rows);
     sendCsv(res, `${group.name.replace(/\s+/g, '_')}_${targetYear}_Yearly.csv`, csv);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[exports]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -218,7 +220,8 @@ router.get('/members', protect, requireFeature('exports'), async (req, res) => {
     const csv = buildCsv(headers, rows);
     sendCsv(res, `${group.name.replace(/\s+/g, '_')}_Members.csv`, csv);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[exports]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -253,7 +256,8 @@ router.get('/trust-scores', protect, requireFeature('trustScoring'), async (req,
     scores.sort((a, b) => b.score - a.score);
     res.json(scores);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[exports]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

@@ -85,7 +85,8 @@ router.post('/register', authLimiter, async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -120,7 +121,8 @@ router.post('/login', authLimiter, async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -247,7 +249,8 @@ router.patch('/profile', protect, async (req, res) => {
       subscription: { plan: user.subscription?.plan || 'free', status: user.subscription?.status || 'active' },
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -266,19 +269,18 @@ router.patch('/password', protect, async (req, res) => {
     const user = await User.findById(req.user._id).select('+password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Re-fetch with password since protect strips it
-    const fullUser = await User.findById(req.user._id);
-    const match = await fullUser.matchPassword(currentPassword);
+    const match = await user.matchPassword(currentPassword);
     if (!match) {
       return res.status(401).json({ message: 'Current password is incorrect' });
     }
 
-    fullUser.password = newPassword;
-    await fullUser.save();
+    user.password = newPassword;
+    await user.save();
 
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -310,7 +312,8 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
 
     res.status(200).json(successResponse);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -341,7 +344,8 @@ router.post('/reset-password/:token', async (req, res) => {
 
     res.status(200).json({ message: 'Password reset successfully. You can now log in.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -365,7 +369,8 @@ router.post('/send-verification', protect, async (req, res) => {
 
     res.json({ message: 'A 6-digit code has been sent to your email.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -402,7 +407,8 @@ router.post('/verify-email', protect, async (req, res) => {
 
     res.json({ message: 'Email verified successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

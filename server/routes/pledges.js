@@ -44,7 +44,8 @@ router.post('/', protect, async (req, res) => {
     if (err.code === 11000) {
       return res.status(400).json({ message: 'You already have a pledge for this month' });
     }
-    res.status(500).json({ message: err.message });
+    console.error('[pledges]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -61,7 +62,8 @@ router.get('/mine', protect, async (req, res) => {
       .sort({ year: -1, month: -1 });
     res.json(pledges);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[pledges]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -81,7 +83,8 @@ router.get('/', protect, async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(pledges);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[pledges]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -116,7 +119,8 @@ router.patch('/:id', protect, async (req, res) => {
     await pledge.populate('user', 'name email');
     res.json(pledge);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[pledges]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -137,7 +141,8 @@ router.delete('/:id', protect, async (req, res) => {
     await pledge.deleteOne();
     res.json({ message: 'Pledge cancelled' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[pledges]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
