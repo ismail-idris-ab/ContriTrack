@@ -5,6 +5,35 @@ import { useGroup } from '../context/GroupContext';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+// Compress images client-side before upload (max 1200px, 0.82 JPEG quality).
+// PDFs and small images (<300KB) are passed through unchanged.
+function compressImage(file, maxDimension = 1200, quality = 0.82) {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/') || file.size < 300 * 1024) {
+      resolve(file);
+      return;
+    }
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width <= maxDimension && height <= maxDimension) { resolve(file); return; }
+      if (width > height) { height = Math.round((height / width) * maxDimension); width = maxDimension; }
+      else { width = Math.round((width / height) * maxDimension); height = maxDimension; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg', lastModified: Date.now() })),
+        'image/jpeg', quality,
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 export default function UploadPage() {
   const navigate = useNavigate();
   const { activeGroup } = useGroup();
@@ -21,6 +50,7 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
   const handleChange = (e) => {
@@ -28,7 +58,7 @@ export default function UploadPage() {
     setAlreadySubmitted(false);
   };
 
-  const applyFile = (f) => {
+  const applyFile = async (f) => {
     if (!f) return;
     if (!f.type.startsWith('image/') && f.type !== 'application/pdf') {
       setError('Only image files and PDFs are allowed');
@@ -38,9 +68,12 @@ export default function UploadPage() {
       setError(`File is too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Maximum size is 5 MB.`);
       return;
     }
-    setFile(f);
-    setPreview(f.type.startsWith('image/') ? URL.createObjectURL(f) : null);
     setError('');
+    setCompressing(true);
+    const compressed = await compressImage(f);
+    setCompressing(false);
+    setFile(compressed);
+    setPreview(compressed.type.startsWith('image/') ? URL.createObjectURL(compressed) : null);
   };
 
   const handleFileChange = (e) => applyFile(e.target.files[0]);
@@ -632,11 +665,11 @@ export default function UploadPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={!file || loading}
-              className={`upload-btn ${file && !loading ? 'active' : 'inactive'}`}
+              disabled={!file || loading || compressing}
+              className={`upload-btn ${file && !loading && !compressing ? 'active' : 'inactive'}`}
             >
-              {loading && <span className="upload-spinner" />}
-              {loading ? 'Uploading…' : 'Submit Payment Proof'}
+              {(loading || compressing) && <span className="upload-spinner" />}
+              {compressing ? 'Compressing image…' : loading ? 'Uploading to cloud…' : 'Submit Payment Proof'}
             </button>
 
             {/* Secure footer */}
