@@ -26,4 +26,18 @@ const adminOnly = (req, res, next) => {
   return res.status(403).json({ message: 'Admin access required' });
 };
 
-module.exports = { protect, adminOnly };
+// Like protect but calls next() instead of 401-ing — req.user is null if no/invalid token
+const softProtect = async (req, res, next) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return next();
+  const token = header.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id).select('-password');
+  } catch {
+    // invalid or expired token — treat as anonymous
+  }
+  next();
+};
+
+module.exports = { protect, adminOnly, softProtect };

@@ -1,29 +1,16 @@
 const express = require('express');
 const router  = express.Router();
+const jwt     = require('jsonwebtoken');
 const Template = require('../models/Template');
-const { protect } = require('../middleware/auth');
+const { protect, softProtect } = require('../middleware/auth');
 
 // GET /api/templates — system presets + caller's saved templates
-router.get('/', async (req, res) => {
+router.get('/', softProtect, async (req, res) => {
   try {
-    let token = null;
-    if (req.headers.authorization?.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-
     const presets = await Template.find({ isPreset: true }).sort({ createdAt: 1 });
-
-    let mine = [];
-    if (token) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        mine = await Template.find({ createdBy: decoded.id, isPreset: false }).sort({ createdAt: -1 });
-      } catch {
-        // invalid token — just return presets
-      }
-    }
-
+    const mine = req.user
+      ? await Template.find({ createdBy: req.user._id, isPreset: false }).sort({ createdAt: -1 })
+      : [];
     res.json({ presets, mine });
   } catch (err) {
     console.error('[templates]', err.message);
