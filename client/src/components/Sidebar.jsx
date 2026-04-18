@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import { canAccess } from '../utils/planUtils';
 
 const getInitials = (name = '') =>
   name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
@@ -114,8 +115,8 @@ const NAV_GROUPS = [
   {
     label: 'Tools',
     items: [
-      { id: 'reports',      label: 'Reports',      path: '/reports',      icon: Icon.reports      },
-      { id: 'whatsapp',     label: 'Reminders',    path: '/whatsapp',     icon: Icon.whatsapp     },
+      { id: 'reports',      label: 'Reports',      path: '/reports',      icon: Icon.reports,      requires: 'pro' },
+      { id: 'whatsapp',     label: 'Reminders',    path: '/whatsapp',     icon: Icon.whatsapp,     requires: 'pro' },
       { id: 'subscription', label: 'Subscription', path: '/subscription', icon: Icon.subscription },
     ],
   },
@@ -124,7 +125,7 @@ const NAV_GROUPS = [
 const ADMIN_ITEM = { id: 'admin', label: 'Admin Panel', path: '/admin', icon: Icon.admin };
 
 // ─── NavItem ─────────────────────────────────────────────────────────────────
-function NavItem({ item, active, onNavigate }) {
+function NavItem({ item, active, locked, onNavigate }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -184,7 +185,7 @@ function NavItem({ item, active, onNavigate }) {
         {item.label}
       </span>
 
-      {/* Badge or active dot */}
+      {/* Badge or locked pill or active dot */}
       {item.badge ? (
         <div style={{
           minWidth: 18, height: 18, borderRadius: 9,
@@ -196,6 +197,17 @@ function NavItem({ item, active, onNavigate }) {
         }}>
           {item.badge > 99 ? '99+' : item.badge}
         </div>
+      ) : locked ? (
+        <span style={{
+          padding: '2px 6px', borderRadius: 4,
+          background: 'rgba(212,160,23,0.14)',
+          color: '#d4a017',
+          fontSize: 8.5, fontWeight: 700,
+          letterSpacing: '0.06em', textTransform: 'uppercase',
+          flexShrink: 0,
+        }}>
+          Pro
+        </span>
       ) : active ? (
         <div style={{
           width: 5, height: 5, borderRadius: '50%',
@@ -350,6 +362,7 @@ export default function Sidebar({ onNavigate, isMobile }) {
                 key={item.id}
                 item={item}
                 active={isActive(item.path)}
+                locked={item.requires ? !canAccess(user, item.requires) : false}
                 onNavigate={onNavigate}
               />
             ))}
