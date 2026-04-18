@@ -365,69 +365,87 @@ function RolesTab() {
         Promote members to admin or demote admins to member. Admins can verify and reject contributions.
       </p>
 
-      <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--ct-shadow)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: '#faf9f6' }}>
-              {['Member', 'Email', 'Current Role', 'Action'].map(h => (
-                <th key={h} style={{ padding: '12px 18px', textAlign: 'left', color: 'var(--ct-text-3)', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u, i) => (
-              <tr key={u._id} style={{ background: i % 2 === 0 ? '#fff' : '#fdfcfa' }}>
-                <td style={tdStyle}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: getAvatarGradient(u.name), display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{getInitials(u.name)}</div>
-                    <span style={{ fontWeight: 600, color: 'var(--ct-text-1)' }}>{u.name}</span>
-                  </div>
-                </td>
-                <td style={{ ...tdStyle, color: 'var(--ct-text-3)' }}>{u.email}</td>
-                <td style={tdStyle}>
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    padding: '3px 10px', borderRadius: 20,
-                    background: u.role === 'admin' ? 'rgba(212,160,23,0.1)' : 'rgba(79,70,229,0.07)',
-                    border: `1px solid ${u.role === 'admin' ? 'rgba(212,160,23,0.25)' : 'rgba(79,70,229,0.15)'}`,
-                    color: u.role === 'admin' ? '#b8860a' : 'var(--ct-indigo)',
-                    fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'capitalize',
-                  }}>
-                    {u.role === 'admin' && (
-                      <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      </svg>
-                    )}
-                    {u.role}
-                  </span>
-                </td>
-                <td style={tdStyle}>
-                  <button
-                    onClick={() => toggleRole(u)}
-                    disabled={updating === u._id}
-                    style={{
-                      padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                      cursor: updating === u._id ? 'not-allowed' : 'pointer',
-                      fontFamily: 'var(--font-sans)',
-                      border: u.role === 'admin'
-                        ? '1px solid rgba(225,29,72,0.25)'
-                        : '1px solid rgba(5,150,105,0.25)',
-                      background: u.role === 'admin'
-                        ? 'rgba(225,29,72,0.07)'
-                        : 'rgba(5,150,105,0.07)',
-                      color: u.role === 'admin' ? '#be123c' : '#047857',
-                      opacity: updating === u._id ? 0.5 : 1,
-                    }}
-                  >
-                    {updating === u._id
-                      ? 'Saving…'
-                      : u.role === 'admin' ? 'Demote to Member' : 'Promote to Admin'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {users.map(u => (
+          <div
+            key={u._id}
+            style={{
+              background: '#fff',
+              borderRadius: 14,
+              padding: '14px 18px',
+              boxShadow: 'var(--ct-shadow)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexWrap: 'wrap',
+            }}
+          >
+            {/* Left: avatar + name + email */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                background: getAvatarGradient(u.name),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, fontWeight: 700, color: '#fff',
+              }}>
+                {getInitials(u.name)}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ct-text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {u.name}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {u.email}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: role badge + action button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '3px 10px', borderRadius: 20,
+                background: u.role === 'admin' ? 'rgba(212,160,23,0.1)' : 'rgba(79,70,229,0.07)',
+                border: `1px solid ${u.role === 'admin' ? 'rgba(212,160,23,0.25)' : 'rgba(79,70,229,0.15)'}`,
+                color: u.role === 'admin' ? '#b8860a' : 'var(--ct-indigo)',
+                fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'capitalize',
+                whiteSpace: 'nowrap',
+              }}>
+                {u.role === 'admin' && (
+                  <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                )}
+                {u.role}
+              </span>
+
+              <button
+                onClick={() => toggleRole(u)}
+                disabled={updating === u._id}
+                style={{
+                  padding: '7px 14px', borderRadius: 9, fontSize: 12.5, fontWeight: 600,
+                  cursor: updating === u._id ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  border: u.role === 'admin'
+                    ? '1px solid rgba(225,29,72,0.25)'
+                    : '1px solid rgba(5,150,105,0.25)',
+                  background: u.role === 'admin'
+                    ? 'rgba(225,29,72,0.07)'
+                    : 'rgba(5,150,105,0.07)',
+                  color: u.role === 'admin' ? '#be123c' : '#047857',
+                  opacity: updating === u._id ? 0.5 : 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {updating === u._id
+                  ? 'Saving…'
+                  : u.role === 'admin' ? 'Demote' : 'Promote'}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
