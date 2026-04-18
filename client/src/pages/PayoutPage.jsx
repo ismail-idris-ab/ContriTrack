@@ -24,6 +24,13 @@ const STATUS_CONFIG = {
   skipped:   { label: 'Skipped',   color: '#8888a4', bg: 'rgba(100,100,130,0.07)', border: 'rgba(100,100,130,0.15)' },
 };
 
+const ROTATION_LABELS = {
+  fixed:        { name: 'Fixed Order',  desc: 'Members assigned in their current list order.' },
+  'join-order': { name: 'Join Order',   desc: 'Members assigned in the order they joined the circle.' },
+  random:       { name: 'Random',       desc: 'Order is shuffled each time you generate.' },
+  bid:          { name: 'Bid (manual)', desc: 'Auto-generate is disabled. Use the manual rotation builder.' },
+};
+
 const now = new Date();
 
 export default function PayoutPage() {
@@ -124,6 +131,7 @@ export default function PayoutPage() {
 
   const paid      = payouts.filter(p => p.status === 'paid');
   const totalPaid = paid.reduce((s, p) => s + (p.actualAmount || 0), 0);
+  const isBidType = groupMeta?.rotationType === 'bid';
 
   if (!activeGroup) {
     return (
@@ -232,19 +240,47 @@ export default function PayoutPage() {
                 {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
               </select>
             </div>
+            {/* Rotation type info */}
+            {groupMeta?.rotationType && (
+              <div style={{
+                padding: '12px 16px', borderRadius: 10,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                marginBottom: 16,
+              }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, color: '#52526e',
+                  textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5,
+                }}>
+                  Rotation Type
+                </div>
+                <div style={{ fontSize: 13, color: '#c8c4d8', fontWeight: 600 }}>
+                  {ROTATION_LABELS[groupMeta.rotationType]?.name ?? groupMeta.rotationType}
+                </div>
+                <div style={{ fontSize: 12, color: '#52526e', marginTop: 3 }}>
+                  {ROTATION_LABELS[groupMeta.rotationType]?.desc}
+                </div>
+              </div>
+            )}
             <button
               type="submit"
-              disabled={generating}
+              disabled={generating || isBidType}
               style={{
                 padding: '10px 20px', borderRadius: 9, border: 'none',
                 background: generating ? '#e8e4dc' : 'var(--ct-gold)',
                 color: generating ? 'var(--ct-text-3)' : '#0f0f14',
-                fontSize: 13.5, fontWeight: 700, cursor: generating ? 'not-allowed' : 'pointer',
+                fontSize: 13.5, fontWeight: 700, cursor: generating || isBidType ? 'not-allowed' : 'pointer',
+                opacity: isBidType ? 0.5 : 1,
                 fontFamily: 'var(--font-sans)',
               }}
             >
               {generating ? 'Generating…' : `Generate for ${year}`}
             </button>
+            {isBidType && (
+              <p style={{ fontSize: 12, color: '#f59e0b', margin: '8px 0 0', textAlign: 'center' }}>
+                Bid rotation must be assigned manually.
+              </p>
+            )}
             <button
               type="button"
               onClick={() => setShowGenerate(false)}
