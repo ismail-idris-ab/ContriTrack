@@ -48,6 +48,7 @@ app.use('/api/reports',       require('./routes/reports'));
 app.use('/api/exports',       require('./routes/exports'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/templates',     require('./routes/templates'));
+app.use('/api/audit',         require('./routes/audit'));
 
 // Health check — Render pings this to confirm the server is up
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
