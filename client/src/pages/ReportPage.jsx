@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../api/axios';
 import { downloadCsv } from '../utils/exportDownload';
+import { canAccess } from '../utils/planUtils';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -109,6 +110,7 @@ function YearlyChart({ months: monthlyData }) {
 export default function ReportPage() {
   const { activeGroup } = useGroup();
   const { user } = useAuth();
+  const planLocked = !canAccess(user, 'pro');
   const { showToast } = useToast();
 
   const now = new Date();
@@ -121,13 +123,28 @@ export default function ReportPage() {
   const [yearly, setYearly] = useState(null);
   const [loading, setLoading] = useState(false);
   const [yearlyLoading, setYearlyLoading] = useState(false);
-  const [planLocked, setPlanLocked] = useState(false);
 
   // Reminder state
   const [reminding, setReminding] = useState(false);
 
   // Export state
   const [exporting, setExporting] = useState(false);
+  const [exportingMembers, setExportingMembers] = useState(false);
+
+  const handleMembersExport = async () => {
+    if (!activeGroup || exportingMembers) return;
+    setExportingMembers(true);
+    try {
+      const fname = `${activeGroup.name.replace(/\s+/g, '_')}_Members.csv`;
+      await downloadCsv(`/api/exports/members?groupId=${activeGroup._id}&includeScore=true`, fname);
+    } catch (err) {
+      showToast(err.message || 'Members export failed', 'error');
+    } finally {
+      setExportingMembers(false);
+    }
+  };
+
+  const isCoordinator = canAccess(user, 'coordinator');
 
   const handleExport = async (type) => {
     if (!activeGroup || exporting) return;
@@ -157,14 +174,13 @@ export default function ReportPage() {
   const fetchMonthly = useCallback(async () => {
     if (!activeGroup) return;
     setLoading(true);
-    setPlanLocked(false);
     try {
       const { data } = await api.get(
         `/reports/monthly?groupId=${activeGroup._id}&month=${month}&year=${year}`
       );
       setMonthly(data);
     } catch (err) {
-      if (err.response?.status === 403) setPlanLocked(true);
+      // error handled silently; plan lock is computed synchronously
     } finally {
       setLoading(false);
     }
@@ -179,7 +195,7 @@ export default function ReportPage() {
       );
       setYearly(data);
     } catch (err) {
-      if (err.response?.status === 403) setPlanLocked(true);
+      // error handled silently; plan lock is computed synchronously
     } finally {
       setYearlyLoading(false);
     }
@@ -343,6 +359,28 @@ export default function ReportPage() {
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
               </svg>
               {exporting ? 'Exporting…' : 'Export CSV'}
+            </button>
+
+            {/* Members CSV — coordinator only */}
+            <button
+              onClick={isCoordinator ? handleMembersExport : undefined}
+              disabled={!isCoordinator || exportingMembers}
+              title={!isCoordinator ? 'Requires Coordinator plan' : 'Download member roster with trust scores'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                padding: '8px 16px', borderRadius: 9,
+                background: isCoordinator ? 'rgba(79,70,229,0.10)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${isCoordinator ? 'rgba(79,70,229,0.22)' : 'rgba(255,255,255,0.07)'}`,
+                color: isCoordinator ? '#818cf8' : '#38385a',
+                fontSize: 12.5, fontWeight: 600,
+                cursor: isCoordinator && !exportingMembers ? 'pointer' : 'not-allowed',
+                fontFamily: 'var(--font-sans)', transition: 'all 0.18s ease',
+              }}
+            >
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"/>
+              </svg>
+              {exportingMembers ? 'Exporting…' : 'Members CSV'}
             </button>
 
             {/* Send reminders (admin only) */}
