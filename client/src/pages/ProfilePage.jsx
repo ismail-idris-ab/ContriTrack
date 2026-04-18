@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
@@ -65,6 +65,9 @@ function Alert({ type, message }) {
 
 export default function ProfilePage() {
   const { user, login } = useAuth();
+  const fileInputRef = useRef(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
 
   // ── Profile form ────────────────────────────────────────────────────────────
   const [profile, setProfile] = useState({
@@ -135,6 +138,33 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError('Image must be under 2 MB.');
+      return;
+    }
+
+    setAvatarError('');
+    setUploadingAvatar(true);
+    try {
+      const form = new FormData();
+      form.append('avatar', file);
+      const { data } = await api.patch('/auth/avatar', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const updated = { ...user, avatar: data.avatar };
+      login(updated);
+    } catch (err) {
+      setAvatarError(err.response?.data?.message || 'Upload failed. Try again.');
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = '';
+    }
+  };
+
   return (
     <div style={{ fontFamily: 'var(--font-sans)', maxWidth: 640, margin: '0 auto' }}>
 
@@ -146,15 +176,98 @@ export default function ProfilePage() {
         boxShadow: 'var(--ct-shadow)',
         display: 'flex', alignItems: 'center', gap: 20,
       }}>
-        <div style={{
-          width: 72, height: 72, borderRadius: '50%', flexShrink: 0,
-          background: getAvatarGradient(user?.name),
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24, fontWeight: 700, color: '#fff',
-          boxShadow: '0 0 0 4px #fff, 0 0 0 6px rgba(212,160,23,0.25)',
-        }}>
-          {getInitials(user?.name)}
+        {/* Clickable avatar */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div
+            onClick={() => !uploadingAvatar && fileInputRef.current?.click()}
+            onMouseEnter={e => {
+              if (!uploadingAvatar) {
+                const overlay = e.currentTarget.querySelector('[data-overlay]');
+                if (overlay) overlay.style.opacity = '1';
+              }
+            }}
+            onMouseLeave={e => {
+              const overlay = e.currentTarget.querySelector('[data-overlay]');
+              if (overlay) overlay.style.opacity = '0';
+            }}
+            style={{
+              width: 72, height: 72, borderRadius: '50%',
+              position: 'relative', cursor: uploadingAvatar ? 'default' : 'pointer',
+              boxShadow: '0 0 0 4px #fff, 0 0 0 6px rgba(212,160,23,0.25)',
+              overflow: 'hidden',
+            }}
+          >
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user?.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            ) : (
+              <div style={{
+                width: '100%', height: '100%',
+                background: getAvatarGradient(user?.name),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 24, fontWeight: 700, color: '#fff',
+              }}>
+                {getInitials(user?.name)}
+              </div>
+            )}
+
+            {uploadingAvatar && (
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTopColor: '#fff',
+                  animation: 'spin 0.7s linear infinite',
+                }} />
+              </div>
+            )}
+
+            {!uploadingAvatar && (
+              <div
+                data-overlay=""
+                style={{
+                  position: 'absolute', inset: 0,
+                  background: 'rgba(0,0,0,0.45)',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: 0, transition: 'opacity 0.18s ease',
+                  pointerEvents: 'none',
+                }}
+              >
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span style={{ color: '#fff', fontSize: 9, fontWeight: 700, marginTop: 3, letterSpacing: '0.05em' }}>CHANGE</span>
+              </div>
+            )}
+          </div>
+
+          {avatarError && (
+            <div style={{
+              position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+              marginTop: 6, whiteSpace: 'nowrap',
+              fontSize: 11, color: '#e11d48', fontWeight: 500,
+            }}>
+              {avatarError}
+            </div>
+          )}
         </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: 'none' }}
+          onChange={handleAvatarChange}
+        />
         <div>
           <div style={{
             fontFamily: 'var(--font-display)',
