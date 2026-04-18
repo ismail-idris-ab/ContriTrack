@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
     if (!user?.token) return;
     try {
       const { data } = await api.get('/subscription/status');
-      const updated = { ...user, subscription: { plan: data.plan, status: data.status } };
+      const updated = { ...user, subscription: { plan: data.plan, status: data.status, trialEndsAt: data.trialEndsAt ?? null } };
       localStorage.setItem('user', JSON.stringify(updated));
       setUser(updated);
     } catch {

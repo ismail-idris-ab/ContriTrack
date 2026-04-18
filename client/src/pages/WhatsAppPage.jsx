@@ -46,13 +46,13 @@ export default function WhatsAppPage() {
 
   // Fetch group members (populate phone info via members route)
   useEffect(() => {
-    if (!activeGroup) return;
+    if (!activeGroup || planLocked) return;
     setLoading(true);
     api.get(`/members?groupId=${activeGroup._id}`)
       .then(({ data }) => setMembers(Array.isArray(data) ? data : data.members || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [activeGroup]);
+  }, [activeGroup, planLocked]);
 
   const sendReminders = async () => {
     if (!activeGroup) return;
@@ -81,28 +81,6 @@ export default function WhatsAppPage() {
   const membersWithPhone    = members.filter(m => m.phone);
   const membersWithoutPhone = members.filter(m => !m.phone);
 
-  // ── Plan lock guard ───────────────────────────────────────────────────────────
-  if (planLocked) {
-    return (
-      <div style={{ maxWidth: 480, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#ede8de', marginBottom: 8 }}>
-          Reminders require Pro
-        </h2>
-        <p style={{ color: '#52526e', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
-          Upgrade to the Pro or Coordinator plan to send WhatsApp payment reminders to unpaid members.
-        </p>
-        <Link to="/subscription" style={{
-          display: 'inline-block', padding: '10px 24px',
-          background: 'linear-gradient(135deg, var(--ct-gold), var(--ct-gold-light))',
-          color: '#1a1206', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: 14,
-        }}>
-          Upgrade Plan
-        </Link>
-      </div>
-    );
-  }
-
   // ── No circle guard ───────────────────────────────────────────────────────────
   if (!activeGroup) {
     return (
@@ -120,6 +98,28 @@ export default function WhatsAppPage() {
           color: '#1a1206', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: 14,
         }}>
           Go to My Circles
+        </Link>
+      </div>
+    );
+  }
+
+  // ── Plan lock guard ───────────────────────────────────────────────────────────
+  if (planLocked) {
+    return (
+      <div style={{ maxWidth: 480, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#ede8de', marginBottom: 8 }}>
+          Reminders require Pro
+        </h2>
+        <p style={{ color: '#52526e', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+          Upgrade to the Pro or Coordinator plan to send WhatsApp payment reminders to unpaid members.
+        </p>
+        <Link to="/subscription" style={{
+          display: 'inline-block', padding: '10px 24px',
+          background: 'linear-gradient(135deg, var(--ct-gold), var(--ct-gold-light))',
+          color: '#1a1206', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: 14,
+        }}>
+          Upgrade Plan
         </Link>
       </div>
     );
