@@ -6,6 +6,7 @@ const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const { guardGroupCreate, guardMemberAdd } = require('../middleware/planGuard');
 const Template = require('../models/Template');
+const { logAudit } = require('../utils/audit');
 
 // Helper: check if requesting user is an admin of the given group
 function isGroupAdmin(group, userId) {
@@ -232,9 +233,20 @@ router.patch('/:id/members/:userId/role', protect, async (req, res) => {
       return res.status(404).json({ message: 'User is not a member of this group' });
     }
 
+    const oldRole = memberEntry.role;
     memberEntry.role = role;
     await group.save();
     await group.populate('members.user', 'name email role');
+
+    logAudit({
+      action:       'member.role_changed',
+      adminId:      req.user._id,
+      groupId:      group._id,
+      entityType:   'User',
+      entityId:     req.params.userId,
+      targetUserId: req.params.userId,
+      meta:         { oldRole, newRole: role },
+    });
 
     res.json(group);
   } catch (err) {
@@ -338,6 +350,20 @@ router.patch('/:id/settings', protect, async (req, res) => {
     }
 
     await group.save();
+
+    logAudit({
+      action:     'group.settings_changed',
+      adminId:    req.user._id,
+      groupId:    group._id,
+      entityType: 'Group',
+      entityId:   group._id,
+      meta: {
+        fields: Object.keys(req.body).filter(k =>
+          ['name','description','contributionAmount','dueDay','graceDays','rotationType'].includes(k)
+        ),
+      },
+    });
+
     await group.populate('members.user', 'name email role');
     res.json(group);
   } catch (err) {
