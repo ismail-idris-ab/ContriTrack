@@ -4,6 +4,7 @@ import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../api/axios';
+import { canAccess } from '../utils/planUtils';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -25,6 +26,7 @@ export default function WhatsAppPage() {
   const { activeGroup } = useGroup();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const planLocked = !canAccess(user, 'pro');
 
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -78,6 +80,28 @@ export default function WhatsAppPage() {
 
   const membersWithPhone    = members.filter(m => m.phone);
   const membersWithoutPhone = members.filter(m => !m.phone);
+
+  // ── Plan lock guard ───────────────────────────────────────────────────────────
+  if (planLocked) {
+    return (
+      <div style={{ maxWidth: 480, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#ede8de', marginBottom: 8 }}>
+          Reminders require Pro
+        </h2>
+        <p style={{ color: '#52526e', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+          Upgrade to the Pro or Coordinator plan to send WhatsApp payment reminders to unpaid members.
+        </p>
+        <Link to="/subscription" style={{
+          display: 'inline-block', padding: '10px 24px',
+          background: 'linear-gradient(135deg, var(--ct-gold), var(--ct-gold-light))',
+          color: '#1a1206', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: 14,
+        }}>
+          Upgrade Plan
+        </Link>
+      </div>
+    );
+  }
 
   // ── No circle guard ───────────────────────────────────────────────────────────
   if (!activeGroup) {
