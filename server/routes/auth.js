@@ -7,6 +7,30 @@ const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const { sendPasswordResetEmail, sendOtpEmail } = require('../utils/mailer');
 const Notification = require('../models/Notification');
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const { cloudinary } = require('../utils/cloudinary');
+
+const avatarStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'contritrack/avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    resource_type: 'image',
+    transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }],
+  },
+});
+
+const avatarUpload = multer({
+  storage: avatarStorage,
+  fileFilter: (req, file, cb) => {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      return cb(new Error('Only JPG, PNG, and WebP images are allowed'));
+    }
+    cb(null, true);
+  },
+  limits: { fileSize: 2 * 1024 * 1024 },
+});
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -408,6 +432,31 @@ router.post('/verify-email', protect, async (req, res) => {
     res.json({ message: 'Email verified successfully.' });
   } catch (err) {
     console.error('[auth]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
+  }
+});
+
+// PATCH /api/auth/avatar — upload or replace profile photo
+router.patch('/avatar', protect, avatarUpload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Delete previous avatar from Cloudinary
+    if (user.avatar) {
+      const parts = user.avatar.split('/');
+      const publicId = parts.slice(-2).join('/').replace(/\.[^.]+$/, '');
+      await cloudinary.uploader.destroy(publicId).catch(() => {});
+    }
+
+    user.avatar = req.file.path;
+    await user.save();
+
+    res.json({ avatar: user.avatar });
+  } catch (err) {
+    console.error('[auth avatar]', err.message);
     res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
