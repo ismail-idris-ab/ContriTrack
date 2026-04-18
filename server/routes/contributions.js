@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 const { protect, adminOnly } = require('../middleware/auth');
 const { sendStatusNotification } = require('../utils/mailer');
 const { isLateSubmission } = require('../utils/cycleUtils');
+const { logAudit } = require('../utils/audit');
 
 // Max 10 uploads per user per 15 minutes
 const uploadLimiter = rateLimit({
@@ -229,6 +230,24 @@ router.patch('/:id/status', protect, async (req, res) => {
           rejectionNote: update.rejectionNote || '',
         }
       );
+    }
+
+    if (status === 'verified' || status === 'rejected') {
+      logAudit({
+        action:       `contribution.${status}`,
+        adminId:      req.user._id,
+        groupId:      contribution.group || null,
+        entityType:   'Contribution',
+        entityId:     contribution._id,
+        targetUserId: contribution.user?._id || contribution.user,
+        meta: {
+          oldStatus:     contribution.status,
+          rejectionNote: update.rejectionNote || null,
+          amount:        contribution.amount,
+          month:         contribution.month,
+          year:          contribution.year,
+        },
+      });
     }
 
     res.json(updated);
