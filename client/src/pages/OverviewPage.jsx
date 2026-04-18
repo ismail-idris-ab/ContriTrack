@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
+import { canAccess } from '../utils/planUtils';
 import api from '../api/axios';
 
 const MONTHS = [
@@ -230,10 +231,7 @@ export default function OverviewPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year,  setYear]  = useState(now.getFullYear());
 
-  const plan = user?.subscription?.plan || 'free';
-  const isFreePlan = plan === 'free' || (
-    user?.subscription?.status === 'expired' || user?.subscription?.status === 'cancelled'
-  );
+  const isFreePlan = !canAccess(user, 'pro');
 
   if (groups.length === 0) {
     return (
@@ -440,12 +438,14 @@ export default function OverviewPage() {
         ))}
       </div>
 
-      <p style={{ marginTop: 28, fontSize: 12, color: 'var(--ct-text-4)', textAlign: 'center' }}>
-        Circle stats require Pro or Coordinator plan.
-        <Link to="/subscription" style={{ color: 'var(--ct-gold)', marginLeft: 6, textDecoration: 'none', fontWeight: 600 }}>
-          Upgrade →
-        </Link>
-      </p>
+      {isFreePlan && (
+        <p style={{ marginTop: 28, fontSize: 12, color: 'var(--ct-text-4)', textAlign: 'center' }}>
+          Circle stats require Pro or Coordinator plan.
+          <Link to="/subscription" style={{ color: 'var(--ct-gold)', marginLeft: 6, textDecoration: 'none', fontWeight: 600 }}>
+            Upgrade →
+          </Link>
+        </p>
+      )}
     </div>
   );
 }
