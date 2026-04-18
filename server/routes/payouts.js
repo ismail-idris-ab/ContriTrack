@@ -40,7 +40,16 @@ router.get('/', protect, async (req, res) => {
       .populate('recordedBy', 'name')
       .sort({ month: 1 });
 
-    res.json({ payouts, group: { _id: group._id, name: group.name, contributionAmount: group.contributionAmount, memberCount: group.members.length } });
+    res.json({
+      payouts,
+      group: {
+        _id: group._id,
+        name: group.name,
+        contributionAmount: group.contributionAmount,
+        memberCount: group.members.length,
+        rotationType: group.rotationType,
+      },
+    });
   } catch (err) {
     console.error('[payouts]', err.message);
     res.status(500).json({ message: 'Something went wrong. Please try again.' });
@@ -144,10 +153,27 @@ router.post('/generate', protect, async (req, res) => {
       return res.status(403).json({ message: 'Only group admins can generate the rotation' });
     }
 
-    const members = group.members;
-    if (members.length === 0) {
+    if (group.members.length === 0) {
       return res.status(400).json({ message: 'Group has no members' });
     }
+
+    // Apply rotation type ordering
+    let orderedMembers = [...group.members];
+
+    if (group.rotationType === 'join-order') {
+      orderedMembers.sort((a, b) => new Date(a.joinedAt) - new Date(b.joinedAt));
+    } else if (group.rotationType === 'random') {
+      for (let i = orderedMembers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [orderedMembers[i], orderedMembers[j]] = [orderedMembers[j], orderedMembers[i]];
+      }
+    } else if (group.rotationType === 'bid') {
+      return res.status(400).json({
+        message: 'Bid rotation must be set manually using the custom rotation builder.',
+        code: 'BID_ROTATION_MANUAL',
+      });
+    }
+    // 'fixed': use orderedMembers as-is (insertion order)
 
     // Remove all existing scheduled slots for this year
     await Payout.deleteMany({ group: groupId, year: targetYear, status: 'scheduled' });
@@ -155,16 +181,16 @@ router.post('/generate', protect, async (req, res) => {
     // Build round-robin slots starting at startMonth
     const docs = [];
     let memberIdx = 0;
-    for (let i = 0; i < members.length; i++) {
+    for (let i = 0; i < orderedMembers.length; i++) {
       const month = start + i;
       if (month > 12) break; // stop at year boundary
       docs.push({
         group:     groupId,
-        recipient: members[memberIdx]?.user._id,
+        recipient: orderedMembers[memberIdx]?.user._id,
         month,
         year:      targetYear,
         position:  i + 1,
-        expectedAmount: group.contributionAmount * members.length,
+        expectedAmount: group.contributionAmount * group.members.length,
         status:    'scheduled',
       });
       memberIdx = (memberIdx + 1) % members.length;
