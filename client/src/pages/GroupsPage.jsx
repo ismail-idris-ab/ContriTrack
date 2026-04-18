@@ -4,6 +4,8 @@ import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import TemplatePickerStep from '../components/TemplatePickerStep';
+import CircleSettingsDrawer from '../components/CircleSettingsDrawer';
 
 const AVATAR_COLORS = [
   ['#4f46e5','#7c3aed'], ['#059669','#0d9488'],
@@ -66,13 +68,17 @@ export default function GroupsPage() {
   useEffect(() => {
     if (searchParams.get('action') === 'create') {
       setShowCreate(true);
+      resetCreate();
       setShowJoin(false);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [leavingId, setLeavingId] = useState(null);
 
   // Create form
-  const [createForm, setCreateForm] = useState({ name: '', description: '', contributionAmount: '' });
+  const [createForm, setCreateForm] = useState({
+    name: '', description: '', contributionAmount: '',
+    dueDay: '25', graceDays: '3', rotationType: 'fixed',
+  });
   const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -80,6 +86,9 @@ export default function GroupsPage() {
   const [inviteCode, setInviteCode] = useState('');
   const [joinError, setJoinError] = useState('');
   const [joining, setJoining] = useState(false);
+
+  const [createStep, setCreateStep] = useState('template'); // 'template' | 'form'
+  const [settingsGroup, setSettingsGroup] = useState(null);
 
   // Edit form
   const [editingGroup, setEditingGroup] = useState(null); // group object
@@ -97,6 +106,12 @@ export default function GroupsPage() {
   const openConfirm = (title, body, onConfirm) =>
     setConfirmModal({ title, body, onConfirm });
   const closeConfirm = () => setConfirmModal(null);
+
+  const resetCreate = () => {
+    setCreateStep('template');
+    setCreateForm({ name: '', description: '', contributionAmount: '', dueDay: '25', graceDays: '3', rotationType: 'fixed' });
+    setCreateError('');
+  };
 
   const openEdit = (group, e) => {
     e.stopPropagation();
@@ -149,17 +164,30 @@ export default function GroupsPage() {
     );
   };
 
+  const handleSettingsSaved = async (updatedGroup) => {
+    await loadGroups();
+    if (activeGroup?._id === updatedGroup._id) selectGroup(updatedGroup);
+    setSettingsGroup(null);
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreateError('');
     if (!createForm.name.trim()) return setCreateError('Group name is required');
     setCreating(true);
     try {
-      const { data: newGroup } = await api.post('/groups', createForm);
+      const { data: newGroup } = await api.post('/groups', {
+        name:               createForm.name.trim(),
+        description:        createForm.description,
+        contributionAmount: Number(createForm.contributionAmount) || 0,
+        dueDay:             Number(createForm.dueDay)    || 25,
+        graceDays:          Number(createForm.graceDays) || 3,
+        rotationType:       createForm.rotationType      || 'fixed',
+      });
       await loadGroups();
       selectGroup(newGroup);
       setShowCreate(false);
-      setCreateForm({ name: '', description: '', contributionAmount: '' });
+      resetCreate();
     } catch (err) {
       setCreateError(err.response?.data?.message || 'Failed to create group');
     } finally {
@@ -219,6 +247,9 @@ export default function GroupsPage() {
     textTransform: 'uppercase', letterSpacing: '0.07em',
   };
 
+  const isGroupAdmin = (grp, userId) =>
+    grp?.members?.some(m => String(m.user?._id || m.user) === String(userId) && m.role === 'admin');
+
   return (
     <div style={{ fontFamily: 'var(--font-sans)', maxWidth: 860, margin: '0 auto' }}>
 
@@ -252,7 +283,7 @@ export default function GroupsPage() {
             Join with code
           </button>
           <button
-            onClick={() => { setShowCreate(v => !v); setShowJoin(false); }}
+            onClick={() => { const next = !showCreate; setShowCreate(next); if (next) resetCreate(); setShowJoin(false); }}
             className="btn-gold"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -318,71 +349,139 @@ export default function GroupsPage() {
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ct-text-1)', margin: '0 0 20px', letterSpacing: '-0.01em' }}>
             Create a New Circle
           </h3>
-          {createError && (
-            <div style={{ padding: '10px 14px', background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 9, color: '#be123c', fontSize: 13, marginBottom: 14 }}>
-              {createError}
-            </div>
+          {createStep === 'template' ? (
+            <TemplatePickerStep
+              onSelect={(settings) => {
+                setCreateForm(f => ({
+                  ...f,
+                  contributionAmount: String(settings.contributionAmount ?? f.contributionAmount),
+                  dueDay:             String(settings.dueDay    ?? f.dueDay),
+                  graceDays:          String(settings.graceDays ?? f.graceDays),
+                  rotationType:       settings.rotationType     ?? f.rotationType,
+                }));
+                setCreateStep('form');
+              }}
+              onSkip={() => setCreateStep('form')}
+            />
+          ) : (
+            <>
+              {createError && (
+                <div style={{ padding: '10px 14px', background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 9, color: '#be123c', fontSize: 13, marginBottom: 14 }}>
+                  {createError}
+                </div>
+              )}
+              <form onSubmit={handleCreate}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                  <div>
+                    <label style={labelStyle}>Circle Name *</label>
+                    <input
+                      value={createForm.name}
+                      onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                      placeholder="e.g. Idrisi Family Circle"
+                      style={inputStyle}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Monthly Target (₦)</label>
+                    <input
+                      type="number"
+                      value={createForm.contributionAmount}
+                      onChange={e => setCreateForm(f => ({ ...f, contributionAmount: e.target.value }))}
+                      placeholder="e.g. 5000"
+                      min="0"
+                      style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
+                    />
+                  </div>
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={labelStyle}>Description <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400, fontSize: 11, color: 'var(--ct-text-3)' }}>(optional)</span></label>
+                  <textarea
+                    value={createForm.description}
+                    onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="What is this circle for?"
+                    rows={2}
+                    style={{ ...inputStyle, resize: 'none' }}
+                  />
+                </div>
+                {/* New settings fields */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
+                      Due day <span style={{ fontWeight: 400, color: 'var(--ct-text-3)' }}>(1–28)</span>
+                    </label>
+                    <input
+                      type="number" min="1" max="28"
+                      value={createForm.dueDay}
+                      onChange={e => setCreateForm(f => ({ ...f, dueDay: e.target.value }))}
+                      style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
+                      Grace period
+                    </label>
+                    <select
+                      value={createForm.graceDays}
+                      onChange={e => setCreateForm(f => ({ ...f, graceDays: e.target.value }))}
+                      style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
+                    >
+                      {[0,1,2,3,5,7].map(d => <option key={d} value={d}>{d === 0 ? 'None' : `${d} day${d > 1 ? 's' : ''}`}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 14 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 8 }}>
+                    Rotation type
+                  </label>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {[
+                      { v: 'fixed', l: 'Fixed' }, { v: 'join-order', l: 'Join Order' },
+                      { v: 'random', l: 'Random' }, { v: 'bid', l: 'Bid' },
+                    ].map(({ v, l }) => (
+                      <button
+                        key={v} type="button"
+                        onClick={() => setCreateForm(f => ({ ...f, rotationType: v }))}
+                        className={createForm.rotationType === v ? 'filter-pill active' : 'filter-pill'}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                  <button type="button" className="btn-outline" onClick={() => setCreateStep('template')} style={{ marginRight: 8 }}>
+                    ← Back
+                  </button>
+                  <button
+                    type="submit" disabled={creating}
+                    style={{
+                      padding: '11px 22px', borderRadius: 10, border: 'none',
+                      background: creating ? '#e8e4dc' : 'var(--ct-gold)',
+                      color: creating ? 'var(--ct-text-3)' : '#0f0f14',
+                      fontSize: 13.5, fontWeight: 700, cursor: creating ? 'not-allowed' : 'pointer',
+                      fontFamily: 'var(--font-sans)',
+                    }}
+                  >
+                    {creating ? 'Creating…' : 'Create Circle'}
+                  </button>
+                  <button
+                    type="button" onClick={() => setShowCreate(false)}
+                    style={{
+                      padding: '11px 18px', borderRadius: 10,
+                      border: '1px solid #e2e0da', background: 'transparent',
+                      color: 'var(--ct-text-2)', fontSize: 13.5, fontWeight: 600,
+                      cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </>
           )}
-          <form onSubmit={handleCreate}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-              <div>
-                <label style={labelStyle}>Circle Name *</label>
-                <input
-                  value={createForm.name}
-                  onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="e.g. Idrisi Family Circle"
-                  style={inputStyle}
-                  required
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Monthly Target (₦)</label>
-                <input
-                  type="number"
-                  value={createForm.contributionAmount}
-                  onChange={e => setCreateForm(f => ({ ...f, contributionAmount: e.target.value }))}
-                  placeholder="e.g. 5000"
-                  min="0"
-                  style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
-                />
-              </div>
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>Description <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400, fontSize: 11, color: 'var(--ct-text-3)' }}>(optional)</span></label>
-              <textarea
-                value={createForm.description}
-                onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="What is this circle for?"
-                rows={2}
-                style={{ ...inputStyle, resize: 'none' }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                type="submit" disabled={creating}
-                style={{
-                  padding: '11px 22px', borderRadius: 10, border: 'none',
-                  background: creating ? '#e8e4dc' : 'var(--ct-gold)',
-                  color: creating ? 'var(--ct-text-3)' : '#0f0f14',
-                  fontSize: 13.5, fontWeight: 700, cursor: creating ? 'not-allowed' : 'pointer',
-                  fontFamily: 'var(--font-sans)',
-                }}
-              >
-                {creating ? 'Creating…' : 'Create Circle'}
-              </button>
-              <button
-                type="button" onClick={() => setShowCreate(false)}
-                style={{
-                  padding: '11px 18px', borderRadius: 10,
-                  border: '1px solid #e2e0da', background: 'transparent',
-                  color: 'var(--ct-text-2)', fontSize: 13.5, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
         </div>
       )}
 
@@ -555,6 +654,30 @@ export default function GroupsPage() {
                   </div>
                 )}
 
+                {isGroupAdmin(group, user?._id) && (
+                  <div onClick={e => e.stopPropagation()} style={{ marginBottom: 8 }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setSettingsGroup(group); }}
+                      title="Circle settings"
+                      style={{
+                        background: 'none', border: '1.5px solid var(--ct-border)',
+                        borderRadius: 7, padding: '4px 10px', cursor: 'pointer',
+                        color: 'var(--ct-text-3)', fontSize: 12, fontFamily: 'var(--font-sans)',
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ct-gold)'; e.currentTarget.style.color = 'var(--ct-gold)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ct-border)'; e.currentTarget.style.color = 'var(--ct-text-3)'; }}
+                    >
+                      <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                      </svg>
+                      Settings
+                    </button>
+                  </div>
+                )}
+
                 {/* Leave button — only for non-creators */}
                 {group.createdBy?._id !== user._id && group.createdBy !== user._id && (
                   <div onClick={e => e.stopPropagation()}>
@@ -692,6 +815,74 @@ export default function GroupsPage() {
           </div>
         </div>
       )}
+
+      <MyTemplatesSection />
+
+      {settingsGroup && (
+        <CircleSettingsDrawer
+          group={settingsGroup}
+          onClose={() => setSettingsGroup(null)}
+          onSaved={handleSettingsSaved}
+        />
+      )}
+    </div>
+  );
+}
+
+function MyTemplatesSection() {
+  const [mine, setMine] = useState([]);
+  const { user } = useAuth();
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/templates').then(({ data }) => setMine(data.mine || [])).catch(() => {});
+  }, [user]);
+
+  if (!mine.length) return null;
+
+  const handleDelete = async (id, name) => {
+    try {
+      await api.delete(`/templates/${id}`);
+      setMine(prev => prev.filter(t => t._id !== id));
+      toast.success(`Template "${name}" deleted.`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not delete template');
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 40 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ct-text-2)', marginBottom: 14 }}>
+        My saved templates
+      </div>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {mine.map(t => (
+          <div key={t._id} style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '10px 14px', borderRadius: 10,
+            background: '#fff', border: '1.5px solid var(--ct-border-2)',
+            boxShadow: 'var(--ct-shadow)',
+          }}>
+            <span style={{ fontSize: 20 }}>{t.icon || '◎'}</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ct-text-1)' }}>{t.name}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--ct-text-3)' }}>
+                ₦{Number(t.settings?.contributionAmount || 0).toLocaleString('en-NG')} · Due {t.settings?.dueDay}th
+              </div>
+            </div>
+            <button
+              onClick={() => handleDelete(t._id, t.name)}
+              aria-label={`Delete template ${t.name}`}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ct-text-4)', fontSize: 18, padding: '2px 6px', marginLeft: 4, lineHeight: 1 }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--ct-rose)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--ct-text-4)'; }}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
