@@ -35,6 +35,7 @@ function ContributionsTab() {
   const [rejectTarget, setRejectTarget] = useState(null); // { id }
   const [rejectNote,   setRejectNote]   = useState('');
   const [rejecting,    setRejecting]    = useState(false);
+  const [verifying,    setVerifying]    = useState(null);
 
   // pagination
   const [page, setPage]   = useState(1);
@@ -72,12 +73,17 @@ function ContributionsTab() {
   };
 
   const handleVerify = async (id) => {
+    if (verifying) return;
+    setVerifying(id);
     try {
       const { data } = await api.patch(`/contributions/${id}/status`, { status: 'verified' });
       setContributions(prev => prev.map(c => c._id === id ? data : c));
       toast.success('Contribution verified.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Verification failed.');
+      console.error('[admin verify]', err.message);
+    } finally {
+      setVerifying(null);
     }
   };
 
@@ -181,7 +187,17 @@ function ContributionsTab() {
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {c.proofImage && <button onClick={() => openModal(c)} style={actionBtnStyle('#faf9f6','rgba(0,0,0,0.09)','var(--ct-text-2)')}>View</button>}
-                      <button onClick={() => handleVerify(c._id)} style={actionBtnStyle('rgba(5,150,105,0.08)','rgba(5,150,105,0.25)','#047857')}>Verify</button>
+                      <button
+                        onClick={() => handleVerify(c._id)}
+                        disabled={verifying === c._id}
+                        style={{
+                          ...actionBtnStyle('rgba(5,150,105,0.08)', 'rgba(5,150,105,0.25)', '#047857'),
+                          opacity: verifying === c._id ? 0.6 : 1,
+                          cursor: verifying === c._id ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {verifying === c._id ? 'Verifying…' : 'Verify'}
+                      </button>
                       <button onClick={() => openRejectModal(c._id)} style={actionBtnStyle('rgba(225,29,72,0.08)','rgba(225,29,72,0.25)','#be123c')}>Reject</button>
                     </div>
                   </div>
@@ -233,7 +249,19 @@ function ContributionsTab() {
                       <td style={tdStyle}>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {c.proofImage && <button onClick={() => openModal(c)} style={smallBtnStyle('#faf9f6','rgba(0,0,0,0.09)','var(--ct-text-2)')}>View</button>}
-                          {c.status !== 'verified'  && <button onClick={() => handleVerify(c._id)}         style={smallBtnStyle('rgba(5,150,105,0.1)','none','#047857')}>Verify</button>}
+                          {c.status !== 'verified' && (
+                            <button
+                              onClick={() => handleVerify(c._id)}
+                              disabled={verifying === c._id}
+                              style={{
+                                ...smallBtnStyle('rgba(5,150,105,0.1)', 'none', '#047857'),
+                                opacity: verifying === c._id ? 0.6 : 1,
+                                cursor: verifying === c._id ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              {verifying === c._id ? 'Verifying…' : 'Verify'}
+                            </button>
+                          )}
                           {c.status !== 'rejected'  && <button onClick={() => openRejectModal(c._id)}      style={smallBtnStyle('rgba(225,29,72,0.1)','none','#be123c')}>Reject</button>}
                         </div>
                       </td>
