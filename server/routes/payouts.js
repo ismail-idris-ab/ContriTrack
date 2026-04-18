@@ -193,7 +193,7 @@ router.post('/generate', protect, async (req, res) => {
         expectedAmount: group.contributionAmount * group.members.length,
         status:    'scheduled',
       });
-      memberIdx = (memberIdx + 1) % members.length;
+      memberIdx = (memberIdx + 1) % orderedMembers.length;
     }
 
     if (docs.length === 0) {
