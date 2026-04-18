@@ -4,7 +4,7 @@ const templateSchema = new mongoose.Schema(
   {
     name:        { type: String, required: true, trim: true, maxlength: 80 },
     description: { type: String, default: '', maxlength: 200 },
-    icon:        { type: String, default: '◎' },
+    icon:        { type: String, default: '◎', maxlength: 10 },
     isPreset:    { type: Boolean, default: false },
     createdBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     settings: {
