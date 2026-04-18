@@ -288,6 +288,108 @@ router.patch('/:id', protect, async (req, res) => {
   }
 });
 
+// ─── PATCH /api/groups/:id/settings ──────────────────────────────────────────
+// Group admin only. Updates schedule and rotation settings.
+router.patch('/:id/settings', protect, async (req, res) => {
+  const { name, description, contributionAmount, dueDay, graceDays, rotationType } = req.body;
+
+  try {
+    const group = await Group.findById(req.params.id);
+    if (!group || !group.isActive) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+    if (!isGroupAdmin(group, req.user._id)) {
+      return res.status(403).json({ message: 'Only group admins can update settings' });
+    }
+
+    if (name !== undefined) {
+      const trimmed = String(name).trim().slice(0, 100);
+      if (!trimmed) return res.status(400).json({ message: 'Group name is required' });
+      group.name = trimmed;
+    }
+    if (description !== undefined) {
+      group.description = String(description).replace(/<[^>]*>/g, '').trim().slice(0, 500);
+    }
+    if (contributionAmount !== undefined) {
+      const amt = Number(contributionAmount);
+      if (isNaN(amt) || amt < 0) return res.status(400).json({ message: 'Invalid contribution amount' });
+      group.contributionAmount = amt;
+    }
+    if (dueDay !== undefined) {
+      const d = Number(dueDay);
+      if (!Number.isInteger(d) || d < 1 || d > 28) {
+        return res.status(400).json({ message: 'Due day must be between 1 and 28' });
+      }
+      group.dueDay = d;
+    }
+    if (graceDays !== undefined) {
+      const g = Number(graceDays);
+      if (!Number.isInteger(g) || g < 0 || g > 7) {
+        return res.status(400).json({ message: 'Grace period must be between 0 and 7 days' });
+      }
+      group.graceDays = g;
+    }
+    if (rotationType !== undefined) {
+      const valid = ['fixed', 'join-order', 'random', 'bid'];
+      if (!valid.includes(rotationType)) {
+        return res.status(400).json({ message: 'Invalid rotation type' });
+      }
+      group.rotationType = rotationType;
+    }
+
+    await group.save();
+    await group.populate('members.user', 'name email role');
+    res.json(group);
+  } catch (err) {
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
+  }
+});
+
+// ─── POST /api/groups/:id/save-template ──────────────────────────────────────
+// Group admin only. Saves current group settings as a personal template.
+router.post('/:id/save-template', protect, async (req, res) => {
+  const { name, description, icon } = req.body;
+
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({ message: 'Template name is required' });
+  }
+
+  try {
+    const group = await Group.findById(req.params.id);
+    if (!group || !group.isActive) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+    if (!isGroupAdmin(group, req.user._id)) {
+      return res.status(403).json({ message: 'Only group admins can save templates' });
+    }
+
+    const existing = await Template.countDocuments({ createdBy: req.user._id, isPreset: false });
+    if (existing >= 10) {
+      return res.status(400).json({ message: 'Template limit reached (max 10). Delete one to save a new template.' });
+    }
+
+    const template = await Template.create({
+      name:        String(name).trim().slice(0, 80),
+      description: description ? String(description).trim().slice(0, 200) : '',
+      icon:        icon || '◎',
+      isPreset:    false,
+      createdBy:   req.user._id,
+      settings: {
+        contributionAmount: group.contributionAmount,
+        dueDay:             group.dueDay,
+        graceDays:          group.graceDays,
+        rotationType:       group.rotationType,
+      },
+    });
+
+    res.status(201).json(template);
+  } catch (err) {
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
+  }
+});
+
 // ─── DELETE /api/groups/:id ───────────────────────────────────────────────────
 // Soft-delete (archive) a group. Only the group creator can do this.
 router.delete('/:id', protect, async (req, res) => {
