@@ -34,6 +34,17 @@ const groupSchema = new mongoose.Schema(
     isActive: {
       type: Boolean, default: true,
     },
+    dueDay: {
+      type: Number, default: 25, min: 1, max: 28,
+    },
+    graceDays: {
+      type: Number, default: 3, min: 0, max: 7,
+    },
+    rotationType: {
+      type: String,
+      enum: ['fixed', 'join-order', 'random', 'bid'],
+      default: 'fixed',
+    },
   },
   { timestamps: true }
 );
