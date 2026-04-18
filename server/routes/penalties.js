@@ -7,11 +7,11 @@ const { requireFeature } = require('../middleware/planGuard');
 const { logAudit } = require('../utils/audit');
 
 function isGroupAdmin(group, userId) {
-  const m = group.members.find(m => m.user.toString() === userId.toString());
+  const m = group.members.find(m => String(m.user?._id ?? m.user) === String(userId));
   return m?.role === 'admin';
 }
 function isGroupMember(group, userId) {
-  return group.members.some(m => m.user.toString() === userId.toString());
+  return group.members.some(m => String(m.user?._id ?? m.user) === String(userId));
 }
 
 // ── GET /api/penalties?groupId= ───────────────────────────────────────────────

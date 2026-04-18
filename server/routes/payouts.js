@@ -8,12 +8,18 @@ const { protect } = require('../middleware/auth');
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function isGroupAdmin(group, userId) {
-  const m = group.members.find(m => m.user.toString() === userId.toString());
+  const m = group.members.find(m => {
+    const uid = m.user?._id ?? m.user;
+    return String(uid) === String(userId);
+  });
   return m?.role === 'admin';
 }
 
 function isGroupMember(group, userId) {
-  return group.members.some(m => m.user.toString() === userId.toString());
+  return group.members.some(m => {
+    const uid = m.user?._id ?? m.user;
+    return String(uid) === String(userId);
+  });
 }
 
 // ── GET /api/payouts?groupId=&year= ───────────────────────────────────────────

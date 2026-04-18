@@ -186,7 +186,7 @@ router.patch('/:id/status', protect, async (req, res) => {
       const group = await Group.findById(contribution.group).select('members');
       if (group) {
         const membership = group.members.find(
-          m => m.user.toString() === req.user._id.toString()
+          m => String(m.user?._id ?? m.user) === String(req.user._id)
         );
         isGroupAdmin = membership?.role === 'admin';
       }

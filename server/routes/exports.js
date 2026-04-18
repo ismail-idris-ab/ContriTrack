@@ -23,7 +23,7 @@ const MONTHS = [
 ];
 
 function isGroupMember(group, userId) {
-  return group.members.some(m => m.user.toString() === userId.toString());
+  return group.members.some(m => String(m.user?._id ?? m.user) === String(userId));
 }
 
 /** Escape a CSV cell value (quotes any cell containing commas, quotes, or newlines). */

@@ -10,13 +10,13 @@ const { logAudit } = require('../utils/audit');
 
 // Helper: check if requesting user is an admin of the given group
 function isGroupAdmin(group, userId) {
-  const member = group.members.find((m) => m.user.toString() === userId.toString());
+  const member = group.members.find(m => String(m.user?._id ?? m.user) === String(userId));
   return member?.role === 'admin';
 }
 
 // Helper: check if requesting user is a member of the given group
 function isGroupMember(group, userId) {
-  return group.members.some((m) => m.user.toString() === userId.toString());
+  return group.members.some(m => String(m.user?._id ?? m.user) === String(userId));
 }
 
 // ─── POST /api/groups ─────────────────────────────────────────────────────────
@@ -226,7 +226,7 @@ router.patch('/:id/members/:userId/role', protect, async (req, res) => {
     }
 
     const memberEntry = group.members.find(
-      (m) => m.user.toString() === req.params.userId
+      (m) => String(m.user?._id ?? m.user) === String(req.params.userId)
     );
 
     if (!memberEntry) {
@@ -460,7 +460,7 @@ router.delete('/:id/members/:userId', protect, async (req, res) => {
     }
 
     group.members = group.members.filter(
-      (m) => m.user.toString() !== req.params.userId
+      (m) => String(m.user?._id ?? m.user) !== String(req.params.userId)
     );
     await group.save();
 
