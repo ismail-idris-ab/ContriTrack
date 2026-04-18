@@ -1,9 +1,13 @@
 /**
  * Returns members sorted by joinedAt ascending (join-order rotation).
- * Each element is a group member subdocument { user, role, joinedAt }.
+ * Members with missing joinedAt are sorted to the end.
  */
 function buildJoinOrderRotation(members) {
-  return [...members].sort((a, b) => new Date(a.joinedAt) - new Date(b.joinedAt));
+  return [...members].sort((a, b) => {
+    const ta = a.joinedAt ? new Date(a.joinedAt).getTime() : Infinity;
+    const tb = b.joinedAt ? new Date(b.joinedAt).getTime() : Infinity;
+    return ta - tb;
+  });
 }
 
 /**
