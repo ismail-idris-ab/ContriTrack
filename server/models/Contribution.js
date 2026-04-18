@@ -18,6 +18,7 @@ const contributionSchema = new mongoose.Schema(
     verifiedBy:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     verifiedAt:    { type: Date, default: null },
     rejectionNote: { type: String, default: '', maxlength: 500 },
+    isLate:        { type: Boolean, default: false },
   },
   { timestamps: true }
 );
