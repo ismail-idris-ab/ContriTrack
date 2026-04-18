@@ -694,18 +694,31 @@ export default function LandingPage() {
               background: "none",
               border: "none",
               cursor: "pointer",
-              padding: "8px 20px",
+              padding: "8px 16px",
               fontSize: 14,
               fontWeight: 600,
               color: "#9898b4",
               fontFamily: "var(--font-sans)",
               borderRadius: 8,
               transition: "color 0.15s",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              textDecoration: "none",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#f5f2ec")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#9898b4")}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#f5f2ec";
+              e.currentTarget.querySelector("span").style.textDecoration = "underline";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "#9898b4";
+              e.currentTarget.querySelector("span").style.textDecoration = "none";
+            }}
           >
-            Log In
+            <span style={{ textDecoration: "none", transition: "text-decoration 0.15s" }}>Log In</span>
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
           </button>
         </div>
 
