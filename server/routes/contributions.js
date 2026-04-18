@@ -10,6 +10,7 @@ const User   = require('../models/User');
 const rateLimit = require('express-rate-limit');
 const { protect, adminOnly } = require('../middleware/auth');
 const { sendStatusNotification } = require('../utils/mailer');
+const { isLateSubmission } = require('../utils/cycleUtils');
 
 // Max 10 uploads per user per 15 minutes
 const uploadLimiter = rateLimit({
@@ -63,13 +64,27 @@ router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res
     : '';
 
   try {
+    // Fetch group settings to determine if submission is late
+    let dueDay = 25, graceDays = 3;
+    if (groupId) {
+      const grp = await Group.findById(groupId).select('dueDay graceDays isActive');
+      if (!grp || !grp.isActive) {
+        return res.status(404).json({ message: 'Group not found' });
+      }
+      dueDay    = grp.dueDay    ?? 25;
+      graceDays = grp.graceDays ?? 3;
+    }
+
+    const late = isLateSubmission(new Date(), parsedYear, parsedMonth, dueDay, graceDays);
+
     const data = {
-      user: req.user._id,
-      amount: parsedAmount,
-      month: parsedMonth,
-      year: parsedYear,
-      note: safeNote,
+      user:       req.user._id,
+      amount:     parsedAmount,
+      month:      parsedMonth,
+      year:       parsedYear,
+      note:       safeNote,
       proofImage: req.file.path,
+      isLate:     late,
     };
     if (groupId) data.group = groupId;
 
@@ -97,7 +112,8 @@ router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res
     if (err.code === 11000) {
       return res.status(400).json({ message: 'You already submitted a contribution for this month' });
     }
-    res.status(500).json({ message: err.message });
+    console.error('[contributions]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -132,7 +148,8 @@ router.get('/', protect, async (req, res) => {
       limit,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[contributions]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -143,7 +160,8 @@ router.get('/mine', protect, async (req, res) => {
       .sort({ year: -1, month: -1 });
     res.json(contributions);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[contributions]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -215,7 +233,8 @@ router.patch('/:id/status', protect, async (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[contributions]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
