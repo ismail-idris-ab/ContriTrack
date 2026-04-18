@@ -343,15 +343,17 @@ export default function ReportPage() {
 
             {/* Export CSV */}
             <button
-              onClick={() => handleExport('monthly')}
-              disabled={exporting || !monthly}
+              onClick={isCoordinator ? () => handleExport('monthly') : undefined}
+              disabled={!isCoordinator || exporting || !monthly}
+              title={!isCoordinator ? 'Requires Coordinator plan' : 'Download monthly CSV'}
               style={{
                 display: 'flex', alignItems: 'center', gap: 7,
                 padding: '8px 16px', borderRadius: 9,
-                background: 'rgba(79,70,229,0.10)',
-                border: '1px solid rgba(79,70,229,0.22)',
-                color: '#818cf8',
-                fontSize: 12.5, fontWeight: 600, cursor: exporting ? 'not-allowed' : 'pointer',
+                background: isCoordinator ? 'rgba(79,70,229,0.10)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${isCoordinator ? 'rgba(79,70,229,0.22)' : 'rgba(255,255,255,0.07)'}`,
+                color: isCoordinator ? '#818cf8' : '#38385a',
+                fontSize: 12.5, fontWeight: 600,
+                cursor: isCoordinator && !exporting ? 'pointer' : 'not-allowed',
                 fontFamily: 'var(--font-sans)', transition: 'all 0.18s ease',
               }}
             >
@@ -621,15 +623,17 @@ export default function ReportPage() {
 
             {/* Export CSV */}
             <button
-              onClick={() => handleExport('yearly')}
-              disabled={exporting || !yearly}
+              onClick={isCoordinator ? () => handleExport('yearly') : undefined}
+              disabled={!isCoordinator || exporting}
+              title={!isCoordinator ? 'Requires Coordinator plan' : 'Download yearly CSV'}
               style={{
                 display: 'flex', alignItems: 'center', gap: 7,
                 padding: '8px 16px', borderRadius: 9,
-                background: 'rgba(79,70,229,0.10)',
-                border: '1px solid rgba(79,70,229,0.22)',
-                color: '#818cf8',
-                fontSize: 12.5, fontWeight: 600, cursor: exporting ? 'not-allowed' : 'pointer',
+                background: isCoordinator ? 'rgba(79,70,229,0.10)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${isCoordinator ? 'rgba(79,70,229,0.22)' : 'rgba(255,255,255,0.07)'}`,
+                color: isCoordinator ? '#818cf8' : '#38385a',
+                fontSize: 12.5, fontWeight: 600,
+                cursor: isCoordinator && !exporting ? 'pointer' : 'not-allowed',
                 fontFamily: 'var(--font-sans)', transition: 'all 0.18s ease',
               }}
             >
