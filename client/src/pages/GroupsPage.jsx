@@ -18,6 +18,9 @@ const getAvatarGradient = (name = '') => {
 const getInitials = (name = '') =>
   name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
+const isGroupAdmin = (grp, userId) =>
+  grp?.members?.some(m => String(m.user?._id || m.user) === String(userId) && m.role === 'admin');
+
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
@@ -63,15 +66,6 @@ export default function GroupsPage() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
-
-  // Auto-open create form when navigated here with ?action=create
-  useEffect(() => {
-    if (searchParams.get('action') === 'create') {
-      setShowCreate(true);
-      resetCreate();
-      setShowJoin(false);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [leavingId, setLeavingId] = useState(null);
 
   // Create form
@@ -112,6 +106,15 @@ export default function GroupsPage() {
     setCreateForm({ name: '', description: '', contributionAmount: '', dueDay: '25', graceDays: '3', rotationType: 'fixed' });
     setCreateError('');
   };
+
+  // Auto-open create form when navigated here with ?action=create
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      setShowCreate(true);
+      resetCreate();
+      setShowJoin(false);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openEdit = (group, e) => {
     e.stopPropagation();
@@ -246,9 +249,6 @@ export default function GroupsPage() {
     color: 'var(--ct-text-2)', marginBottom: 6,
     textTransform: 'uppercase', letterSpacing: '0.07em',
   };
-
-  const isGroupAdmin = (grp, userId) =>
-    grp?.members?.some(m => String(m.user?._id || m.user) === String(userId) && m.role === 'admin');
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)', maxWidth: 860, margin: '0 auto' }}>
