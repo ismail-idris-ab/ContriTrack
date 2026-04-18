@@ -4,6 +4,7 @@ const Penalty = require('../models/Penalty');
 const Group   = require('../models/Group');
 const { protect } = require('../middleware/auth');
 const { requireFeature } = require('../middleware/planGuard');
+const { logAudit } = require('../utils/audit');
 
 function isGroupAdmin(group, userId) {
   const m = group.members.find(m => m.user.toString() === userId.toString());
@@ -93,6 +94,22 @@ router.post('/', protect, requireFeature('penaltyTracking'), async (req, res) =>
 
     await penalty.populate('user', 'name email');
     await penalty.populate('issuedBy', 'name');
+
+    logAudit({
+      action:       'penalty.issued',
+      adminId:      req.user._id,
+      groupId:      penalty.group,
+      entityType:   'Penalty',
+      entityId:     penalty._id,
+      targetUserId: penalty.user,
+      meta: {
+        amount: penalty.amount,
+        reason: penalty.reason,
+        month:  penalty.month,
+        year:   penalty.year,
+      },
+    });
+
     res.status(201).json(penalty);
   } catch (err) {
     console.error('[penalties]', err.message);
@@ -117,6 +134,7 @@ router.patch('/:id/status', protect, requireFeature('penaltyTracking'), async (r
     if (!isGroupAdmin(group, req.user._id))
       return res.status(403).json({ message: 'Only group admins can update penalties' });
 
+    const oldStatus = penalty.status;
     penalty.status = status;
     if (status === 'paid')   penalty.paidAt   = new Date();
     if (status === 'waived') penalty.waivedAt = new Date();
@@ -127,6 +145,17 @@ router.patch('/:id/status', protect, requireFeature('penaltyTracking'), async (r
     await penalty.save();
     await penalty.populate('user', 'name email');
     await penalty.populate('issuedBy', 'name');
+
+    logAudit({
+      action:       'penalty.status_changed',
+      adminId:      req.user._id,
+      groupId:      penalty.group,
+      entityType:   'Penalty',
+      entityId:     penalty._id,
+      targetUserId: penalty.user,
+      meta:         { oldStatus, newStatus: status, note: req.body.note || null },
+    });
+
     res.json(penalty);
   } catch (err) {
     console.error('[penalties]', err.message);
