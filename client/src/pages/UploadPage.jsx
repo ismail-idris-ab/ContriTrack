@@ -21,8 +21,12 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setAlreadySubmitted(false);
+  };
 
   const applyFile = (f) => {
     if (!f) return;
@@ -68,7 +72,12 @@ export default function UploadPage() {
       setSuccess('Proof submitted! Awaiting admin review.');
       setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Upload failed');
+      const msg = err.response?.data?.message || '';
+      if (err.response?.status === 400 && msg.toLowerCase().includes('already submitted')) {
+        setAlreadySubmitted(true);
+      } else {
+        setError(msg || 'Upload failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -446,6 +455,19 @@ export default function UploadPage() {
         )}
 
         {/* Alerts */}
+        {alreadySubmitted && (
+          <div className="upload-alert" style={{ background: 'rgba(79,70,229,0.08)', border: '1px solid rgba(79,70,229,0.2)', color: '#4f46e5', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 10, fontSize: 13.5 }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"/>
+            </svg>
+            <span>
+              You've already submitted a contribution for {MONTHS[form.month - 1]} {form.year}.{' '}
+              <button onClick={() => navigate('/my-payments')} style={{ background: 'none', border: 'none', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: 'inherit' }}>
+                View payment history →
+              </button>
+            </span>
+          </div>
+        )}
         {error && (
           <div className="upload-alert error">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>

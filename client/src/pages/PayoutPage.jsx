@@ -34,7 +34,7 @@ const ROTATION_LABELS = {
 const now = new Date();
 
 export default function PayoutPage() {
-  const { activeGroup } = useGroup();
+  const { activeGroup, loadingGroups } = useGroup();
   const { user } = useAuth();
 
   const [year,     setYear]     = useState(now.getFullYear());
@@ -64,7 +64,7 @@ export default function PayoutPage() {
   };
 
   const fetchPayouts = async () => {
-    if (!activeGroup) return;
+    if (!activeGroup || loadingGroups) return;
     setLoading(true);
     setError('');
     try {
@@ -78,7 +78,7 @@ export default function PayoutPage() {
     }
   };
 
-  useEffect(() => { fetchPayouts(); }, [activeGroup, year]);
+  useEffect(() => { fetchPayouts(); }, [activeGroup, year, loadingGroups]);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
