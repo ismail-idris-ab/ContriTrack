@@ -34,6 +34,31 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [filter, setFilter] = useState('all');
+
+  const TABS = [
+    { key: 'all',           label: 'All'           },
+    { key: 'unread',        label: 'Unread'        },
+    { key: 'contributions', label: 'Contributions' },
+    { key: 'payouts',       label: 'Payouts'       },
+    { key: 'penalties',     label: 'Penalties'     },
+  ];
+
+  const TAB_COUNTS = {
+    all:           notifications.length,
+    unread:        unreadCount,
+    contributions: notifications.filter(n => n.type.startsWith('contribution_')).length,
+    payouts:       notifications.filter(n => n.type.startsWith('payout_')).length,
+    penalties:     notifications.filter(n => n.type.startsWith('penalty_')).length,
+  };
+
+  const filtered = notifications.filter(n => {
+    if (filter === 'unread')        return !n.read;
+    if (filter === 'contributions') return n.type.startsWith('contribution_');
+    if (filter === 'payouts')       return n.type.startsWith('payout_');
+    if (filter === 'penalties')     return n.type.startsWith('penalty_');
+    return true;
+  });
 
   const fetchNotifications = () => {
     setLoading(true);
@@ -132,6 +157,49 @@ export default function NotificationsPage() {
         )}
       </div>
 
+      {/* Filter tabs */}
+      <div style={{
+        display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto',
+        marginBottom: 18, paddingBottom: 2,
+        scrollbarWidth: 'none',
+      }}>
+        {TABS.map(tab => {
+          const isActive = filter === tab.key;
+          const count    = TAB_COUNTS[tab.key];
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 14px', borderRadius: 20, border: '1px solid',
+                borderColor: isActive ? 'rgba(212,160,23,0.28)' : 'rgba(0,0,0,0.08)',
+                background: isActive ? 'rgba(212,160,23,0.10)' : '#fff',
+                color: isActive ? '#92700f' : '#52526e',
+                fontSize: 12.5, fontWeight: isActive ? 700 : 500,
+                cursor: 'pointer', whiteSpace: 'nowrap',
+                fontFamily: 'var(--font-sans)',
+                transition: 'all 0.16s ease',
+                flexShrink: 0,
+              }}
+            >
+              {tab.label}
+              {count > 0 && (
+                <span style={{
+                  padding: '1px 6px', borderRadius: 10, fontSize: 10.5, fontWeight: 700,
+                  background: tab.key === 'unread'
+                    ? 'rgba(225,29,72,0.10)'
+                    : 'rgba(212,160,23,0.14)',
+                  color: tab.key === 'unread' ? '#e11d48' : '#d4a017',
+                }}>
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Loading skeletons */}
       {loading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -147,7 +215,7 @@ export default function NotificationsPage() {
       )}
 
       {/* Empty */}
-      {!loading && notifications.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div style={{
           background: '#fff', borderRadius: 'var(--ct-radius)',
           boxShadow: 'var(--ct-shadow)', border: '1px solid rgba(0,0,0,0.04)',
@@ -157,8 +225,7 @@ export default function NotificationsPage() {
             width: 64, height: 64, borderRadius: '50%',
             background: 'rgba(0,0,0,0.04)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 18px',
-            fontSize: 28,
+            margin: '0 auto 18px', fontSize: 28,
           }}>
             🔔
           </div>
@@ -167,18 +234,20 @@ export default function NotificationsPage() {
             color: 'var(--ct-text-1)', marginBottom: 8,
             fontSize: 20, fontWeight: 700,
           }}>
-            All caught up
+            {filter === 'all' ? 'All caught up' : `No ${TABS.find(t => t.key === filter)?.label.toLowerCase()} notifications`}
           </h3>
           <p style={{ color: 'var(--ct-text-3)', fontSize: 13.5 }}>
-            No notifications yet — you'll see activity here.
+            {filter === 'all'
+              ? "No notifications yet — you'll see activity here."
+              : 'Nothing here yet — check back later.'}
           </p>
         </div>
       )}
 
       {/* Notification list */}
-      {!loading && notifications.length > 0 && (
+      {!loading && filtered.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {notifications.map((n, idx) => {
+          {filtered.map((n, idx) => {
             const typeInfo = TYPE_CONFIG[n.type] || TYPE_CONFIG.system;
             const isUnread  = !n.read;
             return (
@@ -298,7 +367,7 @@ export default function NotificationsPage() {
       )}
 
       {/* Load more */}
-      {!loading && hasMore && (
+      {!loading && hasMore && filter === 'all' && (
         <div style={{ textAlign: 'center', marginTop: 20 }}>
           <button
             onClick={loadMore}
