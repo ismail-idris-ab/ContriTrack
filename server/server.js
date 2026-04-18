@@ -1,19 +1,39 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 
-// Trust the first proxy (fixes express-rate-limit IPv6 key generation)
+// Trust the first proxy (fixes express-rate-limit IPv6 key generation on Render)
 app.set('trust proxy', 1);
 
-// Middleware
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow Cloudinary images
+}));
+
+// CORS — only allow the configured client origin
 app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true,
 }));
-app.use(express.json());
+
+// Body parsing — 1 MB cap prevents large-payload abuse
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+
+// Global rate limiter — 200 requests per 15 min per IP across all /api routes
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { message: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api', globalLimiter);
 
 // Routes
 app.use('/api/auth',          require('./routes/auth'));
@@ -27,6 +47,7 @@ app.use('/api/penalties',     require('./routes/penalties'));
 app.use('/api/reports',       require('./routes/reports'));
 app.use('/api/exports',       require('./routes/exports'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/templates',     require('./routes/templates'));
 
 // Health check — Render pings this to confirm the server is up
 app.get('/health', (req, res) => res.json({ status: 'ok' }));

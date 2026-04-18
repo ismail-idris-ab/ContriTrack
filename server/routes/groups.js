@@ -5,6 +5,7 @@ const Contribution = require('../models/Contribution');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const { guardGroupCreate, guardMemberAdd } = require('../middleware/planGuard');
+const Template = require('../models/Template');
 
 // Helper: check if requesting user is an admin of the given group
 function isGroupAdmin(group, userId) {
@@ -20,10 +21,22 @@ function isGroupMember(group, userId) {
 // ─── POST /api/groups ─────────────────────────────────────────────────────────
 // Create a new group. Creator becomes group admin.
 router.post('/', protect, guardGroupCreate, async (req, res) => {
-  const { name, description, contributionAmount } = req.body;
+  const { name, description, contributionAmount, dueDay, graceDays, rotationType } = req.body;
 
   if (!name || !name.trim()) {
     return res.status(400).json({ message: 'Group name is required' });
+  }
+
+  const parsedDueDay    = dueDay    !== undefined ? Number(dueDay)    : 25;
+  const parsedGraceDays = graceDays !== undefined ? Number(graceDays) : 3;
+  const validRotations  = ['fixed', 'join-order', 'random', 'bid'];
+  const parsedRotationType = validRotations.includes(rotationType) ? rotationType : 'fixed';
+
+  if (!Number.isInteger(parsedDueDay) || parsedDueDay < 1 || parsedDueDay > 28) {
+    return res.status(400).json({ message: 'Due day must be between 1 and 28' });
+  }
+  if (!Number.isInteger(parsedGraceDays) || parsedGraceDays < 0 || parsedGraceDays > 7) {
+    return res.status(400).json({ message: 'Grace period must be between 0 and 7 days' });
   }
 
   const safeDescription = description
@@ -32,17 +45,21 @@ router.post('/', protect, guardGroupCreate, async (req, res) => {
 
   try {
     const group = await Group.create({
-      name: name.trim().slice(0, 100),
-      description: safeDescription,
+      name:               name.trim().slice(0, 100),
+      description:        safeDescription,
       contributionAmount: Number(contributionAmount) || 0,
-      createdBy: req.user._id,
-      members: [{ user: req.user._id, role: 'admin' }],
+      dueDay:             parsedDueDay,
+      graceDays:          parsedGraceDays,
+      rotationType:       parsedRotationType,
+      createdBy:          req.user._id,
+      members:            [{ user: req.user._id, role: 'admin' }],
     });
 
     await group.populate('members.user', 'name email role');
     res.status(201).json(group);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -56,7 +73,8 @@ router.get('/mine', protect, async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(groups);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -88,7 +106,8 @@ router.post('/join', protect, async (req, res, next) => {
     req.resolvedGroup = group;
     next();
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 }, guardMemberAdd, async (req, res) => {
   try {
@@ -98,7 +117,8 @@ router.post('/join', protect, async (req, res, next) => {
     await group.populate('members.user', 'name email role');
     res.json(group);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -120,7 +140,8 @@ router.get('/:id', protect, async (req, res) => {
 
     res.json(group);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -170,7 +191,8 @@ router.get('/:id/members', protect, async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -216,7 +238,8 @@ router.patch('/:id/members/:userId/role', protect, async (req, res) => {
 
     res.json(group);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -260,7 +283,8 @@ router.patch('/:id', protect, async (req, res) => {
 
     res.json(group);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -283,7 +307,8 @@ router.delete('/:id', protect, async (req, res) => {
 
     res.json({ message: 'Circle archived successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -313,7 +338,8 @@ router.delete('/:id/members/:userId', protect, async (req, res) => {
 
     res.json({ message: 'Member removed' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[groups]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
