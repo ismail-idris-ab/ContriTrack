@@ -258,4 +258,70 @@ router.patch('/:id/status', protect, async (req, res) => {
   }
 });
 
+// PATCH /api/contributions/:id/resubmit — member uploads new proof after rejection
+router.patch('/:id/resubmit', protect, uploadLimiter, upload.single('proof'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'New proof image is required' });
+
+  try {
+    const contribution = await Contribution.findById(req.params.id);
+    if (!contribution) return res.status(404).json({ message: 'Contribution not found' });
+
+    // Only the owning member can resubmit
+    if (String(contribution.user) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You can only resubmit your own contributions' });
+    }
+
+    if (contribution.status !== 'rejected') {
+      return res.status(400).json({ message: 'Only rejected contributions can be resubmitted' });
+    }
+
+    // Archive current rejection into history
+    const historyEntry = {
+      proofImage:    contribution.proofImage,
+      rejectionNote: contribution.rejectionNote || '',
+      rejectedBy:    contribution.verifiedBy,
+      rejectedAt:    contribution.verifiedAt,
+    };
+
+    const safeNote = req.body.note
+      ? String(req.body.note).replace(/<[^>]*>/g, '').trim().slice(0, 500)
+      : contribution.note;
+
+    const updated = await Contribution.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push:  { rejectionHistory: historyEntry },
+        $set: {
+          proofImage:    req.file.path,
+          note:          safeNote,
+          status:        'pending',
+          verifiedBy:    null,
+          verifiedAt:    null,
+          rejectionNote: '',
+        },
+      },
+      { new: true }
+    ).populate('user', 'name email');
+
+    logAudit({
+      action:       'contribution.resubmitted',
+      adminId:      req.user._id,
+      groupId:      contribution.group || null,
+      entityType:   'Contribution',
+      entityId:     contribution._id,
+      targetUserId: req.user._id,
+      meta: {
+        month: contribution.month,
+        year:  contribution.year,
+        resubmissionCount: updated.rejectionHistory.length,
+      },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error('[contributions/resubmit]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
+  }
+});
+
 module.exports = router;
