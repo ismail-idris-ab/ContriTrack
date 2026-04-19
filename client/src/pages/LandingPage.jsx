@@ -1741,13 +1741,13 @@ export default function LandingPage() {
                     fontFamily: "var(--font-mono)",
                   }}
                 >
-                  Family Ajo — August
+                  Adashe for — August
                 </span>
               </div>
               <div style={{ padding: "16px" }}>
                 {[
                   {
-                    name: "Chisom A.",
+                    name: "Ismail A.",
                     amount: "₦20,000",
                     status: "Verified",
                     color: "#059669",
@@ -1761,7 +1761,7 @@ export default function LandingPage() {
                     bg: "rgba(5,150,105,0.15)",
                   },
                   {
-                    name: "Fatima A.",
+                    name: "Aiyu Y.",
                     amount: "—",
                     status: "Pending",
                     color: "#d97706",
