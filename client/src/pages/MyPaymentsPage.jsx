@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import StatusBadge from '../components/StatusBadge';
 import ProofModal from '../components/ProofModal';
+import ResubmitModal from '../components/ResubmitModal';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -16,6 +17,7 @@ export default function MyPaymentsPage() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [resubmitTarget, setResubmitTarget] = useState(null);
 
   useEffect(() => {
     api.get('/contributions/mine')
@@ -32,6 +34,10 @@ export default function MyPaymentsPage() {
       submittedDate: p.createdAt,
       status: p.status,
     });
+  };
+
+  const onResubmitSuccess = (updated) => {
+    setPayments(prev => prev.map(p => p._id === updated._id ? updated : p));
   };
 
   const totalVerified = payments.filter(p => p.status === 'verified').reduce((sum, p) => sum + p.amount, 0);
@@ -159,6 +165,15 @@ export default function MyPaymentsPage() {
                     <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 3 }}>
                       Submitted {new Date(p.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
+                    {p.status === 'rejected' && p.rejectionNote && (
+                      <div style={{
+                        fontSize: 11, color: '#e11d48',
+                        marginTop: 5, lineHeight: 1.4,
+                        maxWidth: 280,
+                      }}>
+                        <span style={{ fontWeight: 700 }}>Reason: </span>{p.rejectionNote}
+                      </div>
+                    )}
                   </div>
 
                   {/* Amount */}
@@ -193,6 +208,25 @@ export default function MyPaymentsPage() {
                         View
                       </button>
                     )}
+                    {p.status === 'rejected' && (
+                      <button
+                        onClick={() => setResubmitTarget(p)}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          padding: '6px 12px', borderRadius: 8,
+                          border: '1px solid rgba(225,29,72,0.25)',
+                          background: 'rgba(225,29,72,0.06)',
+                          color: '#e11d48',
+                          fontSize: 12, fontWeight: 700,
+                          cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                        }}
+                      >
+                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                        </svg>
+                        Resubmit
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -202,6 +236,13 @@ export default function MyPaymentsPage() {
       )}
 
       {modal && <ProofModal {...modal} onClose={() => setModal(null)} />}
+      {resubmitTarget && (
+        <ResubmitModal
+          contribution={resubmitTarget}
+          onClose={() => setResubmitTarget(null)}
+          onSuccess={onResubmitSuccess}
+        />
+      )}
     </div>
   );
 }
