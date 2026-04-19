@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import StatusBadge from '../components/StatusBadge';
 import ProofModal from '../components/ProofModal';
 import ResubmitModal from '../components/ResubmitModal';
+import { useGroup } from '../context/GroupContext';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -13,11 +14,24 @@ const STATUS_DOT = {
   rejected: '#e11d48',
 };
 
+const CYCLE_STATUS = {
+  verified: { label: 'Verified',     color: '#059669', bg: 'rgba(5,150,105,0.08)',   border: 'rgba(5,150,105,0.2)'   },
+  pending:  { label: 'Pending',      color: '#d97706', bg: 'rgba(217,119,6,0.08)',   border: 'rgba(217,119,6,0.2)'   },
+  rejected: { label: 'Rejected',     color: '#e11d48', bg: 'rgba(225,29,72,0.08)',   border: 'rgba(225,29,72,0.2)'   },
+  missing:  { label: 'Not uploaded', color: 'var(--ct-text-3)', bg: 'rgba(0,0,0,0.03)', border: 'rgba(0,0,0,0.08)' },
+};
+
 export default function MyPaymentsPage() {
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null);
+  const navigate = useNavigate();
+  const { groups, selectGroup } = useGroup();
+  const [payments, setPayments]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [modal, setModal]             = useState(null);
   const [resubmitTarget, setResubmitTarget] = useState(null);
+
+  const now = new Date();
+  const thisMonth = now.getMonth() + 1;
+  const thisYear  = now.getFullYear();
 
   useEffect(() => {
     api.get('/contributions/mine')
@@ -40,7 +54,21 @@ export default function MyPaymentsPage() {
     setPayments(prev => prev.map(p => p._id === updated._id ? updated : p));
   };
 
+  const handleUploadForGroup = (group) => {
+    selectGroup(group);
+    navigate('/upload');
+  };
+
   const totalVerified = payments.filter(p => p.status === 'verified').reduce((sum, p) => sum + p.amount, 0);
+
+  // Build per-group status for this month
+  const thisMonthByGroup = groups.map(g => {
+    const match = payments.find(
+      p => String(p.group?._id || p.group) === String(g._id)
+        && p.month === thisMonth && p.year === thisYear
+    );
+    return { group: g, payment: match || null, status: match ? match.status : 'missing' };
+  });
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)' }}>
@@ -91,7 +119,7 @@ export default function MyPaymentsPage() {
           {/* Summary card */}
           <div style={{
             background: 'var(--ct-sidebar)', borderRadius: 16,
-            padding: '22px 24px', marginBottom: 20,
+            padding: '22px 24px', marginBottom: 16,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             flexWrap: 'wrap', gap: 12,
           }}>
@@ -107,20 +135,68 @@ export default function MyPaymentsPage() {
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 40, fontWeight: 600,
-                color: 'var(--ct-gold)', lineHeight: 1,
-              }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 40, fontWeight: 600, color: 'var(--ct-gold)', lineHeight: 1 }}>
                 {payments.length}
               </div>
               <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 4 }}>total submissions</div>
             </div>
           </div>
 
+          {/* This Month status bar — only shown when member belongs to groups */}
+          {thisMonthByGroup.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ct-text-3)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>
+                {MONTHS[thisMonth - 1]} {thisYear} — Circle Status
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {thisMonthByGroup.map(({ group, status }) => {
+                  const cfg = CYCLE_STATUS[status];
+                  const isMissing = status === 'missing';
+                  return (
+                    <div
+                      key={group._id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '10px 14px', borderRadius: 12,
+                        background: cfg.bg, border: `1px solid ${cfg.border}`,
+                        minWidth: 0,
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+                          {group.name}
+                        </div>
+                        <div style={{ fontSize: 11, color: cfg.color, fontWeight: 600, marginTop: 2 }}>
+                          {cfg.label}
+                        </div>
+                      </div>
+                      {isMissing && (
+                        <button
+                          onClick={() => handleUploadForGroup(group)}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            padding: '5px 10px', borderRadius: 7,
+                            background: 'var(--ct-gold)', border: 'none',
+                            color: '#0f0f14', fontSize: 11, fontWeight: 700,
+                            cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                            whiteSpace: 'nowrap', flexShrink: 0,
+                          }}
+                        >
+                          <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                          </svg>
+                          Upload
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Timeline */}
           <div style={{ position: 'relative' }}>
-            {/* Vertical line */}
             <div style={{
               position: 'absolute',
               left: 23, top: 22, bottom: 22,
@@ -153,24 +229,36 @@ export default function MyPaymentsPage() {
                   }} />
 
                   {/* Content */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: 15, fontWeight: 700,
-                      color: 'var(--ct-text-1)',
-                      letterSpacing: '-0.01em',
-                    }}>
-                      {MONTHS[p.month - 1]} {p.year}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <div style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 15, fontWeight: 700,
+                        color: 'var(--ct-text-1)',
+                        letterSpacing: '-0.01em',
+                      }}>
+                        {MONTHS[p.month - 1]} {p.year}
+                      </div>
+                      {/* Group name pill */}
+                      {p.group?.name && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 700,
+                          color: 'var(--ct-gold)',
+                          background: 'rgba(212,160,23,0.1)',
+                          border: '1px solid rgba(212,160,23,0.2)',
+                          borderRadius: 5, padding: '2px 7px',
+                          letterSpacing: '0.02em',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {p.group.name}
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 3 }}>
                       Submitted {new Date(p.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
                     {p.status === 'rejected' && p.rejectionNote && (
-                      <div style={{
-                        fontSize: 11, color: '#e11d48',
-                        marginTop: 5, lineHeight: 1.4,
-                        maxWidth: 280,
-                      }}>
+                      <div style={{ fontSize: 11, color: '#e11d48', marginTop: 5, lineHeight: 1.4, maxWidth: 280 }}>
                         <span style={{ fontWeight: 700 }}>Reason: </span>{p.rejectionNote}
                       </div>
                     )}
@@ -187,7 +275,7 @@ export default function MyPaymentsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <StatusBadge status={p.status} />
                     {p.proofImage && (
                       <button
@@ -196,8 +284,7 @@ export default function MyPaymentsPage() {
                           display: 'inline-flex', alignItems: 'center', gap: 4,
                           padding: '6px 12px', borderRadius: 8,
                           border: '1px solid rgba(0,0,0,0.09)',
-                          background: '#faf9f6',
-                          color: 'var(--ct-text-2)',
+                          background: '#faf9f6', color: 'var(--ct-text-2)',
                           fontSize: 12, fontWeight: 600,
                           cursor: 'pointer', fontFamily: 'var(--font-sans)',
                         }}
@@ -215,8 +302,7 @@ export default function MyPaymentsPage() {
                           display: 'inline-flex', alignItems: 'center', gap: 4,
                           padding: '6px 12px', borderRadius: 8,
                           border: '1px solid rgba(212,160,23,0.3)',
-                          background: 'rgba(212,160,23,0.07)',
-                          color: 'var(--ct-gold)',
+                          background: 'rgba(212,160,23,0.07)', color: 'var(--ct-gold)',
                           fontSize: 12, fontWeight: 700,
                           cursor: 'pointer', fontFamily: 'var(--font-sans)',
                         }}
@@ -234,8 +320,7 @@ export default function MyPaymentsPage() {
                           display: 'inline-flex', alignItems: 'center', gap: 4,
                           padding: '6px 12px', borderRadius: 8,
                           border: '1px solid rgba(225,29,72,0.25)',
-                          background: 'rgba(225,29,72,0.06)',
-                          color: '#e11d48',
+                          background: 'rgba(225,29,72,0.06)', color: '#e11d48',
                           fontSize: 12, fontWeight: 700,
                           cursor: 'pointer', fontFamily: 'var(--font-sans)',
                         }}

@@ -158,6 +158,7 @@ router.get('/', protect, async (req, res) => {
 router.get('/mine', protect, async (req, res) => {
   try {
     const contributions = await Contribution.find({ user: req.user._id })
+      .populate('group', 'name')
       .sort({ year: -1, month: -1 })
       .lean();
     res.json(contributions);
