@@ -208,6 +208,25 @@ export default function MyPaymentsPage() {
                         View
                       </button>
                     )}
+                    {p.status === 'pending' && (
+                      <button
+                        onClick={() => setResubmitTarget({ ...p, _mode: 'replace' })}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          padding: '6px 12px', borderRadius: 8,
+                          border: '1px solid rgba(212,160,23,0.3)',
+                          background: 'rgba(212,160,23,0.07)',
+                          color: 'var(--ct-gold)',
+                          fontSize: 12, fontWeight: 700,
+                          cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                        }}
+                      >
+                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                        </svg>
+                        Replace
+                      </button>
+                    )}
                     {p.status === 'rejected' && (
                       <button
                         onClick={() => setResubmitTarget(p)}
@@ -239,6 +258,7 @@ export default function MyPaymentsPage() {
       {resubmitTarget && (
         <ResubmitModal
           contribution={resubmitTarget}
+          mode={resubmitTarget._mode || 'resubmit'}
           onClose={() => setResubmitTarget(null)}
           onSuccess={onResubmitSuccess}
         />

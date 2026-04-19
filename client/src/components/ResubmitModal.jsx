@@ -27,7 +27,8 @@ function compressImage(file, maxDimension = 1200, quality = 0.82) {
   });
 }
 
-export default function ResubmitModal({ contribution, onClose, onSuccess }) {
+export default function ResubmitModal({ contribution, onClose, onSuccess, mode = 'resubmit' }) {
+  const isReplace = mode === 'replace';
   const [file, setFile]           = useState(null);
   const [preview, setPreview]     = useState(null);
   const [note, setNote]           = useState(contribution.note || '');
@@ -103,7 +104,9 @@ export default function ResubmitModal({ contribution, onClose, onSuccess }) {
           boxShadow: '0 32px 80px rgba(0,0,0,0.4)',
         }}
       >
-        <div style={{ height: 3, background: 'linear-gradient(90deg, #e11d48, #fb7185, #e11d48)' }} />
+        <div style={{ height: 3, background: isReplace
+          ? 'linear-gradient(90deg, var(--ct-gold), #f5d68a, var(--ct-gold))'
+          : 'linear-gradient(90deg, #e11d48, #fb7185, #e11d48)' }} />
 
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -115,7 +118,7 @@ export default function ResubmitModal({ contribution, onClose, onSuccess }) {
               fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700,
               color: 'var(--ct-text-1)', margin: 0, letterSpacing: '-0.01em',
             }}>
-              Resubmit Proof
+              {isReplace ? 'Replace Proof' : 'Resubmit Proof'}
             </h3>
             <p style={{ fontSize: 12, color: 'var(--ct-text-3)', margin: '3px 0 0' }}>
               {MONTHS[contribution.month - 1]} {contribution.year}
@@ -133,7 +136,7 @@ export default function ResubmitModal({ contribution, onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-          {contribution.rejectionNote && (
+          {!isReplace && contribution.rejectionNote && (
             <div style={{
               background: 'rgba(225,29,72,0.06)', borderRadius: 10,
               border: '1px solid rgba(225,29,72,0.15)',
@@ -230,7 +233,7 @@ export default function ResubmitModal({ contribution, onClose, onSuccess }) {
               fontFamily: 'var(--font-sans)', transition: 'all 0.2s',
             }}
           >
-            {loading ? 'Uploading…' : 'Resubmit for Review'}
+            {loading ? 'Uploading…' : isReplace ? 'Replace Proof' : 'Resubmit for Review'}
           </button>
         </form>
       </div>
