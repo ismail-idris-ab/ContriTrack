@@ -264,8 +264,6 @@ export default function Sidebar({ onNavigate, isMobile }) {
   }, [user?.role]);
 
   const isActive = (path) => location.pathname === path;
-  const plan = user?.subscription?.plan || 'free';
-  const planBadge = PLAN_BADGE[plan] || PLAN_BADGE.free;
 
   return (
     <div style={{
@@ -389,63 +387,6 @@ export default function Sidebar({ onNavigate, isMobile }) {
         )}
       </nav>
 
-      {/* Divider */}
-      <div style={{
-        margin: '0 16px', height: 1, flexShrink: 0,
-        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
-      }} />
-
-      {/* User card */}
-      <div style={{ padding: '12px 10px 18px', flexShrink: 0 }}>
-        <div style={{
-          borderRadius: 12,
-          background: 'rgba(255,255,255,0.025)',
-          border: '1px solid rgba(255,255,255,0.055)',
-          padding: '11px 12px',
-        }}>
-          {/* User info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: 'linear-gradient(135deg, #4338ca, #7c3aed)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontSize: 11.5, fontWeight: 700, flexShrink: 0,
-              boxShadow: '0 0 0 2px rgba(99,102,241,0.22)',
-            }}>
-              {getInitials(user?.name)}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                color: '#c8c4d8', fontSize: 12.5, fontWeight: 600,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                letterSpacing: '-0.01em',
-              }}>
-                {user?.name}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
-                <div style={{
-                  width: 5, height: 5, borderRadius: '50%',
-                  background: '#22c55e',
-                  boxShadow: '0 0 4px rgba(34,197,94,0.6)',
-                }} />
-                <span style={{ color: '#7070a0', fontSize: 10, fontWeight: 500 }}>
-                  {user?.role === 'admin' ? 'Admin' : 'Member'}
-                </span>
-                <span style={{
-                  padding: '1px 6px', borderRadius: 4,
-                  background: planBadge.bg,
-                  color: planBadge.color,
-                  fontSize: 8.5, fontWeight: 700,
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                }}>
-                  {planBadge.label}
-                </span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
     </div>
   );
 }
