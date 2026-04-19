@@ -92,8 +92,10 @@ router.post('/', protect, requireFeature('penaltyTracking'), async (req, res) =>
       issuedBy: req.user._id,
     });
 
-    await penalty.populate('user', 'name email');
-    await penalty.populate('issuedBy', 'name');
+    await penalty.populate([
+      { path: 'user',     select: 'name email' },
+      { path: 'issuedBy', select: 'name' },
+    ]);
 
     logAudit({
       action:       'penalty.issued',
@@ -143,8 +145,10 @@ router.patch('/:id/status', protect, requireFeature('penaltyTracking'), async (r
       penalty.note = String(note).replace(/<[^>]*>/g, '').trim().slice(0, 500);
 
     await penalty.save();
-    await penalty.populate('user', 'name email');
-    await penalty.populate('issuedBy', 'name');
+    await penalty.populate([
+      { path: 'user',     select: 'name email' },
+      { path: 'issuedBy', select: 'name' },
+    ]);
 
     logAudit({
       action:       'penalty.status_changed',

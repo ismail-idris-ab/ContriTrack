@@ -219,13 +219,13 @@ export default function Topbar({ onMenuClick }) {
 
   useEffect(() => {
     if (!user) return;
-    const fetch = () => {
+    const fetchUnreadCount = () => {
       api.get('/notifications?limit=1')
         .then(({ data }) => setUnreadCount(data.unreadCount || 0))
         .catch(() => {});
     };
-    fetch();
-    const id = setInterval(fetch, 90_000);
+    fetchUnreadCount();
+    const id = setInterval(fetchUnreadCount, 90_000);
     return () => clearInterval(id);
   }, [user]);
 

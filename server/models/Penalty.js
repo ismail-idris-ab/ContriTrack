@@ -30,5 +30,7 @@ const penaltySchema = new mongoose.Schema(
 penaltySchema.index({ group: 1, user: 1 });
 penaltySchema.index({ group: 1, status: 1 });
 penaltySchema.index({ user: 1 });
+// Supports "all pending penalties for user X in group Y" queries
+penaltySchema.index({ group: 1, user: 1, status: 1 });
 
 module.exports = mongoose.model('Penalty', penaltySchema);

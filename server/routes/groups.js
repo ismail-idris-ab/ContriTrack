@@ -71,7 +71,8 @@ router.get('/mine', protect, async (req, res) => {
     const groups = await Group.find({ 'members.user': req.user._id, isActive: true })
       .populate('members.user', 'name email role')
       .populate('createdBy', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(groups);
   } catch (err) {
     console.error('[groups]', err.message);
@@ -290,8 +291,10 @@ router.patch('/:id', protect, async (req, res) => {
     }
 
     await group.save();
-    await group.populate('members.user', 'name email role');
-    await group.populate('createdBy', 'name email');
+    await group.populate([
+      { path: 'members.user', select: 'name email role' },
+      { path: 'createdBy',    select: 'name email' },
+    ]);
 
     res.json(group);
   } catch (err) {

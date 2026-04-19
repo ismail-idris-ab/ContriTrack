@@ -61,7 +61,7 @@ router.get('/', protect, globalAdminOnly, async (req, res) => {
       });
     } else {
       // Global (no group filter) — original behaviour
-      const allUsers    = await User.find().select('-password');
+      const allUsers    = await User.find().select('-password').lean();
       const contributions = await Contribution.find({ month, year, group: null });
       const contribMap  = {};
       contributions.forEach((c) => { contribMap[c.user.toString()] = c; });

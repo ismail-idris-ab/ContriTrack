@@ -158,7 +158,8 @@ router.get('/', protect, async (req, res) => {
 router.get('/mine', protect, async (req, res) => {
   try {
     const contributions = await Contribution.find({ user: req.user._id })
-      .sort({ year: -1, month: -1 });
+      .sort({ year: -1, month: -1 })
+      .lean();
     res.json(contributions);
   } catch (err) {
     console.error('[contributions]', err.message);

@@ -48,4 +48,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Sparse index: only indexes documents that have this field set (most users won't during normal operation)
+userSchema.index({ resetPasswordToken: 1 }, { sparse: true });
+
 module.exports = mongoose.model('User', userSchema);

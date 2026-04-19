@@ -54,7 +54,7 @@ export function GroupProvider({ children }) {
       setGroups([]);
       setActiveGroup(null);
     }
-  }, [user]);
+  }, [user, loadGroups]);
 
   const selectGroup = (group) => {
     setActiveGroup(group);
