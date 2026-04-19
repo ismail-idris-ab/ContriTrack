@@ -62,8 +62,6 @@ groupSchema.pre('save', async function (next) {
   next();
 });
 
-// Index for fast invite-code lookups
-groupSchema.index({ inviteCode: 1 });
 groupSchema.index({ 'members.user': 1 });
 
 module.exports = mongoose.model('Group', groupSchema);
