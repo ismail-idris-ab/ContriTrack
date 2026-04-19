@@ -493,11 +493,11 @@ export default function DashboardPage() {
   const { user } = useAuth();
 
   const fetchMembers = async () => {
+    if (!activeGroup) { setMembers([]); setLoading(false); return; }
     setLoading(true);
     setError('');
     try {
-      const groupParam = activeGroup ? `&groupId=${activeGroup._id}` : '';
-      const { data } = await api.get(`/members?month=${month}&year=${year}${groupParam}`);
+      const { data } = await api.get(`/members?month=${month}&year=${year}&groupId=${activeGroup._id}`);
       setMembers(data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load members.');
@@ -506,7 +506,9 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => { fetchMembers(); }, [month, year, activeGroup]);
+  useEffect(() => {
+    if (!loadingGroups) fetchMembers();
+  }, [month, year, activeGroup, loadingGroups]);
 
   const prevMonth = () => {
     if (month === 1) { setMonth(12); setYear(y => y - 1); }
