@@ -14,17 +14,20 @@ router.get('/', protect, async (req, res) => {
     let filter = {};
 
     if (groupId) {
-      // Group-scoped: requester must be a group admin
+      // Group-scoped: requester must be a group admin OR a system admin
       const group = await Group.findById(groupId);
       if (!group || !group.isActive)
         return res.status(404).json({ message: 'Group not found' });
 
-      const member = group.members.find(m => {
-        const uid = m.user?._id ?? m.user;
-        return String(uid) === String(req.user._id);
-      });
-      if (!member || member.role !== 'admin')
-        return res.status(403).json({ message: 'Only group admins can view the audit log' });
+      const isSystemAdmin = req.user.role === 'admin';
+      if (!isSystemAdmin) {
+        const member = group.members.find(m => {
+          const uid = m.user?._id ?? m.user;
+          return String(uid) === String(req.user._id);
+        });
+        if (!member || member.role !== 'admin')
+          return res.status(403).json({ message: 'Only group admins can view the audit log' });
+      }
 
       filter.groupId = groupId;
     } else {
