@@ -88,13 +88,11 @@ router.post('/initialize', protect, async (req, res) => {
   }
 
   try {
-    const callbackUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/subscription?ref={PAYSTACK_REFERENCE}`;
-
     const body = {
       email:        req.user.email,
       amount,
       currency:     'NGN',
-      callback_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/subscription/callback`,
+      callback_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/subscription`,
       metadata: {
         userId:      req.user._id.toString(),
         plan,

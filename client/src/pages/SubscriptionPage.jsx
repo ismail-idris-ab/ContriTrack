@@ -29,8 +29,8 @@ export default function SubscriptionPage() {
   const [success,   setSuccess]   = useState('');
   const [cycle,     setCycle]     = useState('monthly');
 
-  const targetPlan = params.get('upgrade') || null;
-  const refParam   = params.get('ref')     || null;
+  const targetPlan = params.get('upgrade')   || null;
+  const refParam   = params.get('reference') || params.get('trxref') || null;
 
   // Load current subscription status
   useEffect(() => {
