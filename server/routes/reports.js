@@ -37,23 +37,19 @@ router.get('/monthly', protect, requireFeature('reports'), async (req, res) => {
 
     const memberIds = group.members.map(m => m.user._id);
 
-    // Contributions this month
-    const contributions = await Contribution.find({
-      group: groupId,
-      month: targetMonth,
-      year:  targetYear,
-      user:  { $in: memberIds },
-    }).populate('user', 'name email');
+    const [contributions, penalties, payout] = await Promise.all([
+      Contribution.find({
+        group: groupId, month: targetMonth, year: targetYear, user: { $in: memberIds },
+      }).populate('user', 'name email'),
+      Penalty.find({
+        group: groupId, month: targetMonth, year: targetYear,
+      }).populate('user', 'name email'),
+      Payout.findOne({ group: groupId, month: targetMonth, year: targetYear })
+        .populate('recipient', 'name email'),
+    ]);
 
     const contribMap = {};
     contributions.forEach(c => { contribMap[c.user._id.toString()] = c; });
-
-    // Penalties for this month
-    const penalties = await Penalty.find({
-      group: groupId,
-      month: targetMonth,
-      year:  targetYear,
-    }).populate('user', 'name email');
 
     const penaltyMap = {};
     penalties.forEach(p => {
@@ -61,10 +57,6 @@ router.get('/monthly', protect, requireFeature('reports'), async (req, res) => {
       if (!penaltyMap[uid]) penaltyMap[uid] = [];
       penaltyMap[uid].push(p);
     });
-
-    // Payout slot for this month
-    const payout = await Payout.findOne({ group: groupId, month: targetMonth, year: targetYear })
-      .populate('recipient', 'name email');
 
     // Build per-member rows
     const members = group.members.map(m => {
@@ -137,13 +129,10 @@ router.get('/yearly', protect, requireFeature('reports'), async (req, res) => {
     if (!isGroupMember(group, req.user._id))
       return res.status(403).json({ message: 'You are not a member of this group' });
 
-    const contributions = await Contribution.find({
-      group: groupId,
-      year:  targetYear,
-    });
-
-    const payouts = await Payout.find({ group: groupId, year: targetYear })
-      .populate('recipient', 'name');
+    const [contributions, payouts] = await Promise.all([
+      Contribution.find({ group: groupId, year: targetYear }),
+      Payout.find({ group: groupId, year: targetYear }).populate('recipient', 'name'),
+    ]);
 
     const monthlyData = Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;

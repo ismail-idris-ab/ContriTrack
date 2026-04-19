@@ -222,7 +222,24 @@ router.post('/google', authLimiter, async (req, res) => {
 
 // GET /api/auth/me
 router.get('/me', protect, (req, res) => {
-  res.json(req.user);
+  const u = req.user;
+  res.json({
+    _id:          u._id,
+    name:         u.name,
+    email:        u.email,
+    role:         u.role,
+    avatar:       u.avatar,
+    phone:        u.phone,
+    emailVerified: u.emailVerified,
+    authProvider: u.authProvider,
+    subscription: {
+      plan:   u.subscription?.plan   || 'free',
+      status: u.subscription?.status || 'active',
+      currentPeriodEnd: u.subscription?.currentPeriodEnd || null,
+      trialEndsAt:      u.subscription?.trialEndsAt      || null,
+      billingCycle:     u.subscription?.billingCycle     || 'monthly',
+    },
+  });
 });
 
 // PATCH /api/auth/profile — update name, email, phone

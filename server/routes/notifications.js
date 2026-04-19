@@ -19,7 +19,8 @@ router.get('/', protect, async (req, res) => {
     const [notifications, unreadCount] = await Promise.all([
       Notification.find(filter)
         .sort({ createdAt: -1 })
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       Notification.countDocuments({ user: req.user._id, read: false }),
     ]);
 
