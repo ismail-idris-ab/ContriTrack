@@ -128,7 +128,7 @@ export default function UploadPage() {
 
     setLoading(true);
     try {
-      const { data: newContribution } = await api.post('/contributions', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const { data: newContribution } = await api.post('/contributions', formData);
       setMyContributions(prev => [...prev, newContribution]);
       setSuccess('Proof submitted! Awaiting admin review.');
       const today = new Date();
