@@ -36,7 +36,7 @@ function compressImage(file, maxDimension = 1200, quality = 0.82) {
 
 export default function UploadPage() {
   const navigate = useNavigate();
-  const { activeGroup, groups, selectGroup } = useGroup();
+  const { groups } = useGroup();
   const now = new Date();
   const [form, setForm] = useState({
     amount: '',
@@ -51,30 +51,33 @@ export default function UploadPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [compressing, setCompressing] = useState(false);
-  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [myContributions, setMyContributions] = useState([]);
+  const [loadingContributions, setLoadingContributions] = useState(true);
 
-  // Fetch existing submissions once on mount
+  // Local group selection — independent of the global sidebar context
+  const [selectedGroupId, setSelectedGroupId] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('activeGroup'))?._id ?? null; }
+    catch { return null; }
+  });
+
+  const selectedGroup = groups.find(g => String(g._id) === String(selectedGroupId)) ?? null;
+
+  // Fetch existing submissions on mount
   useEffect(() => {
     api.get('/contributions/mine')
       .then(({ data }) => setMyContributions(data))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingContributions(false));
   }, []);
 
-  // Proactively check if selected month/year/group already has a submission
-  useEffect(() => {
-    const groupId = activeGroup?._id ?? null;
-    const exists = myContributions.some(c =>
-      c.month === Number(form.month) &&
-      c.year  === Number(form.year)  &&
-      String(c.group?._id ?? c.group ?? null) === String(groupId)
-    );
-    setAlreadySubmitted(exists);
-  }, [form.month, form.year, activeGroup, myContributions]);
+  // Derived — no useEffect, no race condition
+  const alreadySubmitted = !loadingContributions && myContributions.some(c =>
+    c.month === Number(form.month) &&
+    c.year  === Number(form.year)  &&
+    String(c.group?._id ?? c.group ?? null) === String(selectedGroupId ?? null)
+  );
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const applyFile = async (f) => {
     if (!f) return;
@@ -95,17 +98,15 @@ export default function UploadPage() {
   };
 
   const handleFileChange = (e) => applyFile(e.target.files[0]);
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragging(false);
-    applyFile(e.dataTransfer.files[0]);
-  };
+  const handleDrop = (e) => { e.preventDefault(); setDragging(false); applyFile(e.dataTransfer.files[0]); };
   const removeFile = () => { setFile(null); setPreview(null); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    // Hard guard — blocks form submit via Enter key too
+    if (alreadySubmitted) return setError(`Already submitted for ${MONTHS[Number(form.month) - 1]} ${form.year}${selectedGroup ? ` — ${selectedGroup.name}` : ''}.`);
     if (!file) return setError('Please select a proof of payment image');
     if (!form.amount || Number(form.amount) <= 0) return setError('Enter a valid amount');
 
@@ -115,7 +116,7 @@ export default function UploadPage() {
     formData.append('month', form.month);
     formData.append('year', form.year);
     formData.append('note', form.note);
-    if (activeGroup) formData.append('groupId', activeGroup._id);
+    if (selectedGroupId) formData.append('groupId', selectedGroupId);
 
     setLoading(true);
     try {
@@ -128,8 +129,7 @@ export default function UploadPage() {
       setFile(null);
       setPreview(null);
     } catch (err) {
-      const msg = err.response?.data?.message || '';
-      setError(msg || 'Upload failed');
+      setError(err.response?.data?.message || 'Upload failed');
     } finally {
       setLoading(false);
     }
@@ -489,78 +489,63 @@ export default function UploadPage() {
 
       <div style={{ maxWidth: 520, margin: '0 auto', fontFamily: 'var(--font-sans)' }}>
 
-        {/* Active group banner */}
-        {activeGroup && (
+        {/* Circle picker — shown when member belongs to 2+ groups */}
+        {groups.length > 1 && (
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
+              Select Circle
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {groups.map(g => {
+                const isSelected = String(g._id) === String(selectedGroupId);
+                const isDone = !loadingContributions && myContributions.some(c =>
+                  c.month === Number(form.month) &&
+                  c.year  === Number(form.year)  &&
+                  String(c.group?._id ?? c.group ?? null) === String(g._id)
+                );
+                return (
+                  <button
+                    key={g._id}
+                    type="button"
+                    onClick={() => { setSelectedGroupId(g._id); setError(''); }}
+                    style={{
+                      padding: '9px 16px', borderRadius: 10, cursor: isDone ? 'default' : 'pointer',
+                      border: isSelected ? '2px solid var(--ct-gold)' : '1.5px solid rgba(255,255,255,0.1)',
+                      background: isSelected ? 'rgba(212,160,23,0.12)' : 'rgba(255,255,255,0.04)',
+                      fontFamily: 'var(--font-sans)', transition: 'all 0.15s',
+                      display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2,
+                      minWidth: 120,
+                    }}
+                  >
+                    <span style={{ fontSize: 13, fontWeight: 700, color: isSelected ? 'var(--ct-gold)' : 'rgba(255,255,255,0.75)' }}>
+                      {g.name}
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: isDone ? '#34d399' : 'rgba(255,255,255,0.3)' }}>
+                      {isDone ? '✓ Submitted' : 'Not submitted'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Single group banner */}
+        {groups.length === 1 && selectedGroup && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '10px 16px', borderRadius: 10, marginBottom: 16,
-            background: 'rgba(212,160,23,0.08)',
-            border: '1px solid rgba(212,160,23,0.2)',
+            background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.2)',
           }}>
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--ct-gold)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            <span style={{ fontSize: 13, color: 'var(--ct-text-2)' }}>
-              Submitting for circle: <strong style={{ color: 'var(--ct-text-1)' }}>{activeGroup.name}</strong>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
+              Submitting for: <strong style={{ color: 'rgba(255,255,255,0.9)' }}>{selectedGroup.name}</strong>
             </span>
           </div>
         )}
 
-        {/* Alerts */}
-        {alreadySubmitted && (() => {
-          // Other groups that haven't been submitted for this month yet
-          const otherGroups = groups.filter(g => {
-            if (String(g._id) === String(activeGroup?._id)) return false;
-            return !myContributions.some(c =>
-              c.month === Number(form.month) &&
-              c.year  === Number(form.year)  &&
-              String(c.group?._id ?? c.group ?? null) === String(g._id)
-            );
-          });
-          return (
-            <div style={{ background: 'rgba(79,70,229,0.08)', border: '1px solid rgba(79,70,229,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: '#4f46e5', fontSize: 13.5 }}>
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
-                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"/>
-                </svg>
-                <div>
-                  <strong>
-                    {activeGroup ? `${activeGroup.name} — ` : ''}Already submitted for {MONTHS[form.month - 1]} {form.year}.
-                  </strong>
-                  {' '}
-                  <button onClick={() => navigate('/my-payments')} style={{ background: 'none', border: 'none', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: 'inherit' }}>
-                    View history →
-                  </button>
-                </div>
-              </div>
-              {otherGroups.length > 0 && (
-                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(79,70,229,0.15)' }}>
-                  <p style={{ fontSize: 12, color: 'rgba(79,70,229,0.8)', margin: '0 0 8px', fontWeight: 600 }}>
-                    Still pending for {MONTHS[form.month - 1]}:
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {otherGroups.map(g => (
-                      <button
-                        key={g._id}
-                        type="button"
-                        onClick={() => selectGroup(g)}
-                        style={{
-                          padding: '5px 12px', borderRadius: 7,
-                          background: 'rgba(79,70,229,0.12)',
-                          border: '1px solid rgba(79,70,229,0.25)',
-                          color: '#4f46e5', fontSize: 12, fontWeight: 700,
-                          cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                        }}
-                      >
-                        Switch to {g.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })()}
         {error && (
           <div className="upload-alert error">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -638,7 +623,7 @@ export default function UploadPage() {
             </div>
 
             {/* Summary row */}
-            <div className="upload-summary" style={{ gridTemplateColumns: activeGroup ? 'auto 1fr 1fr 1fr' : 'auto 1fr 1fr' }}>
+            <div className="upload-summary" style={{ gridTemplateColumns: selectedGroup ? 'auto 1fr 1fr 1fr' : 'auto 1fr 1fr' }}>
               <div className="upload-summary-tag">Summary</div>
               <div className="upload-summary-cell">
                 <div className="upload-summary-cell-label">Period</div>
@@ -650,11 +635,11 @@ export default function UploadPage() {
                   {form.amount ? `₦${Number(form.amount).toLocaleString()}` : '—'}
                 </div>
               </div>
-              {activeGroup && (
+              {selectedGroup && (
                 <div className="upload-summary-cell">
                   <div className="upload-summary-cell-label">Circle</div>
                   <div className="upload-summary-cell-value" style={{ fontSize: 11, color: 'var(--ct-gold)' }}>
-                    {activeGroup.name}
+                    {selectedGroup.name}
                   </div>
                 </div>
               )}
