@@ -103,7 +103,11 @@ export default function UploadPage() {
     try {
       await api.post('/contributions', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       setSuccess('Proof submitted! Awaiting admin review.');
-      setTimeout(() => navigate('/dashboard'), 2000);
+      const today = new Date();
+      setForm({ amount: '', month: today.getMonth() + 1, year: today.getFullYear(), note: '' });
+      if (preview) URL.revokeObjectURL(preview);
+      setFile(null);
+      setPreview(null);
     } catch (err) {
       const msg = err.response?.data?.message || '';
       if (err.response?.status === 400 && msg.toLowerCase().includes('already submitted')) {
