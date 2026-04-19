@@ -95,6 +95,11 @@ export default function PricingPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate(user ? '/subscription' : '/');
+  };
+
   const currentPlan = user?.subscription?.plan || 'free';
 
   function handleCTA(planKey) {
@@ -121,6 +126,32 @@ export default function PricingPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '8px 0 60px' }}>
+
+      {/* Back button */}
+      <div style={{ marginBottom: 32 }}>
+        <button
+          onClick={handleBack}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            padding: '8px 16px', borderRadius: 10,
+            background: '#fff',
+            border: '1px solid rgba(0,0,0,0.08)',
+            color: 'var(--ct-text-2)',
+            fontSize: 13, fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: 'var(--font-sans)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            transition: 'all 0.16s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.16)'; e.currentTarget.style.color = 'var(--ct-text-1)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'; e.currentTarget.style.color = 'var(--ct-text-2)'; }}
+        >
+          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+          Back
+        </button>
+      </div>
 
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 48 }}>
