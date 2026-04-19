@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { GroupProvider } from './context/GroupContext';
+import { GroupProvider, useGroup } from './context/GroupContext';
 import { ToastProvider } from './context/ToastContext';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
@@ -60,7 +60,12 @@ function PublicRoute({ children }) {
 
 function AdminRoute({ children }) {
   const { user } = useAuth();
-  return user?.role === 'admin' ? children : <Navigate to="/dashboard" replace />;
+  const { groups } = useGroup();
+  const isSystemAdmin = user?.role === 'admin';
+  const isGroupAdmin  = groups?.some(g =>
+    g.members?.some(m => String(m.user?._id || m.user) === String(user?._id) && m.role === 'admin')
+  );
+  return (isSystemAdmin || isGroupAdmin) ? children : <Navigate to="/dashboard" replace />;
 }
 
 function EmailVerificationBanner() {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useGroup } from '../context/GroupContext';
 import api from '../api/axios';
 import { canAccess } from '../utils/planUtils';
 
@@ -247,21 +248,28 @@ function NavSection({ label }) {
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 export default function Sidebar({ onNavigate, isMobile }) {
   const { user } = useAuth();
+  const { groups } = useGroup();
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
 
+  const isSystemAdmin = user?.role === 'admin';
+  const isGroupAdmin  = groups?.some(g =>
+    g.members?.some(m => String(m.user?._id || m.user) === String(user?._id) && m.role === 'admin')
+  );
+  const canAdmin = isSystemAdmin || isGroupAdmin;
+
   useEffect(() => {
-    if (user?.role !== 'admin') return;
+    if (!canAdmin) return;
     const now = new Date();
-    const fetch = () => {
+    const fetchPending = () => {
       api.get(`/contributions?month=${now.getMonth() + 1}&year=${now.getFullYear()}&limit=100`)
         .then(({ data }) => setPendingCount(data.docs?.filter(c => c.status === 'pending').length || 0))
         .catch(() => {});
     };
-    fetch();
-    const id = setInterval(fetch, 60_000);
+    fetchPending();
+    const id = setInterval(fetchPending, 60_000);
     return () => clearInterval(id);
-  }, [user?.role]);
+  }, [canAdmin]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -374,7 +382,7 @@ export default function Sidebar({ onNavigate, isMobile }) {
         ))}
 
         {/* Admin item */}
-        {user?.role === 'admin' && (
+        {canAdmin && (
           <>
             <div style={{ margin: '4px 8px 0', height: 1, background: 'rgba(255,255,255,0.03)' }} />
             <NavSection label="System" />
