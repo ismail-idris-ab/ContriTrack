@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import api from '../api/axios';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -36,6 +36,10 @@ export default function ResubmitModal({ contribution, onClose, onSuccess }) {
   const [compressing, setCompressing] = useState(false);
   const [dragging, setDragging]   = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    return () => { if (preview) URL.revokeObjectURL(preview); };
+  }, [preview]);
 
   const applyFile = async (f) => {
     if (!f) return;
