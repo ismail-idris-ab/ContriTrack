@@ -36,7 +36,7 @@ function compressImage(file, maxDimension = 1200, quality = 0.82) {
 
 export default function UploadPage() {
   const navigate = useNavigate();
-  const { activeGroup } = useGroup();
+  const { activeGroup, groups, selectGroup } = useGroup();
   const now = new Date();
   const [form, setForm] = useState({
     amount: '',
@@ -507,19 +507,60 @@ export default function UploadPage() {
         )}
 
         {/* Alerts */}
-        {alreadySubmitted && (
-          <div className="upload-alert" style={{ background: 'rgba(79,70,229,0.08)', border: '1px solid rgba(79,70,229,0.2)', color: '#4f46e5', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 10, fontSize: 13.5 }}>
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"/>
-            </svg>
-            <span>
-              You've already submitted a contribution for {MONTHS[form.month - 1]} {form.year}.{' '}
-              <button onClick={() => navigate('/my-payments')} style={{ background: 'none', border: 'none', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: 'inherit' }}>
-                View payment history →
-              </button>
-            </span>
-          </div>
-        )}
+        {alreadySubmitted && (() => {
+          // Other groups that haven't been submitted for this month yet
+          const otherGroups = groups.filter(g => {
+            if (String(g._id) === String(activeGroup?._id)) return false;
+            return !myContributions.some(c =>
+              c.month === Number(form.month) &&
+              c.year  === Number(form.year)  &&
+              String(c.group?._id ?? c.group ?? null) === String(g._id)
+            );
+          });
+          return (
+            <div style={{ background: 'rgba(79,70,229,0.08)', border: '1px solid rgba(79,70,229,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: '#4f46e5', fontSize: 13.5 }}>
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"/>
+                </svg>
+                <div>
+                  <strong>
+                    {activeGroup ? `${activeGroup.name} — ` : ''}Already submitted for {MONTHS[form.month - 1]} {form.year}.
+                  </strong>
+                  {' '}
+                  <button onClick={() => navigate('/my-payments')} style={{ background: 'none', border: 'none', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: 'inherit' }}>
+                    View history →
+                  </button>
+                </div>
+              </div>
+              {otherGroups.length > 0 && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(79,70,229,0.15)' }}>
+                  <p style={{ fontSize: 12, color: 'rgba(79,70,229,0.8)', margin: '0 0 8px', fontWeight: 600 }}>
+                    Still pending for {MONTHS[form.month - 1]}:
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {otherGroups.map(g => (
+                      <button
+                        key={g._id}
+                        type="button"
+                        onClick={() => selectGroup(g)}
+                        style={{
+                          padding: '5px 12px', borderRadius: 7,
+                          background: 'rgba(79,70,229,0.12)',
+                          border: '1px solid rgba(79,70,229,0.25)',
+                          color: '#4f46e5', fontSize: 12, fontWeight: 700,
+                          cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                        }}
+                      >
+                        Switch to {g.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
         {error && (
           <div className="upload-alert error">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -684,8 +725,8 @@ export default function UploadPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={!file || loading || compressing}
-              className={`upload-btn ${file && !loading && !compressing ? 'active' : 'inactive'}`}
+              disabled={!file || loading || compressing || alreadySubmitted}
+              className={`upload-btn ${file && !loading && !compressing && !alreadySubmitted ? 'active' : 'inactive'}`}
             >
               {(loading || compressing) && <span className="upload-spinner" />}
               {compressing ? 'Compressing image…' : loading ? 'Uploading to cloud…' : 'Submit Payment Proof'}
