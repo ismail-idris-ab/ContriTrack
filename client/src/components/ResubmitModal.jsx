@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import api from '../api/axios';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -35,6 +35,7 @@ export default function ResubmitModal({ contribution, onClose, onSuccess }) {
   const [loading, setLoading]     = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [dragging, setDragging]   = useState(false);
+  const fileInputRef = useRef(null);
 
   const applyFile = async (f) => {
     if (!f) return;
@@ -147,7 +148,7 @@ export default function ResubmitModal({ contribution, onClose, onSuccess }) {
             onDragOver={e => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={e => { e.preventDefault(); setDragging(false); applyFile(e.dataTransfer.files[0]); }}
-            onClick={() => document.getElementById('resubmit-file-input').click()}
+            onClick={() => fileInputRef.current?.click()}
             style={{
               border: `2px dashed ${dragging ? 'var(--ct-gold)' : 'rgba(0,0,0,0.12)'}`,
               borderRadius: 12, padding: '20px 16px',
@@ -157,7 +158,7 @@ export default function ResubmitModal({ contribution, onClose, onSuccess }) {
             }}
           >
             <input
-              id="resubmit-file-input"
+              ref={fileInputRef}
               type="file"
               accept="image/*,application/pdf"
               style={{ display: 'none' }}
