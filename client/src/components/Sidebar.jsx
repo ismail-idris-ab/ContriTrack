@@ -246,9 +246,8 @@ function NavSection({ label }) {
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 export default function Sidebar({ onNavigate, isMobile }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
-  const [logoutHovered, setLogoutHovered] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
@@ -445,30 +444,6 @@ export default function Sidebar({ onNavigate, isMobile }) {
             </div>
           </div>
 
-          {/* Logout */}
-          <button
-            onClick={logout}
-            onMouseEnter={() => setLogoutHovered(true)}
-            onMouseLeave={() => setLogoutHovered(false)}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: '7px 12px',
-              borderRadius: 8, width: '100%',
-              border: `1px solid ${logoutHovered ? 'rgba(225,29,72,0.25)' : 'rgba(255,255,255,0.06)'}`,
-              background: logoutHovered ? 'rgba(225,29,72,0.09)' : 'rgba(255,255,255,0.03)',
-              color: logoutHovered ? '#f87171' : '#7070a0',
-              fontSize: 12, fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: 'var(--font-sans)',
-              transition: 'all 0.16s ease',
-            }}
-          >
-            <svg width={12} height={12} viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
-            Sign out
-          </button>
         </div>
       </div>
     </div>
