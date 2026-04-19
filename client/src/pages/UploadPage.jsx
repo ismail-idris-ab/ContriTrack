@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
@@ -52,10 +52,28 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [myContributions, setMyContributions] = useState([]);
+
+  // Fetch existing submissions once on mount
+  useEffect(() => {
+    api.get('/contributions/mine')
+      .then(({ data }) => setMyContributions(data))
+      .catch(() => {});
+  }, []);
+
+  // Proactively check if selected month/year/group already has a submission
+  useEffect(() => {
+    const groupId = activeGroup?._id ?? null;
+    const exists = myContributions.some(c =>
+      c.month === Number(form.month) &&
+      c.year  === Number(form.year)  &&
+      String(c.group?._id ?? c.group ?? null) === String(groupId)
+    );
+    setAlreadySubmitted(exists);
+  }, [form.month, form.year, activeGroup, myContributions]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setAlreadySubmitted(false);
   };
 
   const applyFile = async (f) => {
@@ -101,7 +119,8 @@ export default function UploadPage() {
 
     setLoading(true);
     try {
-      await api.post('/contributions', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const { data: newContribution } = await api.post('/contributions', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setMyContributions(prev => [...prev, newContribution]);
       setSuccess('Proof submitted! Awaiting admin review.');
       const today = new Date();
       setForm({ amount: '', month: today.getMonth() + 1, year: today.getFullYear(), note: '' });
@@ -110,11 +129,7 @@ export default function UploadPage() {
       setPreview(null);
     } catch (err) {
       const msg = err.response?.data?.message || '';
-      if (err.response?.status === 400 && msg.toLowerCase().includes('already submitted')) {
-        setAlreadySubmitted(true);
-      } else {
-        setError(msg || 'Upload failed');
-      }
+      setError(msg || 'Upload failed');
     } finally {
       setLoading(false);
     }
