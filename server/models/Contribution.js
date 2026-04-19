@@ -18,6 +18,15 @@ const contributionSchema = new mongoose.Schema(
     verifiedBy:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     verifiedAt:    { type: Date, default: null },
     rejectionNote: { type: String, default: '', maxlength: 500 },
+    rejectionHistory: [
+      {
+        proofImage:    { type: String, required: true },
+        rejectionNote: { type: String, default: '' },
+        rejectedBy:    { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        rejectedAt:    { type: Date },
+        _id: false,
+      }
+    ],
     isLate:        { type: Boolean, default: false },
   },
   { timestamps: true }
