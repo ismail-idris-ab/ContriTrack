@@ -116,6 +116,7 @@ function ContributionsTab() {
       month, year,
       submittedDate: c.createdAt,
       status: c.status,
+      rejectionHistory: c.rejectionHistory || [],
     });
   };
 

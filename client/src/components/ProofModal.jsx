@@ -2,7 +2,7 @@ import StatusBadge from './StatusBadge';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-export default function ProofModal({ proofUrl, memberName, month, year, submittedDate, status, onClose }) {
+export default function ProofModal({ proofUrl, memberName, month, year, submittedDate, status, rejectionHistory, onClose }) {
   if (!proofUrl) return null;
 
   const rows = [
@@ -114,6 +114,61 @@ export default function ProofModal({ proofUrl, memberName, month, year, submitte
               </div>
             )}
           </div>
+
+          {rejectionHistory && rejectionHistory.length > 0 && (
+            <div style={{ marginTop: 16, marginBottom: 16 }}>
+              <p style={{
+                fontSize: 11, fontWeight: 700, color: 'var(--ct-text-3)',
+                textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px',
+              }}>
+                Prior rejections ({rejectionHistory.length})
+              </p>
+              <div style={{
+                display: 'flex', flexDirection: 'column', gap: 8,
+                maxHeight: 200, overflowY: 'auto',
+              }}>
+                {rejectionHistory.map((h, i) => (
+                  <div key={i} style={{
+                    background: 'rgba(225,29,72,0.05)',
+                    border: '1px solid rgba(225,29,72,0.12)',
+                    borderRadius: 10, padding: '10px 12px',
+                    display: 'flex', gap: 12, alignItems: 'flex-start',
+                  }}>
+                    <a
+                      href={h.proofImage}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        flexShrink: 0, width: 44, height: 44,
+                        borderRadius: 8, overflow: 'hidden',
+                        border: '1px solid rgba(0,0,0,0.08)',
+                        display: 'block',
+                      }}
+                    >
+                      <img
+                        src={h.proofImage}
+                        alt={`Rejected proof ${i + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={e => { e.target.style.display = 'none'; }}
+                      />
+                    </a>
+                    <div style={{ flex: 1 }}>
+                      {h.rejectionNote && (
+                        <p style={{ fontSize: 12, color: 'var(--ct-text-1)', margin: '0 0 3px', lineHeight: 1.4 }}>
+                          {h.rejectionNote}
+                        </p>
+                      )}
+                      {h.rejectedAt && (
+                        <p style={{ fontSize: 11, color: 'var(--ct-text-3)', margin: 0 }}>
+                          {new Date(h.rejectedAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <a
             href={proofUrl}
