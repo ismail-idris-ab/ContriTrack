@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useGroup } from '../context/GroupContext';
 import api from '../api/axios';
@@ -209,13 +209,29 @@ function CircleSwitcher() {
 
 // ─── Topbar ───────────────────────────────────────────────────────────────────
 export default function Topbar({ onMenuClick }) {
-  const { user } = useAuth();
-  const location = useLocation();
+  const { user, logout } = useAuth();
+  const location  = useLocation();
+  const navigate  = useNavigate();
   const page = PAGE_TITLES[location.pathname] || { title: 'ContriTrack', sub: '' };
 
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [bellHovered, setBellHovered] = useState(false);
-  const [avatarHovered, setAvatarHovered] = useState(false);
+  const [unreadCount,   setUnreadCount]   = useState(0);
+  const [bellHovered,   setBellHovered]   = useState(false);
+  const [profileOpen,   setProfileOpen]   = useState(false);
+  const profileRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Close dropdown on route change
+  useEffect(() => { setProfileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
     if (!user) return;
@@ -352,64 +368,125 @@ export default function Topbar({ onMenuClick }) {
         {/* Divider */}
         <div style={{ width: 1, height: 28, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
 
-        {/* User section */}
-        <Link
-          to="/profile"
-          title="My Profile"
-          onMouseEnter={() => setAvatarHovered(true)}
-          onMouseLeave={() => setAvatarHovered(false)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            textDecoration: 'none',
-            padding: '5px 10px 5px 5px',
-            borderRadius: 11,
-            border: `1.5px solid ${avatarHovered ? 'rgba(0,0,0,0.10)' : 'transparent'}`,
-            background: avatarHovered ? 'rgba(0,0,0,0.03)' : 'transparent',
-            transition: 'all 0.16s ease',
-          }}
-        >
-          {/* Avatar */}
-          <div style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 12.5, fontWeight: 700,
-            letterSpacing: '-0.01em',
-            boxShadow: avatarHovered ? '0 0 0 3px rgba(79,70,229,0.18)' : '0 0 0 2px transparent',
-            transition: 'box-shadow 0.16s ease',
-          }}>
-            {getInitials(user?.name)}
-          </div>
-
-          {/* Name + role */}
-          <div className="hidden sm:block">
-            <div style={{
-              fontSize: 13, fontWeight: 700,
-              color: 'var(--ct-text-1)',
-              lineHeight: 1.2,
-              letterSpacing: '-0.01em',
-              whiteSpace: 'nowrap',
-            }}>
-              {user?.name}
-            </div>
-            <div style={{
-              fontSize: 11, color: 'var(--ct-text-3)',
-              marginTop: 1, lineHeight: 1, whiteSpace: 'nowrap',
-            }}>
-              {user?.role === 'admin' ? 'Administrator' : 'Member'}
-            </div>
-          </div>
-
-          {/* Chevron */}
-          <svg
-            className="hidden sm:block"
-            width={13} height={13} viewBox="0 0 24 24" fill="none"
-            stroke="var(--ct-text-3)" strokeWidth={2.5}
-            strokeLinecap="round" strokeLinejoin="round"
+        {/* User section — toggleable dropdown */}
+        <div ref={profileRef} style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            onClick={() => setProfileOpen(o => !o)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '5px 10px 5px 5px',
+              borderRadius: 11, border: 'none', cursor: 'pointer',
+              border: `1.5px solid ${profileOpen ? 'rgba(0,0,0,0.10)' : 'transparent'}`,
+              background: profileOpen ? 'rgba(0,0,0,0.03)' : 'transparent',
+              fontFamily: 'var(--font-sans)',
+              transition: 'all 0.16s ease',
+            }}
           >
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </Link>
+            {/* Avatar */}
+            <div style={{
+              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontSize: 12.5, fontWeight: 700,
+              letterSpacing: '-0.01em',
+              boxShadow: profileOpen ? '0 0 0 3px rgba(79,70,229,0.18)' : '0 0 0 2px transparent',
+              transition: 'box-shadow 0.16s ease',
+            }}>
+              {getInitials(user?.name)}
+            </div>
+
+            {/* Name + role */}
+            <div className="hidden sm:block" style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ct-text-1)', lineHeight: 1.2, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
+                {user?.name}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--ct-text-3)', marginTop: 1, lineHeight: 1, whiteSpace: 'nowrap' }}>
+                {user?.role === 'admin' ? 'Administrator' : 'Member'}
+              </div>
+            </div>
+
+            {/* Chevron */}
+            <svg
+              className="hidden sm:block"
+              width={13} height={13} viewBox="0 0 24 24" fill="none"
+              stroke="var(--ct-text-3)" strokeWidth={2.5}
+              strokeLinecap="round" strokeLinejoin="round"
+              style={{ transition: 'transform 0.18s ease', transform: profileOpen ? 'rotate(180deg)' : 'none' }}
+            >
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          {/* Dropdown */}
+          {profileOpen && (
+            <div className="animate-slide-down" style={{
+              position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+              minWidth: 200, zIndex: 300,
+              background: '#fff',
+              border: '1.5px solid rgba(0,0,0,0.08)',
+              borderRadius: 13,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.07)',
+              overflow: 'hidden',
+            }}>
+              {/* User info header */}
+              <div style={{ padding: '13px 16px 11px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ct-text-1)' }}>{user?.name}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--ct-text-3)', marginTop: 2 }}>{user?.email}</div>
+              </div>
+
+              {/* Menu items */}
+              <div style={{ padding: '6px 8px' }}>
+                {[
+                  { label: 'My Profile',    path: '/profile',      icon: <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+                  { label: 'Subscription', path: '/subscription', icon: <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> },
+                  { label: 'Notifications', path: '/notifications', icon: <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg> },
+                ].map(item => (
+                  <button
+                    key={item.path}
+                    onClick={() => { navigate(item.path); setProfileOpen(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      width: '100%', padding: '9px 10px',
+                      borderRadius: 8, border: 'none',
+                      background: 'transparent', cursor: 'pointer',
+                      color: 'var(--ct-text-2)', fontSize: 13, fontWeight: 500,
+                      fontFamily: 'var(--font-sans)', textAlign: 'left',
+                      transition: 'background 0.13s ease',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <span style={{ color: 'var(--ct-text-3)', display: 'flex' }}>{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sign out */}
+              <div style={{ padding: '6px 8px 8px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                <button
+                  onClick={() => { logout(); setProfileOpen(false); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '9px 10px',
+                    borderRadius: 8, border: 'none',
+                    background: 'transparent', cursor: 'pointer',
+                    color: '#e11d48', fontSize: 13, fontWeight: 600,
+                    fontFamily: 'var(--font-sans)', textAlign: 'left',
+                    transition: 'background 0.13s ease',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(225,29,72,0.06)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                  </svg>
+                  Sign out
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
