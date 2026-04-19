@@ -305,7 +305,7 @@ router.patch('/:id/resubmit', protect, uploadLimiter, upload.single('proof'), as
 
     logAudit({
       action:       'contribution.resubmitted',
-      adminId:      req.user._id,
+      adminId:      null,
       groupId:      contribution.group || null,
       entityType:   'Contribution',
       entityId:     contribution._id,
