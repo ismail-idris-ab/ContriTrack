@@ -62,6 +62,13 @@ export default function UploadPage() {
 
   const selectedGroup = groups.find(g => String(g._id) === String(selectedGroupId)) ?? null;
 
+  // Auto-select first group when none is selected and groups have loaded
+  useEffect(() => {
+    if (groups.length > 0 && !selectedGroupId) {
+      setSelectedGroupId(String(groups[0]._id));
+    }
+  }, [groups]);
+
   // Fetch existing submissions on mount
   useEffect(() => {
     api.get('/contributions/mine')
@@ -105,7 +112,8 @@ export default function UploadPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
-    // Hard guard — blocks form submit via Enter key too
+    // Hard guards — block every submit path including Enter key
+    if (groups.length > 0 && !selectedGroupId) return setError('Please select a circle before submitting.');
     if (alreadySubmitted) return setError(`Already submitted for ${MONTHS[Number(form.month) - 1]} ${form.year}${selectedGroup ? ` — ${selectedGroup.name}` : ''}.`);
     if (!file) return setError('Please select a proof of payment image');
     if (!form.amount || Number(form.amount) <= 0) return setError('Enter a valid amount');
@@ -710,8 +718,8 @@ export default function UploadPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={!file || loading || compressing || alreadySubmitted}
-              className={`upload-btn ${file && !loading && !compressing && !alreadySubmitted ? 'active' : 'inactive'}`}
+              disabled={!file || loading || compressing || alreadySubmitted || (groups.length > 0 && !selectedGroupId)}
+              className={`upload-btn ${file && !loading && !compressing && !alreadySubmitted && !(groups.length > 0 && !selectedGroupId) ? 'active' : 'inactive'}`}
             >
               {(loading || compressing) && <span className="upload-spinner" />}
               {compressing ? 'Compressing image…' : loading ? 'Uploading to cloud…' : 'Submit Payment Proof'}
