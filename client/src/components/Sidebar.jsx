@@ -144,9 +144,9 @@ function NavItem({ item, active, locked, onNavigate }) {
         position: 'relative',
         transition: 'all 0.16s ease',
         background: active
-          ? 'linear-gradient(90deg, rgba(212,160,23,0.14) 0%, rgba(212,160,23,0.03) 100%)'
+          ? 'linear-gradient(90deg, rgba(212,160,23,0.16) 0%, rgba(212,160,23,0.04) 100%)'
           : hovered
-          ? 'rgba(255,255,255,0.045)'
+          ? 'rgba(255,255,255,0.07)'
           : 'transparent',
         boxShadow: active ? 'inset 3px 0 0 var(--ct-gold)' : 'none',
         marginBottom: 1,
@@ -160,15 +160,15 @@ function NavItem({ item, active, locked, onNavigate }) {
         flexShrink: 0,
         transition: 'all 0.16s ease',
         background: active
-          ? 'rgba(212,160,23,0.16)'
+          ? 'rgba(212,160,23,0.18)'
           : hovered
-          ? 'rgba(255,255,255,0.055)'
+          ? 'rgba(255,255,255,0.09)'
           : 'transparent',
         color: active
           ? 'var(--ct-gold)'
           : hovered
-          ? '#9898b8'
-          : '#42425e',
+          ? '#c8c4d8'
+          : '#8080a8',
       }}>
         {item.icon}
       </div>
@@ -177,7 +177,7 @@ function NavItem({ item, active, locked, onNavigate }) {
       <span style={{
         fontSize: 13,
         fontWeight: active ? 600 : 500,
-        color: active ? '#ede8de' : hovered ? '#9898b8' : '#48486a',
+        color: active ? '#ede8de' : hovered ? '#c8c4d8' : '#9898c0',
         letterSpacing: '-0.01em',
         transition: 'color 0.16s ease',
         flex: 1,
@@ -231,14 +231,14 @@ function NavSection({ label }) {
         fontSize: 9, fontWeight: 700,
         letterSpacing: '0.14em',
         textTransform: 'uppercase',
-        color: '#2e2e46',
+        color: '#5e5e84',
         whiteSpace: 'nowrap',
       }}>
         {label}
       </span>
       <div style={{
         flex: 1, height: 1,
-        background: 'linear-gradient(90deg, rgba(255,255,255,0.055), transparent)',
+        background: 'linear-gradient(90deg, rgba(255,255,255,0.12), transparent)',
       }} />
     </div>
   );
@@ -303,7 +303,7 @@ export default function Sidebar({ onNavigate, isMobile }) {
       }} />
 
       {/* Brand */}
-      <div style={{ padding: '22px 16px 16px', position: 'relative', flexShrink: 0, display: isMobile ? 'none' : undefined }}>
+      <div style={{ padding: '22px 16px 16px', position: 'relative', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <div style={{
@@ -330,7 +330,7 @@ export default function Sidebar({ onNavigate, isMobile }) {
               fontSize: 15.5, lineHeight: 1.2, letterSpacing: '-0.01em',
             }}>ContriTrack</div>
             <div style={{
-              color: '#28283c', fontSize: 9, fontWeight: 700,
+              color: '#52527a', fontSize: 9, fontWeight: 700,
               letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2,
             }}>Savings Circle</div>
           </div>
@@ -370,7 +370,7 @@ export default function Sidebar({ onNavigate, isMobile }) {
               <div style={{
                 margin: '4px 8px 0',
                 height: 1,
-                background: 'rgba(255,255,255,0.03)',
+                background: 'rgba(255,255,255,0.06)',
               }} />
             )}
           </div>
@@ -429,7 +429,7 @@ export default function Sidebar({ onNavigate, isMobile }) {
                   background: '#22c55e',
                   boxShadow: '0 0 4px rgba(34,197,94,0.6)',
                 }} />
-                <span style={{ color: '#36364e', fontSize: 10, fontWeight: 500 }}>
+                <span style={{ color: '#7070a0', fontSize: 10, fontWeight: 500 }}>
                   {user?.role === 'admin' ? 'Admin' : 'Member'}
                 </span>
                 <span style={{
@@ -456,7 +456,7 @@ export default function Sidebar({ onNavigate, isMobile }) {
               borderRadius: 8, width: '100%',
               border: `1px solid ${logoutHovered ? 'rgba(225,29,72,0.25)' : 'rgba(255,255,255,0.06)'}`,
               background: logoutHovered ? 'rgba(225,29,72,0.09)' : 'rgba(255,255,255,0.03)',
-              color: logoutHovered ? '#f87171' : '#38385a',
+              color: logoutHovered ? '#f87171' : '#7070a0',
               fontSize: 12, fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'var(--font-sans)',
