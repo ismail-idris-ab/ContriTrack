@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const MONTHS = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
@@ -39,13 +41,30 @@ const labelStyle = {
 };
 
 export default function PenaltyPage() {
+  useDocumentTitle('Penalties — ContriTrack');
   const { activeGroup } = useGroup();
   const { user }        = useAuth();
   const toast           = useToast();
+  const queryClient     = useQueryClient();
+  const now             = new Date();
 
-  const [penalties, setPenalties] = useState([]);
-  const [members,   setMembers]   = useState([]);
-  const [loading,   setLoading]   = useState(false);
+  const { data: penalties = [], isLoading: loading } = useQuery({
+    queryKey: ['penalties', activeGroup?._id],
+    queryFn: () =>
+      api.get(`/penalties?groupId=${activeGroup._id}`)
+         .then(r => r.data)
+         .catch(err => { if (err.response?.status === 403) return []; throw err; }),
+    enabled: !!activeGroup,
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['members', activeGroup?._id, now.getMonth() + 1, now.getFullYear()],
+    queryFn: () =>
+      api.get(`/members?month=${now.getMonth() + 1}&year=${now.getFullYear()}&groupId=${activeGroup._id}`)
+         .then(r => r.data),
+    enabled: !!activeGroup,
+  });
+
   const [showForm,  setShowForm]  = useState(false);
 
   // Create form
@@ -56,7 +75,6 @@ export default function PenaltyPage() {
     note: '',
   });
   const [formError, setFormError] = useState('');
-  const [creating,  setCreating]  = useState(false);
 
   const isAdmin = () => {
     if (!activeGroup || !user) return false;
@@ -64,66 +82,40 @@ export default function PenaltyPage() {
     return m?.role === 'admin';
   };
 
-  const fetchPenalties = async () => {
-    if (!activeGroup) return;
-    setLoading(true);
-    try {
-      const { data } = await api.get(`/penalties?groupId=${activeGroup._id}`);
-      setPenalties(data);
-    } catch (err) {
-      if (err.response?.status === 403) setPenalties([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const createMutation = useMutation({
+    mutationFn: (payload) => api.post('/penalties', payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['penalties', activeGroup?._id] });
+      setShowForm(false);
+      setForm({ userId: '', amount: '', reason: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(), note: '' });
+      setFormError('');
+    },
+    onError: (err) => setFormError(err.response?.data?.message || 'Failed to create penalty'),
+  });
+  const creating = createMutation.isPending;
 
-  const fetchMembers = async () => {
-    if (!activeGroup) return;
-    try {
-      const { data } = await api.get(
-        `/members?month=${new Date().getMonth() + 1}&year=${new Date().getFullYear()}&groupId=${activeGroup._id}`
-      );
-      setMembers(data);
-    } catch { /* ignore */ }
-  };
-
-  useEffect(() => {
-    fetchPenalties();
-    fetchMembers();
-  }, [activeGroup]);
-
-  const handleCreate = async (e) => {
+  const handleCreate = (e) => {
     e.preventDefault();
     setFormError('');
     if (!form.userId) return setFormError('Select a member');
     if (!form.amount || Number(form.amount) <= 0) return setFormError('Enter a valid amount');
     if (!form.reason.trim()) return setFormError('Reason is required');
-    setCreating(true);
-    try {
-      await api.post('/penalties', {
-        groupId: activeGroup._id,
-        userId:  form.userId,
-        amount:  form.amount,
-        reason:  form.reason,
-        month:   form.month,
-        year:    form.year,
-        note:    form.note,
-      });
-      toast.success('Penalty issued.');
-      await fetchPenalties();
-      setShowForm(false);
-      setForm({ userId: '', amount: '', reason: '', month: new Date().getMonth() + 1, year: new Date().getFullYear(), note: '' });
-    } catch (err) {
-      setFormError(err.response?.data?.message || 'Failed to create penalty');
-    } finally {
-      setCreating(false);
-    }
+    createMutation.mutate({
+      groupId: activeGroup._id,
+      userId:  form.userId,
+      amount:  form.amount,
+      reason:  form.reason,
+      month:   form.month,
+      year:    form.year,
+      note:    form.note,
+    });
+    toast.success('Penalty issued.');
   };
 
   const handleStatus = async (id, status) => {
     try {
-      const { data } = await api.patch(`/penalties/${id}/status`, { status });
-      setPenalties(prev => prev.map(p => p._id === id ? data : p));
+      await api.patch(`/penalties/${id}/status`, { status });
+      queryClient.invalidateQueries({ queryKey: ['penalties', activeGroup?._id] });
       toast.success(`Penalty marked as ${status}.`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update penalty.');
@@ -134,7 +126,7 @@ export default function PenaltyPage() {
     if (!window.confirm('Delete this penalty?')) return;
     try {
       await api.delete(`/penalties/${id}`);
-      setPenalties(prev => prev.filter(p => p._id !== id));
+      queryClient.invalidateQueries({ queryKey: ['penalties', activeGroup?._id] });
       toast.success('Penalty deleted.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not delete.');
