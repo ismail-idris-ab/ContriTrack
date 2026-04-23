@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { downloadCsv } from '../utils/exportDownload';
+import Skeleton from '../components/Skeleton';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const getInitials = (name = '') =>
   name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
@@ -53,72 +56,59 @@ function StatusPill({ status }) {
 }
 
 export default function MembersPage() {
+  useDocumentTitle('Members — ContriTrack');
   const now = new Date();
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search,  setSearch]  = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [tab, setTab]         = useState('members');
-  const [trustScores, setTrustScores] = useState([]);
-  const [trustLoading, setTrustLoading] = useState(false);
-  const [trustLocked, setTrustLocked] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [roleConfirm, setRoleConfirm] = useState(null); // { member, newRole }
-  const [roleChanging, setRoleChanging] = useState(false);
   const { activeGroup } = useGroup();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
+
+  const qMonth = now.getMonth() + 1;
+  const qYear  = now.getFullYear();
+  const { data: members = [], isLoading: loading } = useQuery({
+    queryKey: ['members', activeGroup?._id, qMonth, qYear],
+    queryFn: () => {
+      const groupParam = activeGroup ? `&groupId=${activeGroup._id}` : '';
+      return api.get(`/members?month=${qMonth}&year=${qYear}${groupParam}`).then(r => r.data);
+    },
+  });
+
+  const { data: trustScores = [], isLoading: trustLoading, isError: trustError, error: trustErr } = useQuery({
+    queryKey: ['trust-scores', activeGroup?._id],
+    queryFn: () => api.get(`/exports/trust-scores?groupId=${activeGroup._id}`).then(r => r.data),
+    enabled: tab === 'trust' && !!activeGroup,
+    retry: (count, err) => err?.response?.status !== 403 && count < 1,
+  });
+  const trustLocked = trustError && trustErr?.response?.status === 403;
 
   // Am I a group admin?
   const isGroupAdmin = members.some(m => m._id === user?._id && m.role === 'admin');
 
-  const handleRoleChange = async () => {
-    if (!roleConfirm || !activeGroup) return;
-    setRoleChanging(true);
-    try {
-      await api.patch(
-        `/groups/${activeGroup._id}/members/${roleConfirm.member._id}/role`,
-        { role: roleConfirm.newRole }
-      );
-      setMembers(prev => prev.map(m =>
-        m._id === roleConfirm.member._id ? { ...m, role: roleConfirm.newRole } : m
-      ));
+  const roleMutation = useMutation({
+    mutationFn: ({ memberId, newRole }) =>
+      api.patch(`/groups/${activeGroup._id}/members/${memberId}/role`, { role: newRole }),
+    onSuccess: (_, { newRole }) => {
+      queryClient.invalidateQueries({ queryKey: ['members', activeGroup?._id] });
       showToast(
-        roleConfirm.newRole === 'admin'
+        newRole === 'admin'
           ? `${roleConfirm.member.name} is now an admin`
           : `${roleConfirm.member.name} is now a member`,
         'success'
       );
       setRoleConfirm(null);
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to update role', 'error');
-    } finally {
-      setRoleChanging(false);
-    }
+    },
+    onError: (err) => showToast(err.response?.data?.message || 'Failed to update role', 'error'),
+  });
+  const handleRoleChange = () => {
+    if (!roleConfirm || !activeGroup) return;
+    roleMutation.mutate({ memberId: roleConfirm.member._id, newRole: roleConfirm.newRole });
   };
-
-  useEffect(() => {
-    setLoading(true);
-    const month = now.getMonth() + 1;
-    const year  = now.getFullYear();
-    const groupParam = activeGroup ? `&groupId=${activeGroup._id}` : '';
-    api.get(`/members?month=${month}&year=${year}${groupParam}`)
-      .then(({ data }) => setMembers(data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [activeGroup]);
-
-  useEffect(() => {
-    if (tab !== 'trust' || !activeGroup) return;
-    setTrustLoading(true);
-    setTrustLocked(false);
-    api.get(`/exports/trust-scores?groupId=${activeGroup._id}`)
-      .then(({ data }) => setTrustScores(data))
-      .catch(err => {
-        if (err.response?.status === 403) setTrustLocked(true);
-      })
-      .finally(() => setTrustLoading(false));
-  }, [tab, activeGroup]);
+  const roleChanging = roleMutation.isPending;
 
   const verified = members.filter(m => m.contribution?.status === 'verified').length;
   const pending  = members.filter(m => m.contribution?.status === 'pending').length;
@@ -363,13 +353,21 @@ export default function MembersPage() {
             </div>
           )}
 
-          {loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {loading && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[1,2,3,4,5].map(i => (
-                <div key={i} style={{ height: 68, borderRadius: 'var(--ct-radius)', background: 'linear-gradient(90deg, #f0ede6 0%, #e8e5de 50%, #f0ede6 100%)', backgroundSize: '400px 100%', animation: 'shimmer 1.4s ease infinite', animationDelay: `${i * 0.08}s` }} />
+                <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '16px 20px', boxShadow: 'var(--ct-shadow)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <Skeleton width={44} height={44} borderRadius={22} />
+                  <div style={{ flex: 1 }}>
+                    <Skeleton height={13} width={140} style={{ marginBottom: 8 }} />
+                    <Skeleton height={10} width={100} />
+                  </div>
+                  <Skeleton height={24} width={70} borderRadius={12} />
+                </div>
               ))}
             </div>
-          ) : (
+          )}
+          {!loading && (
             <>
               {/* Summary strip */}
               {members.length > 0 && (
