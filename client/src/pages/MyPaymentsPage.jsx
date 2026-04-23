@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 import StatusBadge from '../components/StatusBadge';
 import ProofModal from '../components/ProofModal';
 import ResubmitModal from '../components/ResubmitModal';
+import Skeleton from '../components/Skeleton';
 import { useGroup } from '../context/GroupContext';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -22,23 +25,21 @@ const CYCLE_STATUS = {
 };
 
 export default function MyPaymentsPage() {
+  useDocumentTitle('My Payments — ContriTrack');
   const navigate = useNavigate();
   const { groups, selectGroup } = useGroup();
-  const [payments, setPayments]       = useState([]);
-  const [loading, setLoading]         = useState(true);
+  const queryClient = useQueryClient();
   const [modal, setModal]             = useState(null);
   const [resubmitTarget, setResubmitTarget] = useState(null);
+
+  const { data: payments = [], isLoading: loading } = useQuery({
+    queryKey: ['contributions', 'mine'],
+    queryFn: () => api.get('/contributions/mine').then(r => r.data),
+  });
 
   const now = new Date();
   const thisMonth = now.getMonth() + 1;
   const thisYear  = now.getFullYear();
-
-  useEffect(() => {
-    api.get('/contributions/mine')
-      .then(({ data }) => setPayments(data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
 
   const openModal = (p) => {
     if (!p.proofImage) return;
@@ -50,8 +51,8 @@ export default function MyPaymentsPage() {
     });
   };
 
-  const onResubmitSuccess = (updated) => {
-    setPayments(prev => prev.map(p => p._id === updated._id ? updated : p));
+  const onResubmitSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['contributions', 'mine'] });
   };
 
   const handleUploadForGroup = (group) => {
@@ -72,11 +73,22 @@ export default function MyPaymentsPage() {
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)' }}>
-      {loading ? (
-        <div style={{ textAlign: 'center', color: 'var(--ct-text-3)', padding: '80px 0', fontSize: 14 }}>
-          Loading…
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {[1,2,3,4,5].map(i => (
+            <div key={i} style={{ background: '#fff', borderRadius: 14, padding: '20px 24px', boxShadow: 'var(--ct-shadow)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <Skeleton height={13} width={120} style={{ marginBottom: 8 }} />
+                  <Skeleton height={10} width={80} />
+                </div>
+                <Skeleton height={28} width={90} borderRadius={12} />
+              </div>
+            </div>
+          ))}
         </div>
-      ) : payments.length === 0 ? (
+      )}
+      {!loading && payments.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: '60px 40px',
           background: '#fff', borderRadius: 18,
