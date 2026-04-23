@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const TYPE_CONFIG = {
   contribution_verified: { icon: '✅', color: '#059669', bg: 'rgba(5,150,105,0.10)' },
@@ -29,12 +31,20 @@ function timeAgo(dateStr) {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  useDocumentTitle('Notifications — ContriTrack');
+  const queryClient = useQueryClient();
+
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
   const [filter, setFilter] = useState('all');
+
+  const { data: notifData, isLoading: loading } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => api.get('/notifications?limit=30').then(r => r.data),
+  });
+
+  const notifications = notifData?.notifications || [];
+  const unreadCount   = notifData?.unreadCount   || 0;
+  const hasMore       = notifData?.hasMore        || false;
 
   const TABS = [
     { key: 'all',           label: 'All'           },
@@ -60,48 +70,34 @@ export default function NotificationsPage() {
     return true;
   });
 
-  const fetchNotifications = () => {
-    setLoading(true);
-    api.get('/notifications?limit=30')
-      .then(({ data }) => {
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unreadCount || 0);
-        setHasMore(data.hasMore || false);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
-
-  const loadMore = () => {
+  const loadMore = async () => {
     const last = notifications[notifications.length - 1];
     if (!last || loadingMore) return;
     setLoadingMore(true);
-    api.get(`/notifications?limit=30&before=${last._id}`)
-      .then(({ data }) => {
-        setNotifications(prev => [...prev, ...(data.notifications || [])]);
-        setHasMore(data.hasMore || false);
-      })
-      .catch(console.error)
-      .finally(() => setLoadingMore(false));
+    try {
+      const { data } = await api.get(`/notifications?limit=30&before=${last._id}`);
+      queryClient.setQueryData(['notifications'], (old) => ({
+        ...old,
+        notifications: [...(old?.notifications || []), ...(data.notifications || [])],
+        hasMore: data.hasMore || false,
+      }));
+    } catch { /* ignore */ }
+    finally { setLoadingMore(false); }
   };
-
-  useEffect(() => { fetchNotifications(); }, []);
 
   const markRead = async (id) => {
     await api.patch(`/notifications/${id}/read`).catch(() => {});
-    setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
-    setUnreadCount(c => Math.max(0, c - 1));
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
   const markAllRead = async () => {
     await api.patch('/notifications/read-all').catch(() => {});
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    setUnreadCount(0);
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
   const deleteNotification = async (id) => {
     await api.delete(`/notifications/${id}`).catch(() => {});
-    setNotifications(prev => prev.filter(n => n._id !== id));
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
   return (
