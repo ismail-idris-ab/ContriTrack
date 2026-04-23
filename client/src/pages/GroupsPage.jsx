@@ -4,6 +4,7 @@ import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import useDocumentTitle from '../utils/useDocumentTitle';
 import TemplatePickerStep from '../components/TemplatePickerStep';
 import CircleSettingsDrawer from '../components/CircleSettingsDrawer';
 
@@ -93,6 +94,7 @@ function CopyButton({ text }) {
 }
 
 export default function GroupsPage() {
+  useDocumentTitle('My Circles — ContriTrack');
   const { user } = useAuth();
   const toast = useToast();
   const { groups, activeGroup, selectGroup, loadGroups } = useGroup();

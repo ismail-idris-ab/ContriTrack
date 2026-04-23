@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const PLANS = [
   {
@@ -91,6 +92,7 @@ function XIcon() {
 }
 
 export default function PricingPage() {
+  useDocumentTitle('Pricing — ContriTrack');
   const [cycle, setCycle] = useState('monthly');
   const { user } = useAuth();
   const navigate = useNavigate();

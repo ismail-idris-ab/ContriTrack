@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import useDocumentTitle from '../utils/useDocumentTitle';
 import api from '../api/axios';
 
 const inputStyle = {
@@ -64,6 +65,7 @@ function Alert({ type, message }) {
 }
 
 export default function ProfilePage() {
+  useDocumentTitle('Profile — ContriTrack');
   const { user, login } = useAuth();
   const fileInputRef = useRef(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
