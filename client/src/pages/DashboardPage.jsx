@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import StatusBadge from '../components/StatusBadge';
 import ProofModal from '../components/ProofModal';
+import Skeleton from '../components/Skeleton';
+import useDocumentTitle from '../utils/useDocumentTitle';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -480,35 +483,25 @@ function NoMembersState({ groupName, navigate }) {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
+  useDocumentTitle('Dashboard — ContriTrack');
   const now = new Date();
   const navigate = useNavigate();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear]   = useState(now.getFullYear());
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState('all');
   const { activeGroup, groups, loadingGroups } = useGroup();
   const { user } = useAuth();
 
-  const fetchMembers = async () => {
-    if (!activeGroup) { setMembers([]); setLoading(false); return; }
-    setLoading(true);
-    setError('');
-    try {
-      const { data } = await api.get(`/members?month=${month}&year=${year}&groupId=${activeGroup._id}`);
-      setMembers(data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load members.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: members = [], isLoading: loading, isError, error: fetchError, refetch } = useQuery({
+    queryKey: ['members', activeGroup?._id, month, year],
+    queryFn: () =>
+      api.get(`/members?month=${month}&year=${year}&groupId=${activeGroup._id}`)
+         .then(r => r.data),
+    enabled: !!activeGroup && !loadingGroups,
+  });
 
-  useEffect(() => {
-    if (!loadingGroups) fetchMembers();
-  }, [month, year, activeGroup, loadingGroups]);
+  const error = isError ? (fetchError?.response?.data?.message || 'Failed to load members.') : '';
 
   const prevMonth = () => {
     if (month === 1) { setMonth(12); setYear(y => y - 1); }
@@ -637,20 +630,26 @@ export default function DashboardPage() {
         />
       </div>
 
-      {loading ? (
-        <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 14, marginBottom: 20 }}>
+      {loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 14, marginBottom: 24 }}>
           {[1,2,3,4].map(i => (
-            <div key={i} style={{ height: 120, borderRadius: 'var(--ct-radius)', background: '#f0ede6', animation: 'shimmer 1.4s ease infinite', backgroundSize: '400px 100%', backgroundImage: 'linear-gradient(90deg, #f0ede6 0%, #e8e5de 50%, #f0ede6 100%)' }} />
+            <div key={i} style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: 'var(--ct-shadow)', position: 'relative' }}>
+              <Skeleton height={10} width={80} style={{ marginBottom: 16 }} />
+              <Skeleton height={28} width={120} style={{ marginBottom: 8 }} />
+              <Skeleton height={10} width={100} />
+            </div>
           ))}
         </div>
-      ) : error ? (
+      )}
+      {!loading && error && (
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: 13.5, color: 'var(--ct-rose)', marginBottom: 14 }}>{error}</div>
-          <button onClick={fetchMembers} style={{ padding: '8px 20px', borderRadius: 8, border: '1.5px solid rgba(0,0,0,0.1)', background: '#fff', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}>
+          <button onClick={() => refetch()} style={{ padding: '8px 20px', borderRadius: 8, border: '1.5px solid rgba(0,0,0,0.1)', background: '#fff', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}>
             Try again
           </button>
         </div>
-      ) : (
+      )}
+      {!loading && !error && (
         <>
           {/* Stat cards */}
           <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 14, marginBottom: 18 }}>
