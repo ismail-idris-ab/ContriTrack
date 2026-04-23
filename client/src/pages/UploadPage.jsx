@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 
@@ -35,13 +34,13 @@ function compressImage(file, maxDimension = 1200, quality = 0.82) {
 }
 
 export default function UploadPage() {
-  const navigate = useNavigate();
-  const { groups } = useGroup();
+  const { groups, activeGroup: selectedGroup } = useGroup();
   const now = new Date();
   const [form, setForm] = useState({
     amount: '',
     month: now.getMonth() + 1,
     year: now.getFullYear(),
+    cycleNumber: 1,
     note: '',
   });
   const [file, setFile] = useState(null);
@@ -54,20 +53,7 @@ export default function UploadPage() {
   const [myContributions, setMyContributions] = useState([]);
   const [loadingContributions, setLoadingContributions] = useState(true);
 
-  // Local group selection — independent of the global sidebar context
-  const [selectedGroupId, setSelectedGroupId] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('activeGroup'))?._id ?? null; }
-    catch { return null; }
-  });
-
-  const selectedGroup = groups.find(g => String(g._id) === String(selectedGroupId)) ?? null;
-
-  // Auto-select first group when none is selected and groups have loaded
-  useEffect(() => {
-    if (groups.length > 0 && !selectedGroupId) {
-      setSelectedGroupId(String(groups[0]._id));
-    }
-  }, [groups]);
+  const selectedGroupId = selectedGroup?._id ?? null;
 
   // Fetch existing submissions on mount
   useEffect(() => {
@@ -77,10 +63,28 @@ export default function UploadPage() {
       .finally(() => setLoadingContributions(false));
   }, []);
 
+  const cyclesPerMonth = selectedGroup?.cyclesPerMonth ?? 1;
+
+  // Auto-select the next unsubmitted cycle silently whenever group/month/year changes
+  useEffect(() => {
+    if (loadingContributions) return;
+    for (let n = 1; n <= cyclesPerMonth; n++) {
+      const taken = myContributions.some(c =>
+        c.month === Number(form.month) &&
+        c.year  === Number(form.year)  &&
+        (c.cycleNumber ?? 1) === n &&
+        String(c.group?._id ?? c.group ?? null) === String(selectedGroupId ?? null)
+      );
+      if (!taken) { setForm(prev => ({ ...prev, cycleNumber: n })); return; }
+    }
+    setForm(prev => ({ ...prev, cycleNumber: cyclesPerMonth }));
+  }, [selectedGroupId, form.month, form.year, myContributions, loadingContributions, cyclesPerMonth]);
+
   // Derived — no useEffect, no race condition
   const alreadySubmitted = !loadingContributions && myContributions.some(c =>
-    c.month === Number(form.month) &&
-    c.year  === Number(form.year)  &&
+    c.month        === Number(form.month)       &&
+    c.year         === Number(form.year)        &&
+    (c.cycleNumber ?? 1) === Number(form.cycleNumber) &&
     String(c.group?._id ?? c.group ?? null) === String(selectedGroupId ?? null)
   );
 
@@ -113,7 +117,7 @@ export default function UploadPage() {
     setError('');
     setSuccess('');
     // Hard guards — block every submit path including Enter key
-    if (groups.length > 0 && !selectedGroupId) return setError('Please select a circle before submitting.');
+    if (!selectedGroupId) return setError('Please select a circle before submitting.');
     if (alreadySubmitted) return setError(`Already submitted for ${MONTHS[Number(form.month) - 1]} ${form.year}${selectedGroup ? ` — ${selectedGroup.name}` : ''}.`);
     if (!file) return setError('Please select a proof of payment image');
     if (!form.amount || Number(form.amount) <= 0) return setError('Enter a valid amount');
@@ -123,6 +127,7 @@ export default function UploadPage() {
     formData.append('amount', form.amount);
     formData.append('month', form.month);
     formData.append('year', form.year);
+    formData.append('cycleNumber', form.cycleNumber);
     formData.append('note', form.note);
     if (selectedGroupId) formData.append('groupId', selectedGroupId);
 
@@ -132,7 +137,7 @@ export default function UploadPage() {
       setMyContributions(prev => [...prev, newContribution]);
       setSuccess('Proof submitted! Awaiting admin review.');
       const today = new Date();
-      setForm({ amount: '', month: today.getMonth() + 1, year: today.getFullYear(), note: '' });
+      setForm({ amount: '', month: today.getMonth() + 1, year: today.getFullYear(), cycleNumber: 1, note: '' });
       if (preview) URL.revokeObjectURL(preview);
       setFile(null);
       setPreview(null);
@@ -497,63 +502,6 @@ export default function UploadPage() {
 
       <div style={{ maxWidth: 520, margin: '0 auto', fontFamily: 'var(--font-sans)' }}>
 
-        {/* Circle picker — shown when member belongs to 2+ groups */}
-        {groups.length > 1 && (
-          <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
-              Select Circle
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {groups.map(g => {
-                const isSelected = String(g._id) === String(selectedGroupId);
-                const isDone = !loadingContributions && myContributions.some(c =>
-                  c.month === Number(form.month) &&
-                  c.year  === Number(form.year)  &&
-                  String(c.group?._id ?? c.group ?? null) === String(g._id)
-                );
-                return (
-                  <button
-                    key={g._id}
-                    type="button"
-                    onClick={() => { setSelectedGroupId(g._id); setError(''); }}
-                    style={{
-                      padding: '9px 16px', borderRadius: 10, cursor: isDone ? 'default' : 'pointer',
-                      border: isSelected ? '2px solid var(--ct-gold)' : '1.5px solid rgba(255,255,255,0.1)',
-                      background: isSelected ? 'rgba(212,160,23,0.12)' : 'rgba(255,255,255,0.04)',
-                      fontFamily: 'var(--font-sans)', transition: 'all 0.15s',
-                      display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2,
-                      minWidth: 120,
-                    }}
-                  >
-                    <span style={{ fontSize: 13, fontWeight: 700, color: isSelected ? 'var(--ct-gold)' : 'rgba(255,255,255,0.75)' }}>
-                      {g.name}
-                    </span>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: isDone ? '#34d399' : 'rgba(255,255,255,0.3)' }}>
-                      {isDone ? '✓ Submitted' : 'Not submitted'}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Single group banner */}
-        {groups.length === 1 && selectedGroup && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 16px', borderRadius: 10, marginBottom: 16,
-            background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.2)',
-          }}>
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--ct-gold)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
-              Submitting for: <strong style={{ color: 'rgba(255,255,255,0.9)' }}>{selectedGroup.name}</strong>
-            </span>
-          </div>
-        )}
-
         {error && (
           <div className="upload-alert error">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -631,7 +579,7 @@ export default function UploadPage() {
             </div>
 
             {/* Summary row */}
-            <div className="upload-summary" style={{ gridTemplateColumns: selectedGroup ? 'auto 1fr 1fr 1fr' : 'auto 1fr 1fr' }}>
+            <div className="upload-summary" style={{ gridTemplateColumns: `auto 1fr 1fr${selectedGroup ? ' 1fr' : ''}` }}>
               <div className="upload-summary-tag">Summary</div>
               <div className="upload-summary-cell">
                 <div className="upload-summary-cell-label">Period</div>
@@ -718,8 +666,8 @@ export default function UploadPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={!file || loading || compressing || alreadySubmitted || (groups.length > 0 && !selectedGroupId)}
-              className={`upload-btn ${file && !loading && !compressing && !alreadySubmitted && !(groups.length > 0 && !selectedGroupId) ? 'active' : 'inactive'}`}
+              disabled={!file || loading || compressing || alreadySubmitted || (!selectedGroupId)}
+              className={`upload-btn ${file && !loading && !compressing && !alreadySubmitted && !(!selectedGroupId) ? 'active' : 'inactive'}`}
             >
               {(loading || compressing) && <span className="upload-spinner" />}
               {compressing ? 'Compressing image…' : loading ? 'Uploading to cloud…' : 'Submit Payment Proof'}

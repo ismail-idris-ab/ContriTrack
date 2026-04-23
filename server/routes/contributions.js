@@ -39,7 +39,7 @@ const upload = multer({ storage: cloudinaryStorage, fileFilter, limits: { fileSi
 router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'Proof image is required' });
 
-  const { amount, month, year, note, groupId } = req.body;
+  const { amount, month, year, note, groupId, cycleNumber } = req.body;
 
   if (!amount || !month || !year) {
     return res.status(400).json({ message: 'Amount, month, and year are required' });
@@ -48,6 +48,7 @@ router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res
   const parsedAmount = Number(amount);
   const parsedMonth = Number(month);
   const parsedYear = Number(year);
+  const parsedCycle = Number(cycleNumber) || 1;
 
   if (isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > 100_000_000) {
     return res.status(400).json({ message: 'Amount must be a positive number' });
@@ -65,27 +66,33 @@ router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res
     : '';
 
   try {
-    // Fetch group settings to determine if submission is late
-    let dueDay = 25, graceDays = 3;
+    // Fetch group settings to determine if submission is late and validate cycle
+    let dueDay = 25, graceDays = 3, cyclesPerMonth = 1;
     if (groupId) {
-      const grp = await Group.findById(groupId).select('dueDay graceDays isActive');
+      const grp = await Group.findById(groupId).select('dueDay graceDays isActive cyclesPerMonth');
       if (!grp || !grp.isActive) {
         return res.status(404).json({ message: 'Group not found' });
       }
-      dueDay    = grp.dueDay    ?? 25;
-      graceDays = grp.graceDays ?? 3;
+      dueDay         = grp.dueDay         ?? 25;
+      graceDays      = grp.graceDays      ?? 3;
+      cyclesPerMonth = grp.cyclesPerMonth ?? 1;
+    }
+
+    if (!Number.isInteger(parsedCycle) || parsedCycle < 1 || parsedCycle > cyclesPerMonth) {
+      return res.status(400).json({ message: `Cycle number must be between 1 and ${cyclesPerMonth}` });
     }
 
     const late = isLateSubmission(new Date(), parsedYear, parsedMonth, dueDay, graceDays);
 
     const data = {
-      user:       req.user._id,
-      amount:     parsedAmount,
-      month:      parsedMonth,
-      year:       parsedYear,
-      note:       safeNote,
-      proofImage: req.file.path,
-      isLate:     late,
+      user:        req.user._id,
+      amount:      parsedAmount,
+      month:       parsedMonth,
+      year:        parsedYear,
+      cycleNumber: parsedCycle,
+      note:        safeNote,
+      proofImage:  req.file.path,
+      isLate:      late,
     };
     if (groupId) data.group = groupId;
 
@@ -111,7 +118,7 @@ router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res
     res.status(201).json(contribution);
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(400).json({ message: 'You already submitted a contribution for this month' });
+      return res.status(400).json({ message: 'You already submitted a contribution for this cycle' });
     }
     console.error('[contributions]', err.message);
     res.status(500).json({ message: 'Something went wrong. Please try again.' });

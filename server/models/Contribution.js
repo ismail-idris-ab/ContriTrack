@@ -27,13 +27,14 @@ const contributionSchema = new mongoose.Schema(
         _id: false,
       }
     ],
+    cycleNumber:   { type: Number, default: 1, min: 1 },
     isLate:        { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-// Unique: one submission per user per month/year (per group if set)
-contributionSchema.index({ user: 1, group: 1, month: 1, year: 1 }, { unique: true });
+// Unique: one submission per user per cycle within a month (per group if set)
+contributionSchema.index({ user: 1, group: 1, month: 1, year: 1, cycleNumber: 1 }, { unique: true });
 
 // Query optimization indexes
 contributionSchema.index({ month: 1, year: 1 });
