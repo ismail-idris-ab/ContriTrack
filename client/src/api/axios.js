@@ -2,7 +2,10 @@ import axios from 'axios';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const api = axios.create({ baseURL: `${BASE}/api` });
+const api = axios.create({
+  baseURL: `${BASE}/api`,
+  timeout: 30000, // 30s — gives Render cold start time to wake up
+});
 
 // Attach JWT token to every request automatically
 api.interceptors.request.use((config) => {
