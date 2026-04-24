@@ -15,9 +15,19 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow Cloudinary images
 }));
 
-// CORS — only allow the configured client origin
+// CORS — allow production client and localhost dev
+const ALLOWED_ORIGINS = [
+  process.env.CLIENT_URL,
+  'http://localhost:3000',
+  'http://localhost:5173',
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: (origin, cb) => {
+    // allow server-to-server requests (no origin) and listed origins
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
