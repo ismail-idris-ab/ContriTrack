@@ -262,19 +262,36 @@ export default function Topbar({ onMenuClick }) {
 
       {/* Left — hamburger + page title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: '1 1 0' }}>
-        <button
-          onClick={onMenuClick}
-          className="md:hidden"
-          style={{
-            display: 'flex', flexDirection: 'column', gap: 4.5,
-            padding: 7, background: 'transparent', border: 0, cursor: 'pointer', flexShrink: 0,
-            borderRadius: 8,
-          }}
-        >
-          <span style={{ display: 'block', width: 18, height: 1.5, background: '#44445a', borderRadius: 2 }} />
-          <span style={{ display: 'block', width: 14, height: 1.5, background: '#44445a', borderRadius: 2 }} />
-          <span style={{ display: 'block', width: 18, height: 1.5, background: '#44445a', borderRadius: 2 }} />
-        </button>
+        {location.pathname === '/dashboard' ? (
+          <button
+            onClick={onMenuClick}
+            className="md:hidden"
+            style={{
+              display: 'flex', flexDirection: 'column', gap: 4.5,
+              padding: 7, background: 'transparent', border: 0, cursor: 'pointer', flexShrink: 0,
+              borderRadius: 8,
+            }}
+          >
+            <span style={{ display: 'block', width: 18, height: 1.5, background: '#44445a', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 14, height: 1.5, background: '#44445a', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 18, height: 1.5, background: '#44445a', borderRadius: 2 }} />
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate(-1)}
+            className="md:hidden"
+            aria-label="Go back"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 7, background: 'transparent', border: 0, cursor: 'pointer', flexShrink: 0,
+              borderRadius: 8,
+            }}
+          >
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#44445a" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+        )}
 
         <div key={location.pathname} className="topbar-title" style={{ minWidth: 0 }}>
           <h1 style={{
