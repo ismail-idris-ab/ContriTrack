@@ -79,7 +79,7 @@ function requireFeature(feature) {
       return res.status(403).json({
         message: `The "${feature}" feature requires a higher plan. Upgrade to access it.`,
         code: 'FEATURE_NOT_AVAILABLE',
-        requiredPlan: feature === 'exports' || feature === 'trustScoring' ? 'coordinator' : 'pro',
+        requiredPlan: feature === 'trustScoring' ? 'coordinator' : 'pro',
         currentPlan: plan,
       });
     }
