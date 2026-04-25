@@ -4,14 +4,14 @@ const User  = require('../models/User');
 // Plan limits
 const LIMITS = {
   free:        { groups: 1,        members: 10,       historyMonths: 6        },
-  pro:         { groups: 10,       members: Infinity, historyMonths: Infinity },
+  pro:         { groups: 4,        members: Infinity, historyMonths: Infinity },
   coordinator: { groups: Infinity, members: Infinity, historyMonths: Infinity },
 };
 
 // Features available per plan
 const FEATURES = {
   free:        { reminders: false, exports: false, penaltyTracking: false, trustScoring: false, reports: false },
-  pro:         { reminders: true,  exports: false, penaltyTracking: true,  trustScoring: false, reports: true  },
+  pro:         { reminders: true,  exports: true,  penaltyTracking: true,  trustScoring: false, reports: true  },
   coordinator: { reminders: true,  exports: true,  penaltyTracking: true,  trustScoring: true,  reports: true  },
 };
 
@@ -34,8 +34,8 @@ async function guardGroupCreate(req, res, next) {
 
     if (count >= limit) {
       const msg = plan === 'free'
-        ? 'Free plan allows 1 group. Upgrade to Pro to create more.'
-        : `Your ${plan} plan allows up to ${limit} groups.`;
+        ? 'Free plan allows 1 circle. Upgrade to Pro to create up to 4.'
+        : `Your ${plan} plan allows up to ${limit} circles.`;
       return res.status(403).json({ message: msg, code: 'GROUP_LIMIT_REACHED', plan });
     }
 
