@@ -14,7 +14,6 @@ const proFeatures = [
   "Advanced automation & reminders",
   "Penalty tracking & health scoring",
   "Multi-group overview dashboard",
-  "Priority support",
 ];
 
 export default function PricingSection({ navigate }) {
