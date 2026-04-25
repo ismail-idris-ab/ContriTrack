@@ -7,13 +7,14 @@ const freeFeatures = [
 ];
 
 const proFeatures = [
-  "Unlimited Circles",
-  "Multi-group overview dashboard",
+  "Up to 4 Circles",
+  "Unlimited members",
+  "Contribution tracking + receipt verification",
+  "CSV / PDF exports",
   "Advanced automation & reminders",
-  "Full PDF / CSV exports",
-  "Admin fee tools (charge management fee)",
+  "Penalty tracking & health scoring",
+  "Multi-group overview dashboard",
   "Priority support",
-  "Advanced penalties & health scoring",
 ];
 
 export default function PricingSection({ navigate }) {
@@ -247,7 +248,7 @@ export default function PricingSection({ navigate }) {
                   lineHeight: 1,
                 }}
               >
-                ₦4,500
+                ₦3,500
               </div>
               <div
                 style={{ fontSize: 14, color: "#8888a4", marginBottom: 7 }}
@@ -314,7 +315,7 @@ export default function PricingSection({ navigate }) {
               position: "relative",
             }}
           >
-            Go Pro — Only ₦4,500/month
+            Go Pro — Only ₦3,500/month
           </button>
           <p
             style={{
