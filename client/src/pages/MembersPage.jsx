@@ -56,7 +56,7 @@ function StatusPill({ status }) {
 }
 
 export default function MembersPage() {
-  useDocumentTitle('Members — ContriTrack');
+  useDocumentTitle('Members — ROTARA');
   const now = new Date();
   const [search,  setSearch]  = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

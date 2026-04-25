@@ -12,7 +12,7 @@ import FinalCTASection from '../components/landing/FinalCTASection';
 import LandingFooter from '../components/landing/LandingFooter';
 
 export default function LandingPage() {
-  useDocumentTitle('ContriTrack — Ajo & Savings Circle Manager for Nigeria');
+  useDocumentTitle('ROTARA — Ajo & Savings Circle Manager for Nigeria');
   const navigate = useNavigate();
   const { user } = useAuth();
 

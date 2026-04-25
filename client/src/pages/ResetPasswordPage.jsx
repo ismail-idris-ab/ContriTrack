@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
             }}>C</span>
           </div>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--ct-text-1)' }}>
-            ContriTrack
+            ROTARA
           </span>
         </div>
 

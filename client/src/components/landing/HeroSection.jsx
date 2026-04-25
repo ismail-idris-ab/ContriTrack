@@ -252,7 +252,7 @@ export default function HeroSection({ navigate, scrollTo }) {
                 letterSpacing: "-0.01em",
               }}
             >
-              ContriTrack
+              ROTARA
             </span> */}
           </div>
 

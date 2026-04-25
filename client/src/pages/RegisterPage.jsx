@@ -102,7 +102,7 @@ export default function RegisterPage() {
             color: 'var(--ct-text-1)',
             letterSpacing: '-0.02em',
             marginBottom: 6,
-          }}>Join ContriTrack</h1>
+          }}>Join ROTARA</h1>
           <p style={{ fontSize: 14, color: 'var(--ct-text-3)' }}>Create your account in seconds</p>
         </div>
 

@@ -257,7 +257,7 @@ export default function FeaturesSection({ navigate: navigateProp, user }) {
         <div
           style={{ textAlign: "center", maxWidth: 680, margin: "0 auto 64px" }}
         >
-          <span className="section-tag">Why ContriTrack</span>
+          <span className="section-tag">Why ROTARA</span>
           <h2
             style={{
               fontFamily: "var(--font-display)",
@@ -505,7 +505,7 @@ export default function FeaturesSection({ navigate: navigateProp, user }) {
                   marginBottom: 28,
                 }}
               >
-                Set rules once. ContriTrack tracks deadlines, applies penalties
+                Set rules once. ROTARA tracks deadlines, applies penalties
                 automatically, and flags missed payments.
               </p>
             </div>
@@ -776,7 +776,7 @@ export default function FeaturesSection({ navigate: navigateProp, user }) {
             position: "relative",
           }}
         >
-          <span className="section-tag">The ContriTrack Difference</span>
+          <span className="section-tag">The ROTARA Difference</span>
           <h2
             className="problem-h2"
             style={{
@@ -837,7 +837,7 @@ export default function FeaturesSection({ navigate: navigateProp, user }) {
                   color: "#e11d48",
                 }}
               >
-                Before ContriTrack
+                Before ROTARA
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -910,7 +910,7 @@ export default function FeaturesSection({ navigate: navigateProp, user }) {
                   color: "var(--ct-gold)",
                 }}
               >
-                With ContriTrack
+                With ROTARA
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1214,7 +1214,7 @@ export default function FeaturesSection({ navigate: navigateProp, user }) {
                 <span style={{ color: "var(--ct-emerald)", fontWeight: 700 }}>
                   {fmt(yearlyTotal)}
                 </span>{" "}
-                moving through your circle every year — ContriTrack ensures
+                moving through your circle every year — ROTARA ensures
                 every naira is accounted for.
               </p>
               <button

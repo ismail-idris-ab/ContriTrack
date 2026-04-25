@@ -315,7 +315,7 @@ export default function SubscriptionPage() {
           color: '#4f46e5',
           fontSize: 14, fontWeight: 600,
         }}>
-          You're on our highest plan. Thanks for supporting ContriTrack!
+          You're on our highest plan. Thanks for supporting ROTARA!
         </div>
       )}
 

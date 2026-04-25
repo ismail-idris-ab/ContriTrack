@@ -1,7 +1,7 @@
 const testimonials = [
   {
     quote:
-      "ContriTrack saved me hours every month. My members now trust the system more than they trust me!",
+      "ROTARA saved me hours every month. My members now trust the system more than they trust me!",
     name: "Chisom A.",
     role: "Ajo Organizer, Lagos",
     color: "#4f46e5",
@@ -23,7 +23,7 @@ const testimonials = [
 
 const featuredQuote = {
   quote:
-    "ContriTrack transformed how our 40-member Ajo operates. What used to take three hours of WhatsApp chasing now takes under ten minutes. Every naira is accounted for — and my members finally trust the system.",
+    "ROTARA transformed how our 40-member Ajo operates. What used to take three hours of WhatsApp chasing now takes under ten minutes. Every naira is accounted for — and my members finally trust the system.",
   name: "Fatima O.",
   role: "Admin, Lagos Women's Circle",
   avatarColor: "#4f46e5",

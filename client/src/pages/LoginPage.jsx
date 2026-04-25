@@ -104,7 +104,7 @@ export default function LoginPage() {
             letterSpacing: '-0.02em',
             marginBottom: 6,
           }}>Welcome back</h1>
-          <p style={{ fontSize: 14, color: 'var(--ct-text-3)' }}>Sign in to ContriTrack</p>
+          <p style={{ fontSize: 14, color: 'var(--ct-text-3)' }}>Sign in to ROTARA</p>
         </div>
 
         {/* Form */}

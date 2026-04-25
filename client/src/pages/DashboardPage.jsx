@@ -483,7 +483,7 @@ function NoMembersState({ groupName, navigate }) {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  useDocumentTitle('Dashboard — ContriTrack');
+  useDocumentTitle('Dashboard — ROTARA');
   const now = new Date();
   const navigate = useNavigate();
   const [month, setMonth] = useState(now.getMonth() + 1);

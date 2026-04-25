@@ -25,7 +25,7 @@ const CYCLE_STATUS = {
 };
 
 export default function MyPaymentsPage() {
-  useDocumentTitle('My Payments — ContriTrack');
+  useDocumentTitle('My Payments — ROTARA');
   const navigate = useNavigate();
   const { groups, selectGroup } = useGroup();
   const queryClient = useQueryClient();

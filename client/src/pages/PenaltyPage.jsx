@@ -41,7 +41,7 @@ const labelStyle = {
 };
 
 export default function PenaltyPage() {
-  useDocumentTitle('Penalties — ContriTrack');
+  useDocumentTitle('Penalties — ROTARA');
   const { activeGroup } = useGroup();
   const { user }        = useAuth();
   const toast           = useToast();

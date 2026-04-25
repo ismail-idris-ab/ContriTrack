@@ -94,7 +94,7 @@ router.post('/register', authLimiter, async (req, res) => {
     Notification.create({
       user:  user._id,
       type:  'system',
-      title: 'Welcome to ContriTrack!',
+      title: 'Welcome to ROTARA!',
       body:  'Start by joining or creating a savings circle.',
       link:  '/groups',
     }).catch(() => {});
@@ -196,7 +196,7 @@ router.post('/google', authLimiter, async (req, res) => {
         Notification.create({
           user:  user._id,
           type:  'system',
-          title: 'Welcome to ContriTrack!',
+          title: 'Welcome to ROTARA!',
           body:  'Start by joining or creating a savings circle.',
           link:  '/groups',
         }).catch(() => {});

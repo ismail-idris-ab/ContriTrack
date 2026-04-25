@@ -206,7 +206,7 @@ export default function WhatsAppPage() {
             Automated WhatsApp Reminders via Termii
           </p>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--ct-text-3)', lineHeight: 1.65 }}>
-            ContriTrack checks who hasn't submitted a contribution for the selected month and sends a
+            ROTARA checks who hasn't submitted a contribution for the selected month and sends a
             personalised WhatsApp message to each unpaid member with a phone number on file.
             Members without phone numbers are skipped.
           </p>

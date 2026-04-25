@@ -6,7 +6,7 @@
  *
  * Env vars required:
  *   TERMII_API_KEY   — Termii secret key
- *   TERMII_SENDER_ID — Alphanumeric sender ID approved by Termii (default: "ContriTrack")
+ *   TERMII_SENDER_ID — Alphanumeric sender ID approved by Termii (default: "ROTARA")
  *
  * Message channel: whatsapp (falls back to generic if WhatsApp not enabled on plan)
  */
@@ -71,13 +71,13 @@ async function sendPaymentReminder(recipient, data) {
     `Hello ${name}! 👋\n\n` +
     `This is a friendly reminder that your *${groupName}* contribution for *${monthName} ${year}* ` +
     `(₦${Number(amount).toLocaleString()}) is due.\n\n` +
-    `Please upload your payment proof on ContriTrack to confirm your payment.\n\n` +
-    `_ContriTrack — savings made transparent_ 🌟`;
+    `Please upload your payment proof on ROTARA to confirm your payment.\n\n` +
+    `_ROTARA — savings made transparent_ 🌟`;
 
   const body = {
     api_key:   process.env.TERMII_API_KEY,
     to:        e164,
-    from:      process.env.TERMII_SENDER_ID || 'ContriTrack',
+    from:      process.env.TERMII_SENDER_ID || 'ROTARA',
     sms:       message,
     type:      'unicode',
     channel:   'whatsapp', // Termii will fallback to generic if WhatsApp not enabled

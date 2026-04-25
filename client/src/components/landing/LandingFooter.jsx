@@ -85,7 +85,7 @@ export default function LandingFooter({ navigate, scrollTo }) {
                   letterSpacing: "-0.01em",
                 }}
               >
-                ContriTrack
+                ROTARA
               </span>
             </div>
             <p
@@ -202,7 +202,7 @@ export default function LandingFooter({ navigate, scrollTo }) {
           }}
         >
           <div style={{ fontSize: 12, color: "#2a2a40" }}>
-            © {new Date().getFullYear()} ContriTrack. All rights reserved.
+            © {new Date().getFullYear()} ROTARA. All rights reserved.
           </div>
           <div style={{ display: "flex", gap: 24 }}>
             {["Privacy Policy", "Terms of Service", "Support"].map(

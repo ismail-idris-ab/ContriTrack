@@ -86,7 +86,7 @@ export default function LandingNavbar({ scrollTo }) {
               letterSpacing: "-0.01em",
             }}
           >
-            ContriTrack
+            ROTARA
           </span>
         </button>
 

@@ -92,7 +92,7 @@ function XIcon() {
 }
 
 export default function PricingPage() {
-  useDocumentTitle('Pricing — ContriTrack');
+  useDocumentTitle('Pricing — ROTARA');
   const [cycle, setCycle] = useState('monthly');
   const { user } = useAuth();
   const navigate = useNavigate();

@@ -23,7 +23,7 @@ const isGroupAdmin = (grp, userId) =>
   grp?.members?.some(m => String(m.user?._id || m.user) === String(userId) && m.role === 'admin');
 
 function ShareButton({ groupName, inviteCode }) {
-  const message = `Join my "${groupName}" savings circle on ContriTrack!\nUse invite code: ${inviteCode}`;
+  const message = `Join my "${groupName}" savings circle on ROTARA!\nUse invite code: ${inviteCode}`;
 
   const handleShare = () => {
     if (navigator.share) {
@@ -94,7 +94,7 @@ function CopyButton({ text }) {
 }
 
 export default function GroupsPage() {
-  useDocumentTitle('My Circles — ContriTrack');
+  useDocumentTitle('My Circles — ROTARA');
   const { user } = useAuth();
   const toast = useToast();
   const { groups, activeGroup, selectGroup, loadGroups } = useGroup();

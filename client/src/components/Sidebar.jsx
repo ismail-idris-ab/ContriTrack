@@ -333,7 +333,7 @@ export default function Sidebar({ onNavigate, isMobile }) {
               fontFamily: 'var(--font-display)',
               color: '#ede8de', fontWeight: 700,
               fontSize: 15.5, lineHeight: 1.2, letterSpacing: '-0.01em',
-            }}>ContriTrack</div>
+            }}>ROTARA</div>
             <div style={{
               color: '#52527a', fontSize: 9, fontWeight: 700,
               letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2,

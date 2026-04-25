@@ -65,7 +65,7 @@ function Alert({ type, message }) {
 }
 
 export default function ProfilePage() {
-  useDocumentTitle('Profile — ContriTrack');
+  useDocumentTitle('Profile — ROTARA');
   const { user, login } = useAuth();
   const fileInputRef = useRef(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);

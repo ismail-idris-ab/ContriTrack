@@ -31,7 +31,7 @@ function timeAgo(dateStr) {
 }
 
 export default function NotificationsPage() {
-  useDocumentTitle('Notifications — ContriTrack');
+  useDocumentTitle('Notifications — ROTARA');
   const queryClient = useQueryClient();
 
   const [loadingMore, setLoadingMore] = useState(false);

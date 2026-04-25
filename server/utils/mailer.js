@@ -22,7 +22,7 @@ function makeTransporter() {
 }
 
 const transporter = makeTransporter();
-const FROM = process.env.EMAIL_FROM || '"ContriTrack" <noreply@contritrack.app>';
+const FROM = process.env.EMAIL_FROM || '"ROTARA" <noreply@contritrack.app>';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -59,7 +59,7 @@ async function sendStatusNotification(user, contribution) {
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px 20px">
       <div style="background:#0f0f14;border-radius:12px;padding:20px 24px;margin-bottom:24px">
-        <span style="font-size:20px;font-weight:700;color:#d4a017;letter-spacing:-0.01em">ContriTrack</span>
+        <span style="font-size:20px;font-weight:700;color:#d4a017;letter-spacing:-0.01em">ROTARA</span>
       </div>
 
       <h2 style="font-size:22px;font-weight:700;color:#14141e;margin:0 0 12px">
@@ -89,7 +89,7 @@ async function sendStatusNotification(user, contribution) {
 
       <hr style="border:none;border-top:1px solid #e8e4dc;margin:24px 0">
       <p style="color:#8888a4;font-size:12px;margin:0">
-        This is an automated message from ContriTrack. Please do not reply.
+        This is an automated message from ROTARA. Please do not reply.
       </p>
     </div>
   `;
@@ -108,12 +108,12 @@ async function sendPasswordResetEmail(user, token) {
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px 20px">
       <div style="background:#0f0f14;border-radius:12px;padding:20px 24px;margin-bottom:24px">
-        <span style="font-size:20px;font-weight:700;color:#d4a017;letter-spacing:-0.01em">ContriTrack</span>
+        <span style="font-size:20px;font-weight:700;color:#d4a017;letter-spacing:-0.01em">ROTARA</span>
       </div>
       <h2 style="font-size:22px;font-weight:700;color:#14141e;margin:0 0 12px">Reset your password</h2>
       <p style="color:#44445a;font-size:14px;line-height:1.6;margin:0 0 20px">
         Hi <strong>${user.name}</strong>,<br>
-        We received a request to reset your ContriTrack password. Click the button below to choose a new password.
+        We received a request to reset your ROTARA password. Click the button below to choose a new password.
         This link expires in <strong>1 hour</strong>.
       </p>
       <a href="${resetUrl}"
@@ -129,11 +129,11 @@ async function sendPasswordResetEmail(user, token) {
         If you didn't request a password reset, you can safely ignore this email.
       </p>
       <hr style="border:none;border-top:1px solid #e8e4dc;margin:24px 0">
-      <p style="color:#8888a4;font-size:12px;margin:0">This is an automated message from ContriTrack. Please do not reply.</p>
+      <p style="color:#8888a4;font-size:12px;margin:0">This is an automated message from ROTARA. Please do not reply.</p>
     </div>
   `;
 
-  await sendMail({ to: user.email, subject: 'Reset your ContriTrack password', html });
+  await sendMail({ to: user.email, subject: 'Reset your ROTARA password', html });
 }
 
 /**
@@ -145,12 +145,12 @@ async function sendOtpEmail(user, otp) {
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px 20px">
       <div style="background:#0f0f14;border-radius:12px;padding:20px 24px;margin-bottom:24px">
-        <span style="font-size:20px;font-weight:700;color:#d4a017;letter-spacing:-0.01em">ContriTrack</span>
+        <span style="font-size:20px;font-weight:700;color:#d4a017;letter-spacing:-0.01em">ROTARA</span>
       </div>
       <h2 style="font-size:22px;font-weight:700;color:#14141e;margin:0 0 12px">Verify your email address</h2>
       <p style="color:#44445a;font-size:14px;line-height:1.6;margin:0 0 24px">
         Hi <strong>${user.name}</strong>,<br>
-        Enter this code on the ContriTrack verification page to activate your account.
+        Enter this code on the ROTARA verification page to activate your account.
         It expires in <strong>10 minutes</strong>.
       </p>
 
@@ -160,14 +160,14 @@ async function sendOtpEmail(user, otp) {
       </div>
 
       <p style="color:#8888a4;font-size:13px;margin:0 0 4px">
-        If you didn't create a ContriTrack account, you can safely ignore this email.
+        If you didn't create a ROTARA account, you can safely ignore this email.
       </p>
       <hr style="border:none;border-top:1px solid #e8e4dc;margin:24px 0">
-      <p style="color:#8888a4;font-size:12px;margin:0">This is an automated message from ContriTrack. Please do not reply.</p>
+      <p style="color:#8888a4;font-size:12px;margin:0">This is an automated message from ROTARA. Please do not reply.</p>
     </div>
   `;
 
-  await sendMail({ to: user.email, subject: 'Your ContriTrack verification code', html });
+  await sendMail({ to: user.email, subject: 'Your ROTARA verification code', html });
 }
 
 module.exports = { sendMail, sendStatusNotification, sendPasswordResetEmail, sendOtpEmail };

@@ -212,7 +212,7 @@ export default function Topbar({ onMenuClick }) {
   const { user, logout } = useAuth();
   const location  = useLocation();
   const navigate  = useNavigate();
-  const page = PAGE_TITLES[location.pathname] || { title: 'ContriTrack', sub: '' };
+  const page = PAGE_TITLES[location.pathname] || { title: 'ROTARA', sub: '' };
 
   const [unreadCount,   setUnreadCount]   = useState(0);
   const [bellHovered,   setBellHovered]   = useState(false);
