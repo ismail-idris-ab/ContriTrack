@@ -59,7 +59,7 @@ async function guardMemberAdd(req, res, next) {
 
     if (limit !== Infinity && group.members.length >= limit) {
       return res.status(403).json({
-        message: `This group has reached the ${limit}-member limit on the Free plan. The group admin must upgrade to Pro to add more members.`,
+        message: `This circle has reached the ${limit}-member limit on the Free plan. The circle admin must upgrade to Pro to add more members.`,
         code: 'MEMBER_LIMIT_REACHED',
         plan,
       });
