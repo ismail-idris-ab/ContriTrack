@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 
@@ -685,7 +686,7 @@ export default function UploadPage() {
                   )}
                 </div>
               </div>
-              <a href="/payments" style={{
+              <Link to="/my-payments" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '8px 14px', borderRadius: 8,
                 background: 'rgba(212,160,23,0.1)', border: '1px solid rgba(212,160,23,0.25)',
@@ -695,7 +696,7 @@ export default function UploadPage() {
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
                 </svg>
                 Go to My Payments to resubmit
-              </a>
+              </Link>
             </div>
           )}
 
