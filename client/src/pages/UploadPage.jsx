@@ -155,383 +155,416 @@ export default function UploadPage() {
   return (
     <>
       <style>{`
-        .up-root {
-          max-width: 520px;
+        .up2-page {
+          max-width: 600px;
           margin: 0 auto;
-          padding: 0 0 32px;
-          font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+          padding: 0 0 48px;
+          font-family: var(--font-sans);
         }
 
-        /* ── Hero header ─────────────────────────────── */
-        .up-hero {
-          padding: 4px 20px 24px;
-          position: relative;
+        /* ── Page header ── */
+        .up2-header {
+          padding: 32px 24px 24px;
+          border-bottom: 1px solid var(--ct-border);
+          margin-bottom: 24px;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+          flex-wrap: wrap;
         }
-        .up-hero::after {
-          content: '';
-          position: absolute;
-          bottom: 0; left: 20px; right: 20px;
-          height: 1px;
-          background: linear-gradient(90deg, rgba(212,160,23,0.4) 0%, rgba(212,160,23,0.08) 60%, transparent 100%);
-        }
-
-        .up-badge {
+        .up2-header-left {}
+        .up2-eyebrow {
           display: inline-flex;
           align-items: center;
-          gap: 7px;
-          padding: 5px 12px 5px 9px;
-          border-radius: 999px;
-          border: 1px solid rgba(212,160,23,0.3);
-          background: rgba(212,160,23,0.08);
-          font-size: 9.5px;
-          font-weight: 700;
-          letter-spacing: 0.13em;
+          gap: 6px;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: var(--ct-gold, #d4a017);
-          margin-bottom: 16px;
+          color: var(--ct-gold);
+          margin-bottom: 10px;
         }
-        .up-badge-dot {
-          width: 6px; height: 6px;
+        .up2-eyebrow-dot {
+          width: 5px; height: 5px;
           border-radius: 50%;
-          background: var(--ct-gold, #d4a017);
-          animation: up-pulse 2s ease-in-out infinite;
+          background: var(--ct-gold);
+          animation: up2-pulse 2.2s ease-in-out infinite;
+        }
+        @keyframes up2-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.65); }
+        }
+        .up2-title {
+          font-family: var(--font-display);
+          font-size: 28px;
+          font-weight: 700;
+          color: var(--ct-text-1);
+          letter-spacing: -0.02em;
+          line-height: 1.15;
+          margin: 0 0 6px;
+        }
+        .up2-subtitle {
+          font-size: 13.5px;
+          color: var(--ct-text-3);
+          margin: 0;
+          line-height: 1.5;
+        }
+        .up2-badge {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          background: rgba(5,150,105,0.08);
+          border: 1px solid rgba(5,150,105,0.18);
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--ct-emerald);
+          white-space: nowrap;
           flex-shrink: 0;
         }
-        @keyframes up-pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.45; transform: scale(0.7); }
+        .up2-badge svg { flex-shrink: 0; }
+
+        /* ── Cards ── */
+        .up2-card {
+          background: var(--ct-card);
+          border-radius: var(--ct-radius);
+          box-shadow: var(--ct-shadow);
+          border: 1px solid var(--ct-border);
+          margin: 0 16px 16px;
+          overflow: hidden;
+        }
+        .up2-card-header {
+          padding: 16px 20px 14px;
+          border-bottom: 1px solid var(--ct-border-2);
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .up2-card-icon {
+          width: 30px; height: 30px;
+          border-radius: 8px;
+          background: var(--ct-gold-bg);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--ct-gold);
+          flex-shrink: 0;
+        }
+        .up2-card-title {
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+          color: var(--ct-text-2);
+        }
+        .up2-card-body {
+          padding: 20px;
         }
 
-        .up-title {
-          font-family: var(--font-display, 'Playfair Display', serif);
-          font-size: 34px;
-          font-weight: 700;
-          line-height: 1.12;
-          color: #f5f0e8;
-          margin: 0 0 8px;
-          letter-spacing: -0.02em;
-        }
-        .up-subtitle {
-          font-size: 13px;
-          color: rgba(255,255,255,0.36);
-          margin: 0;
-          line-height: 1.55;
-        }
-
-        /* ── Alerts ──────────────────────────────────── */
-        .up-alert {
+        /* ── Alert banners ── */
+        .up2-alert {
           display: flex;
           align-items: flex-start;
           gap: 10px;
           padding: 13px 16px;
-          border-radius: 14px;
+          border-radius: 12px;
           font-size: 13px;
-          line-height: 1.45;
-          margin: 16px 20px 0;
+          line-height: 1.5;
+          margin: 0 16px 16px;
+          border: 1px solid transparent;
         }
-        .up-alert svg { flex-shrink: 0; margin-top: 1px; }
-        .up-alert--error {
-          background: rgba(225,29,72,0.07);
-          border: 1px solid rgba(225,29,72,0.22);
-          color: #fb7185;
+        .up2-alert svg { flex-shrink: 0; margin-top: 1px; }
+        .up2-alert--error {
+          background: rgba(225,29,72,0.05);
+          border-color: rgba(225,29,72,0.18);
+          color: #c41a3a;
         }
-        .up-alert--success {
-          background: rgba(5,150,105,0.07);
-          border: 1px solid rgba(5,150,105,0.22);
-          color: #34d399;
+        .up2-alert--success {
+          background: rgba(5,150,105,0.06);
+          border-color: rgba(5,150,105,0.18);
+          color: #065f46;
         }
-
-        /* ── Section blocks ──────────────────────────── */
-        .up-body {
-          padding: 20px 20px 0;
-          display: flex;
+        .up2-alert--warning {
+          background: rgba(217,119,6,0.06);
+          border-color: rgba(217,119,6,0.2);
+          color: #92400e;
           flex-direction: column;
-          gap: 0;
+          gap: 10px;
         }
-
-        .up-section {
-          padding: 20px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.055);
-        }
-        .up-section:last-child { border-bottom: none; }
-
-        .up-field-label {
-          display: block;
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.35);
-          margin-bottom: 10px;
-        }
-        .up-optional {
-          text-transform: none;
-          letter-spacing: 0;
-          font-size: 10px;
-          font-weight: 400;
-          color: rgba(255,255,255,0.2);
-        }
-        .up-field-header {
+        .up2-alert--warning-top {
           display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-        }
-        .up-field-header .up-field-label { margin-bottom: 0; }
-        .up-char-count {
-          font-family: var(--font-mono, 'IBM Plex Mono', monospace);
-          font-size: 10px;
-          color: rgba(255,255,255,0.22);
+          align-items: flex-start;
+          gap: 10px;
         }
 
-        /* ── Amount input ────────────────────────────── */
-        .up-amount-wrap {
+        /* ── Amount input ── */
+        .up2-amount-wrap {
           display: flex;
           align-items: center;
-          gap: 0;
-          background: rgba(255,255,255,0.04);
-          border: 1.5px solid rgba(255,255,255,0.08);
-          border-radius: 14px;
+          border: 2px solid var(--ct-border);
+          border-radius: 12px;
+          background: #faf9f6;
           overflow: hidden;
-          transition: border-color 0.2s, background 0.2s;
+          transition: border-color 0.18s, box-shadow 0.18s;
         }
-        .up-amount-wrap:focus-within {
-          border-color: rgba(212,160,23,0.5);
-          background: rgba(212,160,23,0.035);
+        .up2-amount-wrap:focus-within {
+          border-color: var(--ct-gold);
+          box-shadow: 0 0 0 3px rgba(212,160,23,0.12);
+          background: #fff;
         }
-        .up-amount-prefix {
-          padding: 0 4px 0 18px;
-          font-family: var(--font-mono, 'IBM Plex Mono', monospace);
-          font-size: 22px;
-          font-weight: 500;
-          color: rgba(255,255,255,0.28);
+        .up2-currency {
+          padding: 0 6px 0 18px;
+          font-family: var(--font-mono);
+          font-size: 20px;
+          font-weight: 600;
+          color: var(--ct-text-3);
           user-select: none;
           pointer-events: none;
-          line-height: 1;
+          flex-shrink: 0;
         }
-        .up-amount-input {
+        .up2-amount-input {
           flex: 1;
-          padding: 17px 18px 17px 6px;
+          padding: 16px 18px 16px 4px;
           border: none;
           background: transparent;
-          font-family: var(--font-mono, 'IBM Plex Mono', monospace);
-          font-size: 26px;
-          font-weight: 600;
-          color: #f0ede6;
+          font-family: var(--font-mono);
+          font-size: 28px;
+          font-weight: 700;
+          color: var(--ct-text-1);
           outline: none;
           min-width: 0;
           -moz-appearance: textfield;
         }
-        .up-amount-input::-webkit-outer-spin-button,
-        .up-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-        .up-amount-input::placeholder { color: rgba(255,255,255,0.15); }
+        .up2-amount-input::-webkit-outer-spin-button,
+        .up2-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .up2-amount-input::placeholder { color: var(--ct-text-4); font-weight: 400; }
 
-        /* ── Period row ──────────────────────────────── */
-        .up-period-grid {
+        /* ── Field label ── */
+        .up2-label {
+          display: block;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--ct-text-3);
+          margin-bottom: 8px;
+        }
+        .up2-label-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .up2-label-row .up2-label { margin-bottom: 0; }
+        .up2-char-count {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: var(--ct-text-4);
+        }
+
+        /* ── Period grid ── */
+        .up2-period-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 12px;
+          gap: 10px;
         }
-
-        .up-select-wrap {
+        .up2-select-wrap {
           position: relative;
         }
-        .up-select-wrap svg {
+        .up2-select-wrap svg {
           position: absolute;
-          right: 14px; top: 50%;
+          right: 12px; top: 50%;
           transform: translateY(-50%);
           pointer-events: none;
-          color: rgba(255,255,255,0.28);
+          color: var(--ct-text-3);
         }
-        .up-select,
-        .up-input {
+        .up2-select, .up2-input {
           width: 100%;
-          padding: 13px 16px;
-          border: 1.5px solid rgba(255,255,255,0.08);
-          border-radius: 12px;
-          font-size: 14px;
-          font-family: var(--font-mono, 'IBM Plex Mono', monospace);
-          background: rgba(255,255,255,0.04);
-          color: #f0ede6;
+          padding: 11px 14px;
+          border: 1.5px solid var(--ct-border);
+          border-radius: 10px;
+          font-size: 13.5px;
+          font-family: var(--font-mono);
+          background: #faf9f6;
+          color: var(--ct-text-1);
           box-sizing: border-box;
-          transition: border-color 0.2s, background 0.2s;
+          transition: border-color 0.18s, box-shadow 0.18s;
           outline: none;
           -webkit-appearance: none;
           appearance: none;
         }
-        .up-select { padding-right: 38px; cursor: pointer; }
-        .up-select:focus,
-        .up-input:focus {
-          border-color: rgba(212,160,23,0.5);
-          background: rgba(212,160,23,0.035);
+        .up2-select { padding-right: 36px; cursor: pointer; }
+        .up2-select:focus, .up2-input:focus {
+          border-color: var(--ct-gold);
+          box-shadow: 0 0 0 3px rgba(212,160,23,0.12);
+          background: #fff;
         }
-        .up-select option { background: #1e1e2e; color: #f0ede6; }
+        .up2-select option { background: #fff; color: var(--ct-text-1); }
 
-        /* ── Summary strip ───────────────────────────── */
-        .up-summary {
+        /* ── Summary strip ── */
+        .up2-summary {
           display: flex;
-          align-items: stretch;
-          background: rgba(255,255,255,0.025);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 14px;
+          margin-top: 14px;
+          border: 1px solid var(--ct-border);
+          border-radius: 10px;
           overflow: hidden;
-          margin-top: 18px;
+          background: #faf9f6;
         }
-        .up-summary-tag {
-          padding: 12px 13px;
-          font-size: 9px;
+        .up2-summary-tag {
+          padding: 10px 12px;
+          font-size: 8.5px;
           font-weight: 800;
-          letter-spacing: 0.13em;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: var(--ct-gold, #d4a017);
-          border-right: 1px solid rgba(255,255,255,0.07);
+          color: var(--ct-gold);
+          border-right: 1px solid var(--ct-border);
           display: flex;
           align-items: center;
-          writing-mode: horizontal-tb;
           white-space: nowrap;
+          background: var(--ct-gold-bg);
         }
-        .up-summary-item {
+        .up2-summary-item {
           flex: 1;
-          padding: 10px 12px;
-          border-right: 1px solid rgba(255,255,255,0.07);
+          padding: 8px 12px;
+          border-right: 1px solid var(--ct-border);
           display: flex;
           flex-direction: column;
-          gap: 3px;
+          gap: 2px;
         }
-        .up-summary-item:last-child { border-right: none; }
-        .up-summary-lbl {
-          font-size: 8.5px;
+        .up2-summary-item:last-child { border-right: none; }
+        .up2-summary-lbl {
+          font-size: 8px;
           font-weight: 700;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.22);
+          color: var(--ct-text-3);
         }
-        .up-summary-val {
-          font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+        .up2-summary-val {
+          font-family: var(--font-mono);
           font-size: 12px;
-          font-weight: 600;
-          color: #f0ede6;
+          font-weight: 700;
+          color: var(--ct-text-1);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
-        /* ── Note textarea ───────────────────────────── */
-        .up-textarea {
+        /* ── Textarea ── */
+        .up2-textarea {
           width: 100%;
-          padding: 13px 16px;
-          border: 1.5px solid rgba(255,255,255,0.08);
-          border-radius: 12px;
+          padding: 11px 14px;
+          border: 1.5px solid var(--ct-border);
+          border-radius: 10px;
           font-size: 13.5px;
-          font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
-          background: rgba(255,255,255,0.04);
-          color: #f0ede6;
+          font-family: var(--font-sans);
+          background: #faf9f6;
+          color: var(--ct-text-1);
           box-sizing: border-box;
-          transition: border-color 0.2s, background 0.2s;
+          transition: border-color 0.18s, box-shadow 0.18s;
           outline: none;
           resize: none;
-          line-height: 1.5;
+          line-height: 1.55;
         }
-        .up-textarea::placeholder { color: rgba(255,255,255,0.18); }
-        .up-textarea:focus {
-          border-color: rgba(212,160,23,0.5);
-          background: rgba(212,160,23,0.035);
+        .up2-textarea::placeholder { color: var(--ct-text-4); }
+        .up2-textarea:focus {
+          border-color: var(--ct-gold);
+          box-shadow: 0 0 0 3px rgba(212,160,23,0.12);
+          background: #fff;
         }
 
-        /* ── Upload zone ─────────────────────────────── */
-        .up-dropzone {
-          border: 2px dashed rgba(255,255,255,0.1);
-          border-radius: 16px;
-          background: rgba(255,255,255,0.02);
+        /* ── Dropzone ── */
+        .up2-dropzone {
+          border: 2px dashed var(--ct-border);
+          border-radius: 12px;
+          background: #faf9f6;
           cursor: pointer;
           transition: all 0.2s;
           overflow: hidden;
-          position: relative;
           -webkit-tap-highlight-color: transparent;
         }
-        .up-dropzone--drag,
-        .up-dropzone:active {
-          border-color: rgba(212,160,23,0.55);
-          background: rgba(212,160,23,0.045);
+        .up2-dropzone:hover, .up2-dropzone--drag {
+          border-color: var(--ct-gold);
+          background: rgba(212,160,23,0.04);
         }
-        .up-dropzone-inner {
+        .up2-dropzone-inner {
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 32px 20px;
+          padding: 36px 24px;
           gap: 10px;
+          text-align: center;
         }
-        .up-upload-icon {
-          width: 58px; height: 58px;
-          border-radius: 50%;
-          background: var(--ct-gold, #d4a017);
+        .up2-upload-icon {
+          width: 56px; height: 56px;
+          border-radius: 14px;
+          background: linear-gradient(135deg, var(--ct-gold) 0%, #c49012 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #0f0f14;
-          box-shadow: 0 6px 24px rgba(212,160,23,0.32);
-          transition: transform 0.2s, box-shadow 0.2s;
+          color: #fff;
+          box-shadow: 0 6px 20px rgba(212,160,23,0.3);
           margin-bottom: 4px;
+          transition: transform 0.2s, box-shadow 0.2s;
         }
-        .up-dropzone:active .up-upload-icon {
-          transform: scale(0.94);
-          box-shadow: 0 3px 14px rgba(212,160,23,0.28);
+        .up2-dropzone:hover .up2-upload-icon {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 28px rgba(212,160,23,0.35);
         }
-        .up-dropzone-text {
+        .up2-dropzone-title {
           font-size: 14px;
-          font-weight: 600;
-          color: rgba(255,255,255,0.55);
+          font-weight: 700;
+          color: var(--ct-text-1);
           margin: 0;
-          text-align: center;
         }
-        .up-dropzone-text span { color: var(--ct-gold, #d4a017); font-weight: 700; }
-        .up-dropzone-hint {
-          font-size: 11.5px;
-          color: rgba(255,255,255,0.2);
+        .up2-dropzone-title span { color: var(--ct-gold); }
+        .up2-dropzone-hint {
+          font-size: 12px;
+          color: var(--ct-text-3);
           margin: 0;
-          text-align: center;
         }
-        .up-preview-img {
+        .up2-preview-img {
           width: 100%;
           max-height: 260px;
           object-fit: contain;
           display: block;
         }
 
-        /* ── File pill ───────────────────────────────── */
-        .up-file-pill {
+        /* ── File pill ── */
+        .up2-file-pill {
           display: flex;
           align-items: center;
           gap: 10px;
           padding: 11px 14px;
-          background: rgba(5,150,105,0.07);
-          border: 1px solid rgba(5,150,105,0.2);
-          border-radius: 12px;
+          background: rgba(5,150,105,0.06);
+          border: 1px solid rgba(5,150,105,0.18);
+          border-radius: 10px;
           margin-top: 10px;
         }
-        .up-file-name {
+        .up2-file-name {
           flex: 1;
           font-size: 12.5px;
           font-weight: 600;
-          color: #f0ede6;
+          color: var(--ct-text-1);
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
-        .up-file-size {
+        .up2-file-size {
           font-size: 11px;
-          font-family: var(--font-mono, 'IBM Plex Mono', monospace);
-          color: rgba(255,255,255,0.28);
+          font-family: var(--font-mono);
+          color: var(--ct-text-3);
           white-space: nowrap;
           flex-shrink: 0;
         }
-        .up-remove-btn {
+        .up2-remove-btn {
           width: 26px; height: 26px;
           border-radius: 7px;
           border: none;
-          background: rgba(225,29,72,0.12);
-          color: #fb7185;
+          background: rgba(225,29,72,0.08);
+          color: var(--ct-rose);
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -540,95 +573,109 @@ export default function UploadPage() {
           line-height: 1;
           transition: background 0.15s;
           flex-shrink: 0;
-          -webkit-tap-highlight-color: transparent;
         }
-        .up-remove-btn:active { background: rgba(225,29,72,0.25); }
+        .up2-remove-btn:hover { background: rgba(225,29,72,0.14); }
 
-        /* ── Submit area ─────────────────────────────── */
-        .up-submit-area {
-          padding: 20px 20px 0;
+        /* ── Submit area ── */
+        .up2-submit-area {
+          padding: 8px 16px 0;
         }
-        .up-submit-btn {
+        .up2-submit-btn {
           width: 100%;
-          padding: 17px;
+          padding: 16px;
           border: none;
-          border-radius: 14px;
+          border-radius: 12px;
           font-size: 15px;
-          font-weight: 700;
-          font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+          font-weight: 800;
+          font-family: var(--font-sans);
           letter-spacing: 0.01em;
           cursor: pointer;
-          transition: all 0.22s;
+          transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 9px;
+          gap: 10px;
           -webkit-tap-highlight-color: transparent;
         }
-        .up-submit-btn--active {
-          background: linear-gradient(135deg, #e8b94f 0%, var(--ct-gold, #d4a017) 50%, #c49012 100%);
-          color: #0f0f14;
-          box-shadow: 0 6px 28px rgba(212,160,23,0.38);
+        .up2-submit-btn--active {
+          background: linear-gradient(135deg, #e8b94f 0%, var(--ct-gold) 60%, #b8880e 100%);
+          color: #3a2700;
+          box-shadow: 0 4px 20px rgba(212,160,23,0.35), 0 1px 3px rgba(212,160,23,0.2);
         }
-        .up-submit-btn--active:active {
-          transform: scale(0.98);
-          box-shadow: 0 3px 16px rgba(212,160,23,0.3);
+        .up2-submit-btn--active:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 28px rgba(212,160,23,0.4), 0 2px 6px rgba(212,160,23,0.25);
         }
-        .up-submit-btn:not(.up-submit-btn--active) {
-          background: rgba(255,255,255,0.055);
-          color: rgba(255,255,255,0.2);
+        .up2-submit-btn--active:active { transform: scale(0.99); }
+        .up2-submit-btn:not(.up2-submit-btn--active) {
+          background: var(--ct-border-2);
+          border: 1.5px solid var(--ct-border);
+          color: var(--ct-text-4);
           cursor: not-allowed;
         }
-        .up-secure {
+
+        .up2-secure {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          margin-top: 14px;
+          gap: 5px;
+          margin-top: 12px;
           font-size: 11.5px;
-          color: rgba(255,255,255,0.2);
+          color: var(--ct-text-4);
         }
 
-        /* ── Spinner ─────────────────────────────────── */
-        .up-spinner {
-          display: inline-block;
+        /* ── Spinner ── */
+        .up2-spinner {
           width: 16px; height: 16px;
-          border: 2.5px solid rgba(15,15,20,0.25);
-          border-top-color: #0f0f14;
+          border: 2.5px solid rgba(58,39,0,0.2);
+          border-top-color: #3a2700;
           border-radius: 50%;
-          animation: up-spin 0.65s linear infinite;
+          animation: up2-spin 0.65s linear infinite;
           flex-shrink: 0;
         }
-        .up-spinner--gold {
-          border-color: rgba(212,160,23,0.25);
-          border-top-color: var(--ct-gold, #d4a017);
+        @keyframes up2-spin { to { transform: rotate(360deg); } }
+
+        /* ── Divider ── */
+        .up2-divider {
+          height: 1px;
+          background: var(--ct-border-2);
+          margin: 20px 0;
         }
-        @keyframes up-spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      <form onSubmit={handleSubmit} className="up-root">
+      <form onSubmit={handleSubmit} className="up2-page">
 
-        {/* ── Hero ─── */}
-        <div className="up-hero">
-          <div className="up-badge">
-            <span className="up-badge-dot" />
-            Payment Verification
+        {/* ── Page header ── */}
+        <div className="up2-header">
+          <div className="up2-header-left">
+            <div className="up2-eyebrow">
+              <span className="up2-eyebrow-dot" />
+              Payment Verification
+            </div>
+            <h1 className="up2-title">Submit Payment Proof</h1>
+            <p className="up2-subtitle">Upload your receipt to confirm your contribution.</p>
           </div>
-          <h1 className="up-title">Submit<br />Payment Proof</h1>
-          <p className="up-subtitle">Upload your proof of payment to confirm your<br />transaction securely.</p>
+          <div className="up2-badge">
+            <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            Secure Upload
+          </div>
         </div>
 
-        {/* ── Alerts ─── */}
+        {/* ── Error alert ── */}
         {error && (
-          <div className="up-alert up-alert--error">
+          <div className="up2-alert up2-alert--error">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            {error}
+            <span>{error}</span>
           </div>
         )}
+
+        {/* ── Success alert ── */}
         {success && (
-          <div className="up-alert up-alert--success">
+          <div className="up2-alert up2-alert--success">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"/>
             </svg>
@@ -636,41 +683,29 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* ── Rejected contribution banner ─── */}
+        {/* ── Rejected contribution banner ── */}
         {rejectedContribution && (
-          <div style={{
-            margin: '16px 20px 0',
-            padding: '14px 16px',
-            borderRadius: 14,
-            background: 'rgba(225,29,72,0.07)',
-            border: '1px solid rgba(225,29,72,0.22)',
-            display: 'flex', flexDirection: 'column', gap: 8,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#fb7185" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          <div className="up2-alert up2-alert--warning">
+            <div className="up2-alert--warning-top">
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: 1 }}>
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
               </svg>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 13, color: '#fb7185', fontWeight: 700, lineHeight: 1.4 }}>
-                  Your previous proof was rejected
-                </p>
+              <div>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 13 }}>Your previous proof was rejected</p>
                 {rejectedContribution.rejectionNote && (
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(251,113,133,0.8)', lineHeight: 1.45 }}>
-                    Reason: {rejectedContribution.rejectionNote}
-                  </p>
+                  <p style={{ margin: '3px 0 0', fontSize: 12 }}>Reason: {rejectedContribution.rejectionNote}</p>
                 )}
               </div>
             </div>
             <a
               href="/payments"
               style={{
-                alignSelf: 'flex-start',
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '8px 14px', borderRadius: 9,
-                background: 'rgba(225,29,72,0.12)',
-                border: '1px solid rgba(225,29,72,0.25)',
-                color: '#fb7185', fontSize: 12, fontWeight: 700,
-                textDecoration: 'none',
+                padding: '8px 14px', borderRadius: 8,
+                background: 'rgba(217,119,6,0.1)',
+                border: '1px solid rgba(217,119,6,0.25)',
+                color: '#92400e', fontSize: 12, fontWeight: 700,
+                textDecoration: 'none', alignSelf: 'flex-start',
               }}
             >
               <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -681,14 +716,19 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* ── Form body ─── */}
-        <div className="up-body">
-
-          {/* Amount */}
-          <div className="up-section">
-            <label className="up-field-label">Amount Paid</label>
-            <div className="up-amount-wrap">
-              <span className="up-amount-prefix">₦</span>
+        {/* ── Amount card ── */}
+        <div className="up2-card">
+          <div className="up2-card-header">
+            <div className="up2-card-icon">
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+              </svg>
+            </div>
+            <span className="up2-card-title">Amount Paid</span>
+          </div>
+          <div className="up2-card-body">
+            <div className="up2-amount-wrap">
+              <span className="up2-currency">₦</span>
               <input
                 type="number"
                 name="amount"
@@ -697,141 +737,164 @@ export default function UploadPage() {
                 required
                 min="1"
                 placeholder="0"
-                className="up-amount-input"
+                className="up2-amount-input"
                 inputMode="numeric"
               />
             </div>
           </div>
+        </div>
 
-          {/* Period */}
-          <div className="up-section">
-            <label className="up-field-label">Period</label>
-            <div className="up-period-grid">
-              <div className="up-select-wrap">
-                <select name="month" value={form.month} onChange={handleChange} className="up-select">
-                  {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-                </select>
-                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
+        {/* ── Period card ── */}
+        <div className="up2-card">
+          <div className="up2-card-header">
+            <div className="up2-card-icon">
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <span className="up2-card-title">Contribution Period</span>
+          </div>
+          <div className="up2-card-body">
+            <div className="up2-period-grid">
+              <div>
+                <label className="up2-label">Month</label>
+                <div className="up2-select-wrap">
+                  <select name="month" value={form.month} onChange={handleChange} className="up2-select">
+                    {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                  </select>
+                  <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
               </div>
-              <input
-                type="number"
-                name="year"
-                value={form.year}
-                onChange={handleChange}
-                min="2020"
-                max="2100"
-                className="up-input"
-                inputMode="numeric"
-              />
+              <div>
+                <label className="up2-label">Year</label>
+                <input
+                  type="number"
+                  name="year"
+                  value={form.year}
+                  onChange={handleChange}
+                  min="2020" max="2100"
+                  className="up2-input"
+                  inputMode="numeric"
+                />
+              </div>
             </div>
 
-            {/* Summary */}
-            <div className="up-summary">
-              <div className="up-summary-tag">Summary</div>
-              <div className="up-summary-item">
-                <span className="up-summary-lbl">Period</span>
-                <span className="up-summary-val">{MONTHS[form.month - 1].slice(0, 3)} {form.year}</span>
+            <div className="up2-summary">
+              <div className="up2-summary-tag">Summary</div>
+              <div className="up2-summary-item">
+                <span className="up2-summary-lbl">Period</span>
+                <span className="up2-summary-val">{MONTHS[form.month - 1].slice(0,3)} {form.year}</span>
               </div>
-              <div className="up-summary-item">
-                <span className="up-summary-lbl">Amount</span>
-                <span className="up-summary-val" style={{ color: form.amount ? '#34d399' : 'rgba(255,255,255,0.22)' }}>
+              <div className="up2-summary-item">
+                <span className="up2-summary-lbl">Amount</span>
+                <span className="up2-summary-val" style={{ color: form.amount ? 'var(--ct-emerald)' : 'var(--ct-text-4)' }}>
                   {form.amount ? `₦${Number(form.amount).toLocaleString()}` : '—'}
                 </span>
               </div>
               {selectedGroup && (
-                <div className="up-summary-item">
-                  <span className="up-summary-lbl">Circle</span>
-                  <span className="up-summary-val" style={{ color: 'var(--ct-gold)', fontSize: 11 }}>{selectedGroup.name}</span>
+                <div className="up2-summary-item">
+                  <span className="up2-summary-lbl">Circle</span>
+                  <span className="up2-summary-val" style={{ color: 'var(--ct-gold)', fontSize: 11 }}>{selectedGroup.name}</span>
                 </div>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Note */}
-          <div className="up-section">
-            <div className="up-field-header">
-              <label className="up-field-label" style={{ margin: 0 }}>
-                Note <span className="up-optional">(optional)</span>
-              </label>
-              <span className="up-char-count" style={{ color: form.note.length > 450 ? '#fb7185' : undefined }}>
-                {form.note.length}/500
-              </span>
+        {/* ── Note card ── */}
+        <div className="up2-card">
+          <div className="up2-card-header">
+            <div className="up2-card-icon">
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
             </div>
+            <span className="up2-card-title">Note</span>
+            <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 10, color: form.note.length > 450 ? 'var(--ct-rose)' : 'var(--ct-text-4)' }}>
+              {form.note.length}/500
+            </span>
+          </div>
+          <div className="up2-card-body">
             <textarea
               name="note"
               value={form.note}
               onChange={handleChange}
               rows={2}
               maxLength={500}
-              placeholder="e.g. Paid via bank transfer, reference #XYZ123"
-              className="up-textarea"
+              placeholder="e.g. Paid via bank transfer, reference #XYZ123 (optional)"
+              className="up2-textarea"
             />
           </div>
+        </div>
 
-          {/* Upload */}
-          <div className="up-section">
-            <label className="up-field-label">Proof of Payment</label>
+        {/* ── Upload card ── */}
+        <div className="up2-card">
+          <div className="up2-card-header">
+            <div className="up2-card-icon">
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <span className="up2-card-title">Proof of Payment</span>
+          </div>
+          <div className="up2-card-body">
             <div
-              className={`up-dropzone${dragging ? ' up-dropzone--drag' : ''}`}
+              className={`up2-dropzone${dragging ? ' up2-dropzone--drag' : ''}`}
               onDragOver={e => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
               onDrop={handleDrop}
-              onClick={() => document.getElementById('up-proof-file').click()}
+              onClick={() => document.getElementById('up2-proof-file').click()}
             >
               {preview ? (
-                <img src={preview} alt="Preview" className="up-preview-img" />
+                <img src={preview} alt="Preview" className="up2-preview-img" />
               ) : (
-                <div className="up-dropzone-inner">
-                  <div className="up-upload-icon">
+                <div className="up2-dropzone-inner">
+                  <div className="up2-upload-icon">
                     {compressing ? (
-                      <span className="up-spinner up-spinner--gold" style={{ borderTopColor: '#0f0f14', borderColor: 'rgba(15,15,20,0.25)' }} />
+                      <div style={{ width: 20, height: 20, border: '2.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'up2-spin 0.65s linear infinite' }} />
                     ) : (
-                      <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
+                      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                       </svg>
                     )}
                   </div>
-                  <p className="up-dropzone-text">
-                    {compressing ? 'Compressing image…' : <>Tap to select, or <span>browse</span></>}
+                  <p className="up2-dropzone-title">
+                    {compressing ? 'Compressing image…' : <>Tap to select or <span>browse</span></>}
                   </p>
-                  <p className="up-dropzone-hint">JPG · PNG · WebP · PDF &nbsp;—&nbsp; Max 5 MB</p>
+                  <p className="up2-dropzone-hint">JPG · PNG · WebP · PDF &nbsp;—&nbsp; Max 5 MB</p>
                 </div>
               )}
-              <input id="up-proof-file" type="file" accept="image/*,.pdf" onChange={handleFileChange} style={{ display: 'none' }} />
+              <input id="up2-proof-file" type="file" accept="image/*,.pdf" onChange={handleFileChange} style={{ display: 'none' }} />
             </div>
 
             {file && (
-              <div className="up-file-pill">
-                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <div className="up2-file-pill">
+                <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="var(--ct-emerald)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"/>
                 </svg>
-                <span className="up-file-name">{file.name}</span>
-                <span className="up-file-size">{(file.size / 1024).toFixed(0)} KB</span>
-                <button type="button" onClick={removeFile} className="up-remove-btn">×</button>
+                <span className="up2-file-name">{file.name}</span>
+                <span className="up2-file-size">{(file.size / 1024).toFixed(0)} KB</span>
+                <button type="button" onClick={removeFile} className="up2-remove-btn">×</button>
               </div>
             )}
           </div>
+        </div>
 
-        </div>{/* /up-body */}
-
-        {/* ── Submit ─── */}
-        <div className="up-submit-area">
+        {/* ── Submit ── */}
+        <div className="up2-submit-area">
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`up-submit-btn${canSubmit ? ' up-submit-btn--active' : ''}`}
+            className={`up2-submit-btn${canSubmit ? ' up2-submit-btn--active' : ''}`}
           >
-            {(loading || compressing) && <span className="up-spinner" />}
-            {compressing ? 'Compressing image…' : loading ? 'Uploading to cloud…' : 'Submit Payment Proof'}
+            {(loading || compressing) && <span className="up2-spinner" />}
+            {compressing ? 'Compressing image…' : loading ? 'Uploading…' : 'Submit Payment Proof'}
           </button>
-          <div className="up-secure">
-            <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0110 0v4"/>
+          <div className="up2-secure">
+            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
             </svg>
             Secure &amp; encrypted submission
           </div>
