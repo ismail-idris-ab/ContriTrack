@@ -290,7 +290,7 @@ export default function GroupsPage() {
     <div style={{ fontFamily: 'var(--font-sans)', maxWidth: 860, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 28 }}>
+      <div className="groups-page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 28 }}>
         <div>
           <h1 style={{
             fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700,
@@ -302,7 +302,7 @@ export default function GroupsPage() {
             Manage your savings circles and track contributions per group.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div className="groups-action-btns" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
             onClick={() => { setShowJoin(v => !v); setShowCreate(false); }}
             style={{
@@ -407,7 +407,7 @@ export default function GroupsPage() {
                 </div>
               )}
               <form onSubmit={handleCreate}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div className="groups-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <div>
                     <label style={labelStyle}>Circle Name *</label>
                     <input
@@ -546,7 +546,7 @@ export default function GroupsPage() {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div className="groups-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {groups.map(group => {
             const myMembership = group.members.find(m => m.user._id === user._id || m.user === user._id);
             const myRole = myMembership?.role || 'member';
@@ -791,7 +791,7 @@ export default function GroupsPage() {
               </div>
             )}
             <form onSubmit={handleEdit}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+              <div className="groups-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
                 <div>
                   <label style={labelStyle}>Circle Name *</label>
                   <input

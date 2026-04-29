@@ -35,8 +35,19 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage: cloudinaryStorage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
+// Wrap multer to forward its errors as JSON instead of letting Express default-handle them
+function uploadSingle(req, res, next) {
+  upload.single('proof')(req, res, (err) => {
+    if (!err) return next();
+    const message = err.code === 'LIMIT_FILE_SIZE'
+      ? 'File is too large. Maximum size is 5 MB.'
+      : err.message || 'File upload failed';
+    res.status(400).json({ message });
+  });
+}
+
 // POST /api/contributions — upload proof of payment
-router.post('/', protect, uploadLimiter, upload.single('proof'), async (req, res) => {
+router.post('/', protect, uploadLimiter, uploadSingle, async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'Proof image is required' });
 
   const { amount, month, year, note, groupId, cycleNumber } = req.body;
@@ -267,7 +278,7 @@ router.patch('/:id/status', protect, async (req, res) => {
 });
 
 // PATCH /api/contributions/:id/resubmit — member replaces proof (pending) or resubmits after rejection
-router.patch('/:id/resubmit', protect, uploadLimiter, upload.single('proof'), async (req, res) => {
+router.patch('/:id/resubmit', protect, uploadLimiter, uploadSingle, async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'New proof image is required' });
 
   try {

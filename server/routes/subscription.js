@@ -159,6 +159,35 @@ router.get('/verify/:reference', protect, async (req, res) => {
     };
     await user.save();
 
+    // Award 1 month credit to referrer on first upgrade (fire-and-forget)
+    if (user.referredBy && user.referralCredits === 0) {
+      User.findById(user.referredBy).then(async (referrer) => {
+        if (!referrer) return;
+        const now        = new Date();
+        const currentEnd = referrer.subscription?.currentPeriodEnd;
+        const base       = currentEnd && currentEnd > now ? currentEnd : now;
+        const newEnd     = new Date(base);
+        newEnd.setDate(newEnd.getDate() + 30);
+
+        await User.findByIdAndUpdate(referrer._id, {
+          'subscription.currentPeriodEnd': newEnd,
+          $inc: { referralCredits: 1 },
+        });
+
+        // Sentinel: mark new user so credit is never awarded twice
+        await User.findByIdAndUpdate(user._id, { referralCredits: -1 });
+
+        const Notification = require('../models/Notification');
+        Notification.create({
+          user:  referrer._id,
+          type:  'system',
+          title: 'You earned 1 free month!',
+          body:  'Someone you referred just upgraded. Your subscription has been extended by 30 days.',
+          link:  '/profile',
+        }).catch(() => {});
+      }).catch((err) => console.error('[referral credit]', err.message));
+    }
+
     res.json({
       message:  `Successfully upgraded to ${plan} plan.`,
       plan,

@@ -8,6 +8,7 @@ import HowItWorksSection from '../components/landing/HowItWorksSection';
 import FeaturesSection from '../components/landing/FeaturesSection';
 import TestimonialsSection from '../components/landing/TestimonialsSection';
 import PricingSection from '../components/landing/PricingSection';
+import FAQSection from '../components/landing/FAQSection';
 import FinalCTASection from '../components/landing/FinalCTASection';
 import LandingFooter from '../components/landing/LandingFooter';
 
@@ -28,6 +29,7 @@ export default function LandingPage() {
       <FeaturesSection navigate={navigate} user={user} />
       <TestimonialsSection />
       <PricingSection navigate={navigate} />
+      <FAQSection />
       <FinalCTASection navigate={navigate} />
       <LandingFooter navigate={navigate} scrollTo={scrollTo} />
     </div>

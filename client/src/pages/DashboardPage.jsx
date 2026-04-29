@@ -178,7 +178,7 @@ function MemberCard({ m, onView }) {
   return (
     <div
       onClick={() => hasProof && onView(m)}
-      className={hasProof ? 'card-hover' : ''}
+      className={`dash-member-card${hasProof ? ' card-hover' : ''}`}
       style={{
         background: '#fff',
         borderRadius: 'var(--ct-radius)',
@@ -206,7 +206,7 @@ function MemberCard({ m, onView }) {
       )}
 
       {/* Avatar with status ring */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+      <div className="dm-avatar-wrap" style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
         <div style={{
           width: 52, height: 52, borderRadius: '50%',
           background: getAvatarGradient(m.name),
@@ -219,7 +219,7 @@ function MemberCard({ m, onView }) {
         </div>
       </div>
 
-      <div style={{
+      <div className="dm-name" style={{
         fontSize: 13.5, fontWeight: 700,
         color: 'var(--ct-text-1)',
         marginBottom: 5, letterSpacing: '-0.01em',
@@ -229,7 +229,7 @@ function MemberCard({ m, onView }) {
       </div>
 
       {m.contribution ? (
-        <div style={{
+        <div className="dm-amount" style={{
           fontFamily: 'var(--font-mono)',
           fontSize: 13.5, fontWeight: 600,
           color: 'var(--ct-emerald)',
@@ -238,13 +238,16 @@ function MemberCard({ m, onView }) {
           ₦{m.contribution.amount.toLocaleString()}
         </div>
       ) : (
-        <div style={{ fontSize: 13, color: 'var(--ct-text-4)', marginBottom: 10 }}>—</div>
+        <div className="dm-amount" style={{ fontSize: 13, color: 'var(--ct-text-4)', marginBottom: 10 }}>—</div>
       )}
 
-      <StatusBadge status={status} />
+      <div className="dm-status">
+        <StatusBadge status={status} />
+      </div>
 
       {hasProof && (
         <button
+          className="dm-proof-btn"
           onClick={e => { e.stopPropagation(); onView(m); }}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -600,7 +603,7 @@ export default function DashboardPage() {
     <div style={{ fontFamily: 'var(--font-sans)' }}>
 
       {/* Page header row */}
-      <div style={{
+      <div className="dash-header-row" style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 22, gap: 12, flexWrap: 'wrap',
       }}>
@@ -623,11 +626,13 @@ export default function DashboardPage() {
           <div />
         )}
 
-        <MonthNav
-          month={month} year={year}
-          onPrev={prevMonth} onNext={nextMonth}
-          isCurrentMonth={month === now.getMonth() + 1 && year === now.getFullYear()}
-        />
+        <div className="dash-month-nav-center">
+          <MonthNav
+            month={month} year={year}
+            onPrev={prevMonth} onNext={nextMonth}
+            isCurrentMonth={month === now.getMonth() + 1 && year === now.getFullYear()}
+          />
+        </div>
       </div>
 
       {loading && (
@@ -658,8 +663,49 @@ export default function DashboardPage() {
             ))}
           </div>
 
+          {/* Referral invite banner */}
+          <div
+            onClick={() => navigate('/profile')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigate('/profile')}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '13px 20px', borderRadius: 12,
+              background: 'rgba(212,160,23,0.06)',
+              border: '1px solid rgba(212,160,23,0.18)',
+              cursor: 'pointer', marginBottom: 18,
+              transition: 'background 0.15s',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: 9,
+                background: 'rgba(212,160,23,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="var(--ct-gold)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ct-text-1)' }}>
+                  Invite friends · Earn free months
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 2 }}>
+                  Share your referral link and earn 1 free month per upgrade
+                </div>
+              </div>
+            </div>
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="var(--ct-text-3)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+
           {/* Progress card */}
-          <div style={{
+          <div className="dash-progress-card" style={{
             background: '#fff',
             borderRadius: 'var(--ct-radius)',
             padding: '20px 24px',
@@ -751,7 +797,7 @@ export default function DashboardPage() {
           {members.length === 0 ? (
             <NoMembersState groupName={activeGroup?.name} navigate={navigate} />
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: 12 }}>
+            <div className="dash-member-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: 12 }}>
               {filteredMembers.map((m, idx) => (
                 <div key={m._id} className="animate-fade-up" style={{ animationDelay: `${idx * 0.035}s` }}>
                   <MemberCard m={m} onView={openModal} />

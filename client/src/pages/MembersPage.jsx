@@ -307,7 +307,7 @@ export default function MembersPage() {
         <>
           {/* Toolbar */}
           {!loading && members.length > 0 && (
-            <div style={{
+            <div className="members-toolbar" style={{
               display: 'flex', gap: 10, alignItems: 'center',
               marginBottom: 16, flexWrap: 'wrap',
             }}>
@@ -371,7 +371,7 @@ export default function MembersPage() {
             <>
               {/* Summary strip */}
               {members.length > 0 && (
-                <div style={{
+                <div className="members-summary" style={{
                   display: 'flex', alignItems: 'center', gap: 24,
                   background: '#fff', borderRadius: 'var(--ct-radius-sm)',
                   padding: '12px 18px', marginBottom: 10,
@@ -383,17 +383,17 @@ export default function MembersPage() {
                     <span style={{ fontWeight: 700, color: 'var(--ct-text-1)' }}>{members.length}</span>
                     <span style={{ marginLeft: 4 }}>members</span>
                   </div>
-                  <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
+                  <div className="members-summary-divider" style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
                   <div style={{ fontSize: 12.5, color: 'var(--ct-text-2)' }}>
                     <span style={{ fontWeight: 700, color: 'var(--ct-emerald)' }}>{verified}</span>
                     <span style={{ marginLeft: 4 }}>paid this month</span>
                   </div>
-                  <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
+                  <div className="members-summary-divider" style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
                   <div style={{ fontSize: 12.5, color: 'var(--ct-text-2)' }}>
                     <span style={{ fontWeight: 700, color: 'var(--ct-amber)' }}>{pending}</span>
                     <span style={{ marginLeft: 4 }}>pending review</span>
                   </div>
-                  <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
+                  <div className="members-summary-divider" style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
                   <div style={{ fontSize: 12.5, color: 'var(--ct-text-2)' }}>
                     <span style={{ fontWeight: 700, color: 'var(--ct-rose)' }}>{unpaid}</span>
                     <span style={{ marginLeft: 4 }}>unpaid</span>
@@ -410,7 +410,92 @@ export default function MembersPage() {
                   }
                 </div>
               ) : (
-                <div className="ct-table-wrap">
+                <>
+                {/* Mobile card list (hidden on desktop via CSS) */}
+                <div className="members-card-view" style={{
+                  flexDirection: 'column', gap: 0,
+                  background: '#fff', borderRadius: 'var(--ct-radius)',
+                  overflow: 'hidden', boxShadow: 'var(--ct-shadow)',
+                  border: '1px solid rgba(0,0,0,0.04)',
+                  marginBottom: 12,
+                }}>
+                  {filtered.map((m, idx) => {
+                    const status = m.paid ? (m.contribution?.status || 'pending') : 'unpaid';
+                    return (
+                      <div key={m._id} style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '13px 16px',
+                        borderBottom: idx < filtered.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                      }}>
+                        <div style={{
+                          width: 42, height: 42, borderRadius: 11, flexShrink: 0,
+                          background: getAvatarGradient(m.name),
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 13, fontWeight: 700, color: '#fff',
+                        }}>
+                          {getInitials(m.name)}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontSize: 14, fontWeight: 700, color: 'var(--ct-text-1)',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            marginBottom: 4,
+                          }}>
+                            {m.name}
+                            {m.role === 'admin' && (
+                              <span style={{
+                                marginLeft: 6, padding: '1px 6px', borderRadius: 5,
+                                background: 'rgba(212,160,23,0.1)',
+                                border: '1px solid rgba(212,160,23,0.2)',
+                                color: '#a07010', fontSize: 9, fontWeight: 700,
+                                letterSpacing: '0.04em', verticalAlign: 'middle',
+                              }}>ADMIN</span>
+                            )}
+                          </div>
+                          <StatusPill status={status} />
+                        </div>
+                        {m.contribution ? (
+                          <span style={{
+                            fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600,
+                            color: 'var(--ct-emerald)', flexShrink: 0,
+                          }}>
+                            ₦{m.contribution.amount.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--ct-text-4)', fontSize: 14, flexShrink: 0 }}>—</span>
+                        )}
+                        {isGroupAdmin && m._id !== user?._id && (
+                          <button
+                            onClick={() => setRoleConfirm({ member: m, newRole: m.role === 'admin' ? 'member' : 'admin' })}
+                            title={m.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                            style={{
+                              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                              border: '1.5px solid rgba(0,0,0,0.08)', background: '#faf9f6',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', color: 'var(--ct-text-3)',
+                            }}
+                          >
+                            {m.role === 'admin' ? (
+                              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <line x1="9" y1="12" x2="15" y2="12"/>
+                              </svg>
+                            ) : (
+                              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <line x1="12" y1="9" x2="12" y2="15"/>
+                                <line x1="9" y1="12" x2="15" y2="12"/>
+                              </svg>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop table (hidden on mobile via CSS) */}
+                <div className="members-table-view ct-table-wrap">
                   <table className="ct-table">
                     <thead>
                       <tr>
@@ -550,6 +635,7 @@ export default function MembersPage() {
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
             </>
           )}

@@ -792,3 +792,90 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 @media (max-width: 480px) {
   .footer-cols { grid-template-columns: 1fr !important; }
 }
+
+/* ─── Dashboard Mobile ───────────────────────────── */
+@media (max-width: 767px) {
+  .dash-header-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .dash-month-nav-center {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  .dash-member-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    background: #fff;
+    border-radius: var(--ct-radius);
+    overflow: hidden;
+    box-shadow: var(--ct-shadow);
+  }
+  .dash-member-grid > div:last-child .dash-member-card {
+    border-bottom: none !important;
+  }
+  .dash-member-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+    padding: 13px 16px !important;
+    text-align: left !important;
+  }
+  .dm-avatar-wrap { margin-bottom: 0 !important; flex-shrink: 0 !important; }
+  .dm-name { margin-bottom: 0 !important; flex: 1 !important; min-width: 0 !important; font-size: 14px !important; }
+  .dm-amount { margin-bottom: 0 !important; flex-shrink: 0 !important; text-align: right !important; }
+  .dm-status { display: none !important; }
+  .dm-proof-btn { display: none !important; }
+  .dash-progress-card { padding: 16px !important; }
+}
+
+/* ─── Groups Mobile ──────────────────────────────── */
+@media (max-width: 767px) {
+  .groups-page-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .groups-action-btns {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .groups-action-btns > button {
+    justify-content: center !important;
+  }
+  .groups-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .groups-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─── Members Mobile ─────────────────────────────── */
+@media (max-width: 767px) {
+  .members-summary {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    padding: 14px 16px !important;
+  }
+  .members-summary-divider { display: none !important; }
+  .members-table-view { display: none !important; }
+  .members-card-view { display: flex !important; }
+  .members-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .members-toolbar .ct-search { max-width: 100% !important; }
+}
+@media (min-width: 768px) {
+  .members-card-view { display: none !important; }
+}

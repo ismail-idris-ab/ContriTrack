@@ -227,7 +227,8 @@ function ContributionsTab() {
             <div style={{ textAlign: 'center', color: 'var(--ct-text-3)', padding: '48px 0', background: '#fff', borderRadius: 14, boxShadow: 'var(--ct-shadow)', fontSize: 14 }}>No submissions for this month.</div>
           ) : (
             <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--ct-shadow)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 580 }}>
                 <thead>
                   <tr style={{ background: '#faf9f6' }}>
                     {['Member','Amount','Date','Status','Actions'].map(h => (
@@ -270,6 +271,7 @@ function ContributionsTab() {
                   ))}
                 </tbody>
               </table>
+              </div>
 
               {/* Pagination */}
               {totalPages > 1 && (

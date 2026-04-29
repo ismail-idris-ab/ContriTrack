@@ -14,7 +14,8 @@ export default function RegisterPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const intent = searchParams.get('intent');
+  const intent  = searchParams.get('intent');
+  const refCode = searchParams.get('ref') || '';
 
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
@@ -28,7 +29,10 @@ export default function RegisterPage() {
     if (form.password.length < 6) return setError('Password must be at least 6 characters');
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/register', form);
+      const { data } = await api.post('/auth/register', {
+        ...form,
+        ...(refCode && { referralCode: refCode }),
+      });
       login(data);
       navigate('/verify-email?new=1');
     } catch (err) {

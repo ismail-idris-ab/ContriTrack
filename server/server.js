@@ -59,6 +59,7 @@ app.use('/api/exports',       require('./routes/exports'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/templates',     require('./routes/templates'));
 app.use('/api/audit',         require('./routes/audit'));
+app.use('/api/referral',      require('./routes/referral'));
 
 // Health check — Render pings this to confirm the server is up
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -68,8 +69,11 @@ const PORT = process.env.PORT || 5000;
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log('MongoDB connected');
+    // Drop stale indexes not in the current schema (e.g. the old 4-field unique index
+    // on Contribution that was replaced by the 5-field cycleNumber index).
+    await require('./models/Contribution').syncIndexes();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((err) => console.error('MongoDB connection error:', err));

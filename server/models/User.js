@@ -31,6 +31,9 @@ const userSchema = new mongoose.Schema(
     emailVerified:           { type: Boolean, default: false },
     emailOtp:                { type: String, default: null },
     emailOtpExpires:         { type: Date,   default: null },
+    referralCode:            { type: String, default: null },
+    referredBy:              { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    referralCredits:         { type: Number, default: 0 },
   },
   { timestamps: true }
 );
@@ -50,5 +53,6 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 // Sparse index: only indexes documents that have this field set (most users won't during normal operation)
 userSchema.index({ resetPasswordToken: 1 }, { sparse: true });
+userSchema.index({ referralCode: 1 }, { sparse: true, unique: true });
 
 module.exports = mongoose.model('User', userSchema);

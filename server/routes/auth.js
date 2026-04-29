@@ -48,7 +48,7 @@ const authLimiter = rateLimit({
 
 // POST /api/auth/register
 router.post('/register', authLimiter, async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, referralCode } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -79,10 +79,17 @@ router.post('/register', authLimiter, async (req, res) => {
     const otp       = String(Math.floor(100000 + Math.random() * 900000));
     const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
 
+    let referredById = null;
+    if (referralCode && typeof referralCode === 'string') {
+      const referrer = await User.findOne({ referralCode: referralCode.trim().toUpperCase() }).select('_id');
+      if (referrer) referredById = referrer._id;
+    }
+
     const user = await User.create({
       name: trimmedName, email, password, role,
       emailOtp:        hashedOtp,
       emailOtpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      ...(referredById && { referredBy: referredById }),
     });
 
     // Fire-and-forget OTP email
