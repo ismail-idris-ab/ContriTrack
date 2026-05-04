@@ -1,0 +1,120 @@
+<h2>Upload Page — 3 Design Approaches</h2>
+<p class="subtitle">The core problem: payment status is shown as an error ❌ instead of a clear status. Pick the layout that feels best for your app.</p>
+
+<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:14px 18px;margin-bottom:28px;">
+  <p style="margin:0;font-size:13px;color:#fca5a5;"><strong>Root cause found:</strong> The "already submitted" message shows as a red error even though it's just a status fact. Also, if contributions haven't fully loaded yet, the submit button stays active — hitting the server's duplicate check and returning a raw 400 error.</p>
+</div>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0f0f1a;border-radius:8px;font-family:monospace;font-size:11px;">
+      <div style="margin-bottom:10px;">
+        <div style="font-size:9px;color:#d4a017;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Active Circles — April 2026</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="padding:8px 12px;border:2px solid #d4a017;border-radius:8px;background:rgba(212,160,23,.1);">
+            <div style="color:#d4a017;font-size:11px;font-weight:700;">Family Circle</div>
+            <div style="color:#34d399;font-size:9px;margin-top:2px;">✓ Paid</div>
+          </div>
+          <div style="padding:8px 12px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.04);">
+            <div style="color:rgba(255,255,255,.8);font-size:11px;font-weight:700;">Work Savings</div>
+            <div style="color:#fb7185;font-size:9px;margin-top:2px;">✗ Not paid</div>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:10px;font-size:10px;color:rgba(255,255,255,.4);">
+        ↳ Form shows below only for "Work Savings"
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Status Banner + Smart Form</h3>
+      <p>Show all active circles at the top with paid/unpaid badges. The upload form only appears for the currently selected <em>unpaid</em> circle. If a circle is already paid, the selector shows a green receipt view instead of the form.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Least code change from current</li>
+          <li>Clear per-circle status at a glance</li>
+          <li>No red error messages</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Form still collapses/shows based on selection — can feel jumpy</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0f0f1a;border-radius:8px;font-family:monospace;font-size:11px;">
+      <div style="display:flex;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:10px;">
+        <div style="padding:8px 14px;border-bottom:2px solid #d4a017;color:#d4a017;font-size:10px;font-weight:700;">Family Circle ✓</div>
+        <div style="padding:8px 14px;color:rgba(255,255,255,.5);font-size:10px;">Work Savings</div>
+        <div style="padding:8px 14px;color:rgba(255,255,255,.5);font-size:10px;">Street Group</div>
+      </div>
+      <div style="font-size:10px;">
+        <div style="color:#34d399;text-align:center;padding:8px;background:rgba(52,211,153,.06);border-radius:6px;">
+          ✓ Payment recorded — April 2026<br/>
+          <span style="color:rgba(255,255,255,.3);font-size:9px;">Awaiting admin review</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — One Tab Per Circle</h3>
+      <p>Each active circle is its own tab. Paid tabs show a receipt/confirmation view. Unpaid tabs show the full upload form. User can freely switch between circles and see each one's status independently.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Crystal clear — each circle is isolated</li>
+          <li>Easy to scan all circle statuses</li>
+          <li>No confusion about which circle the form is for</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>More UI work to build</li>
+          <li>Tabs can get cramped with many circles</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#0f0f1a;border-radius:8px;font-family:monospace;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:10px;">
+        <div>
+          <div style="font-size:9px;color:#d4a017;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Circles</div>
+          <div style="padding:7px 10px;border:2px solid #d4a017;border-radius:6px;margin-bottom:5px;background:rgba(212,160,23,.08);">
+            <div style="color:#f0ede6;font-size:10px;font-weight:700;">Family Circle</div>
+            <div style="color:#34d399;font-size:9px;">✓ Paid</div>
+          </div>
+          <div style="padding:7px 10px;border:1.5px solid rgba(255,255,255,.1);border-radius:6px;">
+            <div style="color:rgba(255,255,255,.7);font-size:10px;font-weight:700;">Work Savings</div>
+            <div style="color:#fb7185;font-size:9px;">✗ Not paid</div>
+          </div>
+        </div>
+        <div style="border-left:1px solid rgba(255,255,255,.07);padding-left:10px;">
+          <div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:5px;">→ Work Savings — April 2026</div>
+          <div style="background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.12);border-radius:6px;padding:8px;text-align:center;color:rgba(255,255,255,.3);font-size:9px;">
+            Drop proof here
+          </div>
+          <div style="margin-top:6px;background:rgba(212,160,23,.12);border-radius:6px;padding:5px;text-align:center;color:#d4a017;font-size:9px;font-weight:700;">
+            Submit Payment Proof →
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Two-Panel (Sidebar + Form)</h3>
+      <p>Left panel lists all active circles with their status. Selecting a paid circle shows a receipt view on the right. Selecting an unpaid circle shows the upload form on the right. Status is the primary UI, upload is secondary.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Most professional, cleanest mental model</li>
+          <li>Status is front-and-center, not an error message</li>
+          <li>Scales well to many circles</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Most UI work to build</li>
+          <li>Two-panel layout may feel complex on mobile</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p style="text-align:center;color:rgba(255,255,255,.35);font-size:12px;margin-top:20px;">Click a card to select. My recommendation: <strong style="color:#d4a017;">Option A</strong> for quick fix, <strong style="color:#d4a017;">Option B</strong> for best UX.</p>
