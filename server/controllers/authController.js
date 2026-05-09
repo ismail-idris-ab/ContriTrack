@@ -112,12 +112,7 @@ async function googleAuth(req, res) {
       }
     }
 
-    send(res, {
-      _id: user._id, name: user.name, email: user.email, role: user.role,
-      emailVerified: user.emailVerified, phone: user.phone || '', avatar: user.avatar || '',
-      subscription: { plan: user.subscription?.plan || 'free', status: user.subscription?.status || 'active' },
-      token: generateToken(user._id),
-    });
+    send(res, userPayload(user));
   } catch (err) {
     console.error('[google auth]', err.message);
     fail(res, 'Google authentication failed. Please try again.', 401);
@@ -147,7 +142,13 @@ async function updateProfile(req, res) {
     if (!user) return fail(res, 'User not found', 404);
 
     if (name !== undefined)  user.name  = String(name).trim();
-    if (phone !== undefined) user.phone = String(phone).replace(/\D/g, '').slice(0, 15);
+    if (phone !== undefined) {
+      const digits = String(phone).replace(/\D/g, '');
+      if (digits.length > 15) {
+        return fail(res, 'Phone number must be 15 digits or fewer', 400);
+      }
+      user.phone = digits;
+    }
 
     if (email !== undefined) {
       const trimmedEmail = String(email).trim().toLowerCase();
