@@ -21,7 +21,7 @@ const googleSchema = z.object({
 const profileSchema = z.object({
   name:  z.string().trim().min(2, 'Name must be at least 2 characters').max(100).optional(),
   email: emailSchema.optional(),
-  phone: z.string().max(15, 'Phone number must be 15 digits or fewer').optional(),
+  phone: z.string().transform(v => v.replace(/\D/g, '')).pipe(z.string().max(15, 'Phone number must be 15 digits or fewer')).optional(),
 }).refine(d => d.name !== undefined || d.email !== undefined || d.phone !== undefined, {
   message: 'Provide at least one field to update',
 });
@@ -32,7 +32,7 @@ const changePasswordSchema = z.object({
 });
 
 const forgotPasswordSchema = z.object({
-  email: emailSchema,
+  email: emailSchema.optional(),
 });
 
 const resetPasswordSchema = z.object({
