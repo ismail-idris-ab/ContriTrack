@@ -5,6 +5,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+const errorHandler = require('./middleware/errorHandler');
+
 const app = express();
 
 // Trust the first proxy (fixes express-rate-limit IPv6 key generation on Render)
@@ -63,6 +65,9 @@ app.use('/api/referral',      require('./routes/referral'));
 
 // Health check — Render pings this to confirm the server is up
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Global error handler — must be after all routes
+app.use(errorHandler);
 
 // Connect to MongoDB and start server
 const PORT = process.env.PORT || 5000;
