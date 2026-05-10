@@ -20,6 +20,7 @@ function getEffectivePlan(user) {
   if (!sub || sub.plan === 'free') return 'free';
   if (sub.status === 'expired' || sub.status === 'cancelled') return 'free';
   if (sub.status === 'trialing' && sub.trialEndsAt && new Date() > sub.trialEndsAt) return 'free';
+  if (sub.currentPeriodEnd && new Date() > new Date(sub.currentPeriodEnd)) return 'free';
   return sub.plan;
 }
 

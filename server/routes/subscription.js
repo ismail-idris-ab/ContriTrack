@@ -55,14 +55,25 @@ function paystackRequest(method, path, body = null) {
 // Returns current plan info for the logged-in user.
 router.get('/status', protect, (req, res) => {
   const user = req.user;
+  const sub  = user.subscription;
   const plan = getEffectivePlan(user);
+
+  // Derive effective status: if period has expired but DB still says 'active', report 'expired'
+  let effectiveStatus = sub?.status || 'active';
+  if (
+    plan === 'free' &&
+    sub?.plan && sub.plan !== 'free' &&
+    sub?.status === 'active'
+  ) {
+    effectiveStatus = 'expired';
+  }
 
   res.json({
     plan,
-    status:           user.subscription?.status      || 'active',
-    billingCycle:     user.subscription?.billingCycle || 'monthly',
-    currentPeriodEnd: user.subscription?.currentPeriodEnd || null,
-    trialEndsAt:      user.subscription?.trialEndsAt  || null,
+    status:           effectiveStatus,
+    billingCycle:     sub?.billingCycle || 'monthly',
+    currentPeriodEnd: sub?.currentPeriodEnd || null,
+    trialEndsAt:      sub?.trialEndsAt  || null,
   });
 });
 
