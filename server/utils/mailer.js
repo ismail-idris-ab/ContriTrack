@@ -22,7 +22,7 @@ function makeTransporter() {
 }
 
 const transporter = makeTransporter();
-const FROM = process.env.EMAIL_FROM || '"ROTARA" <noreply@contritrack.app>';
+const FROM = process.env.EMAIL_FROM || '"ROTARA" <noreply@rotara.app>';
 
 const MONTHS = [
   'January','February','March','April','May','June',

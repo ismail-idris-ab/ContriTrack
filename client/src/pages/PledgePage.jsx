@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -48,6 +49,7 @@ function futureMonths() {
 }
 
 export default function PledgePage() {
+  useDocumentTitle('Pledges — ROTARA');
   const { activeGroup } = useGroup();
   const [pledges, setPledges] = useState([]);
   const [loading, setLoading] = useState(true);

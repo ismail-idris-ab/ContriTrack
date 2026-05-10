@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const fields = [
   { label: 'Full Name',      name: 'name',     type: 'text',     placeholder: 'John Doe' },
@@ -11,6 +12,7 @@ const fields = [
 ];
 
 export default function RegisterPage() {
+  useDocumentTitle('Create Account — ROTARA');
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

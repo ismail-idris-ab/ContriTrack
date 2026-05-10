@@ -2,12 +2,14 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const EXPIRY_SECONDS = 10 * 60; // 10 minutes
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
 export default function VerifyEmailPage() {
+  useDocumentTitle('Verify Email — ROTARA');
   const [searchParams] = useSearchParams();
   const { user, login, logout } = useAuth();
   const navigate = useNavigate();

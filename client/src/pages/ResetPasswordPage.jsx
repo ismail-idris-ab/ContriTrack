@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 export default function ResetPasswordPage() {
+  useDocumentTitle('Reset Password — ROTARA');
   const { token } = useParams();
   const navigate  = useNavigate();
 

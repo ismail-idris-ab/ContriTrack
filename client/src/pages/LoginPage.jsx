@@ -3,8 +3,10 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 export default function LoginPage() {
+  useDocumentTitle('Sign In — ROTARA');
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

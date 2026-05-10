@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -30,6 +31,7 @@ function compressImage(file, maxDimension = 1200, quality = 0.82) {
 }
 
 export default function UploadPage() {
+  useDocumentTitle('Upload Proof — ROTARA');
   const { groups, activeGroup: selectedGroup } = useGroup();
   const now = new Date();
   const [form, setForm] = useState({

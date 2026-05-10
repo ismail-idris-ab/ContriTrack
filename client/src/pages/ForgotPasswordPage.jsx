@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 export default function ForgotPasswordPage() {
+  useDocumentTitle('Forgot Password — ROTARA');
   const [email,   setEmail]   = useState('');
   const [sent,    setSent]    = useState(false);
   const [error,   setError]   = useState('');

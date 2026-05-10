@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import api from '../api/axios';
 import { downloadCsv } from '../utils/exportDownload';
 import { canAccess } from '../utils/planUtils';
+import useDocumentTitle from '../utils/useDocumentTitle';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -248,6 +249,7 @@ function StatusBadge({ status, paid }) {
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function ReportPage() {
+  useDocumentTitle('Reports — ROTARA');
   const { activeGroup } = useGroup();
   const { user } = useAuth();
   const planLocked = !canAccess(user, 'pro');
