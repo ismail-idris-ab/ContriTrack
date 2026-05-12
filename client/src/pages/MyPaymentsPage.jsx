@@ -289,6 +289,17 @@ export default function MyPaymentsPage() {
                   {/* Actions */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <StatusBadge status={p.status} />
+                    {p.isLate && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center',
+                        padding: '2px 8px', borderRadius: 10,
+                        background: 'rgba(217,119,6,0.10)', color: '#d97706',
+                        fontSize: 11, fontWeight: 700, marginLeft: 6,
+                        border: '1px solid rgba(217,119,6,0.2)',
+                      }}>
+                        Late{p.lateDaysOverdue > 0 ? ` +${p.lateDaysOverdue}d` : ''}
+                      </span>
+                    )}
                     {p.proofImage && (
                       <button
                         onClick={() => openModal(p)}

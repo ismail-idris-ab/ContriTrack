@@ -250,7 +250,17 @@ function ContributionsTab() {
                       </td>
                       <td data-label="Amount" style={{ ...tdStyle, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ct-emerald)' }}>₦{c.amount.toLocaleString()}</td>
                       <td data-label="Date" style={{ ...tdStyle, color: 'var(--ct-text-3)' }}>{new Date(c.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                      <td data-label="Status" style={tdStyle}><StatusBadge status={c.status} /></td>
+                      <td data-label="Status" style={tdStyle}><StatusBadge status={c.status} />{c.isLate && (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center',
+                            padding: '2px 8px', borderRadius: 10,
+                            background: 'rgba(217,119,6,0.10)', color: '#d97706',
+                            fontSize: 11, fontWeight: 700, marginLeft: 6,
+                            border: '1px solid rgba(217,119,6,0.2)',
+                          }}>
+                            Late{c.lateDaysOverdue > 0 ? ` +${c.lateDaysOverdue}d` : ''}
+                          </span>
+                        )}</td>
                       <td data-label="Actions" style={tdStyle}>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {c.proofImage && <button onClick={() => openModal(c)} style={smallBtnStyle('#faf9f6','rgba(0,0,0,0.09)','var(--ct-text-2)')}>View</button>}
