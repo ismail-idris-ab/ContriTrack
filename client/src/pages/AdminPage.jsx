@@ -754,12 +754,12 @@ function AuditTab({ groupId }) {
 
       {pages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
-          <button onClick={() => fetchLogs(page - 1)} disabled={page <= 1}
+          <button onClick={() => fetchLogs(page - 1, actionFilter, fromDate, toDate)} disabled={page <= 1}
             style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.09)', background: '#fff', cursor: page <= 1 ? 'not-allowed' : 'pointer', opacity: page <= 1 ? 0.4 : 1, fontSize: 12.5, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}>
             ← Prev
           </button>
           <span style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--ct-text-3)' }}>{page} / {pages}</span>
-          <button onClick={() => fetchLogs(page + 1)} disabled={page >= pages}
+          <button onClick={() => fetchLogs(page + 1, actionFilter, fromDate, toDate)} disabled={page >= pages}
             style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.09)', background: '#fff', cursor: page >= pages ? 'not-allowed' : 'pointer', opacity: page >= pages ? 0.4 : 1, fontSize: 12.5, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}>
             Next →
           </button>
