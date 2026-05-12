@@ -8,11 +8,8 @@ import Skeleton from '../components/Skeleton';
 import useDocumentTitle from '../utils/useDocumentTitle';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
-
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-const getInitials = (name = '') =>
-  name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+import { MONTHS, MONTHS_SHORT } from '../utils/dateUtils';
+import { getInitials, getAvatarGradient } from '../utils/avatarUtils';
 
 const STATUS_RING = {
   verified: '#10b981',
@@ -20,19 +17,6 @@ const STATUS_RING = {
   rejected: '#f43f5e',
   unpaid:   '#d0cce0',
 };
-
-const AVATAR_COLORS = [
-  ['#4f46e5','#7c3aed'],
-  ['#059669','#0d9488'],
-  ['#d97706','#b45309'],
-  ['#e11d48','#be123c'],
-  ['#0ea5e9','#0284c7'],
-];
-
-function getAvatarGradient(name = '') {
-  const i = name.charCodeAt(0) % AVATAR_COLORS.length;
-  return `linear-gradient(135deg, ${AVATAR_COLORS[i][0]}, ${AVATAR_COLORS[i][1]})`;
-}
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, color, bg, icon, trend }) {
@@ -98,7 +82,6 @@ function StatCard({ label, value, sub, color, bg, icon, trend }) {
 
 // ─── Month Navigator ──────────────────────────────────────────────────────────
 function MonthNav({ month, year, onPrev, onNext, isCurrentMonth }) {
-  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   return (
     <div style={{

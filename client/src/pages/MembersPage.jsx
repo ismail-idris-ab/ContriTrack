@@ -7,23 +7,7 @@ import { useToast } from '../context/ToastContext';
 import { downloadCsv } from '../utils/exportDownload';
 import Skeleton from '../components/Skeleton';
 import useDocumentTitle from '../utils/useDocumentTitle';
-
-const getInitials = (name = '') =>
-  name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-
-const AVATAR_COLORS = [
-  ['#4f46e5','#7c3aed'],
-  ['#059669','#0d9488'],
-  ['#d97706','#b45309'],
-  ['#e11d48','#be123c'],
-  ['#0ea5e9','#0284c7'],
-  ['#d4a017','#b8891a'],
-];
-
-function getAvatarGradient(name = '') {
-  const i = name.charCodeAt(0) % AVATAR_COLORS.length;
-  return `linear-gradient(135deg, ${AVATAR_COLORS[i][0]}, ${AVATAR_COLORS[i][1]})`;
-}
+import { getInitials, getAvatarGradient } from '../utils/avatarUtils';
 
 const STATUS_CONFIG = {
   verified: { color: '#047857', bg: 'rgba(5,150,105,0.10)',  border: 'rgba(5,150,105,0.22)',  label: 'Verified',  dot: '#10b981' },
