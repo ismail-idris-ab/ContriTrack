@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
+import { canAccess } from '../utils/planUtils';
+import UpgradeLock from '../components/UpgradeLock';
 import { useToast } from '../context/ToastContext';
 import useDocumentTitle from '../utils/useDocumentTitle';
 
@@ -44,6 +46,7 @@ export default function PenaltyPage() {
   useDocumentTitle('Penalties — ROTARA');
   const { activeGroup } = useGroup();
   const { user }        = useAuth();
+  const planLocked = !canAccess(user, 'pro');
   const toast           = useToast();
   const queryClient     = useQueryClient();
   const now             = new Date();
@@ -52,8 +55,7 @@ export default function PenaltyPage() {
     queryKey: ['penalties', activeGroup?._id],
     queryFn: () =>
       api.get(`/penalties?groupId=${activeGroup._id}`)
-         .then(r => r.data)
-         .catch(err => { if (err.response?.status === 403) return []; throw err; }),
+         .then(r => r.data),
     enabled: !!activeGroup,
   });
 
@@ -136,6 +138,14 @@ export default function PenaltyPage() {
   const pending = penalties.filter(p => p.status === 'pending');
   const totalPending = pending.reduce((s, p) => s + p.amount, 0);
   const totalAll     = penalties.reduce((s, p) => s + p.amount, 0);
+
+  if (planLocked) return (
+    <UpgradeLock
+      feature="Penalty Tracking"
+      requiredPlan="pro"
+      description="Track late payments and fee collection across your savings circle. Assign penalties, mark them paid or waived, and keep members accountable."
+    />
+  );
 
   if (!activeGroup) {
     return (
