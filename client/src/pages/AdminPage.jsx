@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import Skeleton from '../components/Skeleton';
 import StatusBadge from '../components/StatusBadge';
 import ProofModal from '../components/ProofModal';
 import { useToast } from '../context/ToastContext';
@@ -144,7 +145,21 @@ function ContributionsTab() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', color: 'var(--ct-text-3)', padding: '80px 0', fontSize: 14 }}>Loading…</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} style={{ background: '#fff', borderRadius: 14, padding: '16px 20px', boxShadow: 'var(--ct-shadow)', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <Skeleton width={44} height={44} borderRadius={12} />
+              <div style={{ flex: 1 }}>
+                <Skeleton height={13} width={140} style={{ marginBottom: 8 }} />
+                <Skeleton height={10} width={100} />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Skeleton width={56} height={30} borderRadius={8} />
+                <Skeleton width={56} height={30} borderRadius={8} />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : fetchError ? (
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: 13.5, color: 'var(--ct-rose)', marginBottom: 14 }}>{fetchError}</div>
@@ -347,8 +362,33 @@ function RolesTab() {
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', color: 'var(--ct-text-3)', padding: '80px 0', fontSize: 14 }}>Loading…</div>;
-  if (fetchError) return <div style={{ textAlign: 'center', color: 'var(--ct-rose)', padding: '60px 0', fontSize: 13.5 }}>{fetchError}</div>;
+  if (loading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+      {[1,2,3,4].map(i => (
+        <div key={i} style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', boxShadow: 'var(--ct-shadow)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Skeleton width={40} height={40} borderRadius={10} />
+            <div>
+              <Skeleton height={13} width={120} style={{ marginBottom: 6 }} />
+              <Skeleton height={10} width={160} />
+            </div>
+          </div>
+          <Skeleton width={80} height={30} borderRadius={8} />
+        </div>
+      ))}
+    </div>
+  );
+  if (fetchError) return (
+    <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+      <div style={{ fontSize: 13.5, color: 'var(--ct-rose)', marginBottom: 14 }}>{fetchError}</div>
+      <button
+        onClick={() => { setFetchError(''); setLoading(true); api.get('/members').then(({ data }) => setUsers(data)).catch(err => setFetchError(err.response?.data?.message || 'Failed to load members.')).finally(() => setLoading(false)); }}
+        style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}
+      >
+        Try again
+      </button>
+    </div>
+  );
 
   return (
     <div>
@@ -555,13 +595,28 @@ function AuditTab({ groupId }) {
   useEffect(() => { fetchLogs(1); }, [groupId]);
 
   if (loading) return (
-    <div style={{ textAlign: 'center', color: 'var(--ct-text-3)', padding: '60px 0', fontSize: 14 }}>
-      Loading audit log…
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+      {[1,2,3,4,5].map(i => (
+        <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '14px 18px', boxShadow: 'var(--ct-shadow)', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          <Skeleton width={38} height={38} borderRadius={10} />
+          <div style={{ flex: 1 }}>
+            <Skeleton height={13} width={220} style={{ marginBottom: 8 }} />
+            <Skeleton height={10} width={140} />
+          </div>
+          <Skeleton height={11} width={48} />
+        </div>
+      ))}
     </div>
   );
   if (error) return (
-    <div style={{ textAlign: 'center', color: 'var(--ct-rose)', padding: '60px 0', fontSize: 13.5 }}>
-      {error}
+    <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+      <div style={{ fontSize: 13.5, color: 'var(--ct-rose)', marginBottom: 14 }}>{error}</div>
+      <button
+        onClick={() => fetchLogs(1)}
+        style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}
+      >
+        Try again
+      </button>
     </div>
   );
   if (!logs.length) return (
