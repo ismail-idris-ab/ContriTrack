@@ -5,6 +5,7 @@ import api from '../api/axios';
 import StatusBadge from '../components/StatusBadge';
 import ProofModal from '../components/ProofModal';
 import Skeleton from '../components/Skeleton';
+import OnboardingChecklist from '../components/OnboardingChecklist';
 import useDocumentTitle from '../utils/useDocumentTitle';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
@@ -478,6 +479,9 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState('all');
   const { activeGroup, groups, loadingGroups } = useGroup();
   const { user } = useAuth();
+  const isGroupAdmin = activeGroup?.members?.some(
+    m => String(m.user?._id || m.user) === String(user?._id) && m.role === 'admin'
+  );
 
   const { data: members = [], isLoading: loading, isError, error: fetchError, refetch } = useQuery({
     queryKey: ['members', activeGroup?._id, month, year],
@@ -645,6 +649,14 @@ export default function DashboardPage() {
               <StatCard key={card.label} {...card} />
             ))}
           </div>
+
+          {isGroupAdmin && (
+            <OnboardingChecklist
+              groups={groups}
+              activeGroup={activeGroup}
+              members={members}
+            />
+          )}
 
           {/* Referral invite banner */}
           <div
