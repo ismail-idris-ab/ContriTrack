@@ -7,6 +7,7 @@ import api from '../api/axios';
 import { downloadCsv } from '../utils/exportDownload';
 import { canAccess } from '../utils/planUtils';
 import useDocumentTitle from '../utils/useDocumentTitle';
+import UpgradeLock from '../components/UpgradeLock';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -371,25 +372,11 @@ export default function ReportPage() {
 
   // ── Guard: plan locked ────────────────────────────────────────────────────
   if (planLocked) return (
-    <div style={{ maxWidth: 480, margin: '80px auto', textAlign: 'center' }}>
-      <div style={{
-        width: 72, height: 72, borderRadius: 20, margin: '0 auto 20px',
-        background: 'rgba(225,29,72,0.08)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 32,
-      }}>🔒</div>
-      <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--ct-text-1)', marginBottom: 8 }}>Reports require Pro</h2>
-      <p style={{ color: 'var(--ct-text-3)', marginBottom: 24, lineHeight: 1.6, fontSize: 14 }}>
-        Upgrade to unlock monthly and yearly reports for your savings circles.
-      </p>
-      <Link to="/subscription" style={{
-        display: 'inline-block', padding: '10px 24px',
-        background: 'linear-gradient(135deg, var(--ct-gold), var(--ct-gold-light))',
-        color: '#1a1206', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: 14,
-      }}>
-        Upgrade Plan
-      </Link>
-    </div>
+    <UpgradeLock
+      feature="Reports"
+      requiredPlan="pro"
+      description="Unlock monthly and yearly collection reports, CSV exports, and WhatsApp reminder sending for your savings circles."
+    />
   );
 
   // ── Main render ───────────────────────────────────────────────────────────
