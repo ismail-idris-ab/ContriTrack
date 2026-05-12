@@ -75,6 +75,11 @@ async function joinGroup(req, res) {
     group.members.push({ user: req.user._id, role: 'member' });
     await group.save();
     await group.populate('members.user', 'name email role');
+    logAudit({
+      action: 'member.added', adminId: req.user._id, groupId: group._id,
+      entityType: 'User', entityId: req.user._id, targetUserId: req.user._id,
+      meta: { role: 'member', via: 'invite_code' },
+    });
     send(res, group);
   } catch (err) {
     console.error('[groups]', err.message);
@@ -282,6 +287,11 @@ async function removeMember(req, res) {
       m => String(m.user?._id ?? m.user) !== String(req.params.userId)
     );
     await group.save();
+    logAudit({
+      action: 'member.removed', adminId: req.user._id, groupId: group._id,
+      entityType: 'User', entityId: req.params.userId, targetUserId: req.params.userId,
+      meta: { removedBy: isSelf ? 'self' : 'admin' },
+    });
     send(res, { message: 'Member removed' });
   } catch (err) {
     console.error('[groups]', err.message);

@@ -4,6 +4,7 @@ const Payout  = require('../models/Payout');
 const Group   = require('../models/Group');
 const Contribution = require('../models/Contribution');
 const { protect } = require('../middleware/auth');
+const { logAudit } = require('../utils/audit');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -259,6 +260,19 @@ router.patch('/:id/status', protect, async (req, res) => {
     await payout.save();
     await payout.populate('recipient', 'name email avatar');
     await payout.populate('recordedBy', 'name');
+
+    if (status === 'paid') {
+      logAudit({
+        action: 'payout.paid', adminId: req.user._id, groupId: payout.group,
+        entityType: 'Payout', entityId: payout._id,
+        targetUserId: payout.recipient?._id || payout.recipient,
+        meta: {
+          month: payout.month, year: payout.year,
+          amount: payout.actualAmount || payout.expectedAmount,
+          recipientName: payout.recipient?.name,
+        },
+      });
+    }
 
     res.json(payout);
   } catch (err) {

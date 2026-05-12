@@ -4,9 +4,8 @@ const AuditLog   = require('../models/AuditLog');
 const Group      = require('../models/Group');
 const { protect } = require('../middleware/auth');
 
-// GET /api/audit?groupId=&page=1&limit=20
 router.get('/', protect, async (req, res) => {
-  const { groupId } = req.query;
+  const { groupId, action, from, to } = req.query;
   const page  = Math.max(1, parseInt(req.query.page,  10) || 1);
   const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
 
@@ -14,7 +13,6 @@ router.get('/', protect, async (req, res) => {
     let filter = {};
 
     if (groupId) {
-      // Group-scoped: requester must be a group admin OR a system admin
       const group = await Group.findById(groupId);
       if (!group || !group.isActive)
         return res.status(404).json({ message: 'Group not found' });
@@ -31,9 +29,15 @@ router.get('/', protect, async (req, res) => {
 
       filter.groupId = groupId;
     } else {
-      // No groupId: system admin only
       if (req.user.role !== 'admin')
         return res.status(403).json({ message: 'System admin access required' });
+    }
+
+    if (action) filter.action = action;
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to)   filter.createdAt.$lte = new Date(to);
     }
 
     const total = await AuditLog.countDocuments(filter);
