@@ -28,7 +28,8 @@ const contributionSchema = new mongoose.Schema(
       }
     ],
     cycleNumber:   { type: Number, default: 1, min: 1 },
-    isLate:        { type: Boolean, default: false },
+    isLate:         { type: Boolean, default: false },
+    lateDaysOverdue:{ type: Number,  default: 0 },
   },
   { timestamps: true }
 );

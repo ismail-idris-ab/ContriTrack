@@ -55,11 +55,19 @@ async function createContribution(req, res) {
       return fail(res, `Cycle number must be between 1 and ${cyclesPerMonth}`, 400);
     }
 
-    const late = isLateSubmission(new Date(), parsedYear, parsedMonth, dueDay, graceDays);
+    const now = new Date();
+    const late = isLateSubmission(now, parsedYear, parsedMonth, dueDay, graceDays);
+
+    let lateDaysOverdue = 0;
+    if (late) {
+      const deadline = new Date(parsedYear, parsedMonth - 1, dueDay + graceDays, 23, 59, 59);
+      lateDaysOverdue = Math.max(0, Math.ceil((now - deadline) / 86400000));
+    }
+
     const data = {
       user: req.user._id, amount: parsedAmount, month: parsedMonth,
       year: parsedYear, cycleNumber: parsedCycle, note: safeNote,
-      proofImage: req.file.path, isLate: late,
+      proofImage: req.file.path, isLate: late, lateDaysOverdue,
     };
     if (groupId) data.group = groupId;
 
