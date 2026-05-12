@@ -22,6 +22,7 @@ export default function SubscriptionPage() {
   const [params]         = useSearchParams();
 
   const [status,    setStatus]    = useState(null);
+  const [referral,  setReferral]  = useState(null);
   const [loading,   setLoading]   = useState(true);
   const [upgrading, setUpgrading] = useState(false);
   const [cancelling,setCancelling]= useState(false);
@@ -45,6 +46,12 @@ export default function SubscriptionPage() {
       }
     }
     loadStatus();
+  }, []);
+
+  useEffect(() => {
+    api.get('/referral/me')
+      .then(({ data }) => setReferral(data))
+      .catch(() => {});
   }, []);
 
   // Handle Paystack callback — verify payment reference from URL
@@ -201,6 +208,29 @@ export default function SubscriptionPage() {
           )}
         </div>
 
+        {currentPlan !== 'free' && status?.billingCycle && (
+          <div style={{ marginTop: 12, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ct-text-3)', marginBottom: 3 }}>
+                Billing cycle
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ct-text-1)' }}>
+                {status.billingCycle === 'annual' ? 'Annual' : 'Monthly'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {status?.status === 'trialing' && status?.trialEndsAt && (
+          <div style={{
+            marginTop: 14, padding: '10px 14px', borderRadius: 8,
+            background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.22)',
+            color: '#92600a', fontSize: 13, fontWeight: 500,
+          }}>
+            ⚠ Trial ends on {new Date(status.trialEndsAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}. Upgrade to keep access.
+          </div>
+        )}
+
         {currentPlan !== 'free' && status?.status === 'active' && (
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
             <button
@@ -219,6 +249,9 @@ export default function SubscriptionPage() {
             >
               {cancelling ? 'Cancelling…' : 'Cancel subscription'}
             </button>
+            <p style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 10, marginBottom: 0 }}>
+              Cancelling returns you to the Free plan at the end of your billing period. Your data is never deleted.
+            </p>
           </div>
         )}
       </div>
@@ -316,6 +349,78 @@ export default function SubscriptionPage() {
           fontSize: 14, fontWeight: 600,
         }}>
           You're on our highest plan. Thanks for supporting ROTARA!
+        </div>
+      )}
+
+      {referral && (
+        <div style={{
+          background: '#fff',
+          borderRadius: 16,
+          border: '1px solid rgba(0,0,0,0.07)',
+          padding: '24px 26px',
+          marginTop: 24,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+        }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ct-text-1)', marginBottom: 4 }}>
+              Referral programme
+            </div>
+            <p style={{ color: 'var(--ct-text-3)', fontSize: 13.5, margin: 0 }}>
+              Each friend who upgrades earns you 30 free days added to your subscription.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 18 }}>
+            {[
+              { label: 'Friends referred', value: referral.totalReferred },
+              { label: 'Upgraded',         value: referral.convertedReferrals },
+              { label: 'Credits earned',   value: `${referral.creditsEarned > 0 ? '+' : ''}${referral.creditsEarned} mo` },
+            ].map(({ label, value }) => (
+              <div key={label} style={{
+                flex: '1 1 80px',
+                background: '#faf9f6',
+                borderRadius: 10, padding: '12px 14px',
+                border: '1px solid rgba(0,0,0,0.06)',
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ct-text-3)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>
+                  {label}
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: 'var(--ct-text-1)' }}>
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginBottom: 8 }}>Your referral link</div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <code style={{
+              flex: 1, minWidth: 0,
+              padding: '8px 12px', borderRadius: 8,
+              background: '#f0ece4',
+              border: '1px solid rgba(0,0,0,0.07)',
+              fontSize: 12.5, color: 'var(--ct-text-2)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              display: 'block',
+            }}>
+              {referral.link}
+            </code>
+            <button
+              onClick={() => { navigator.clipboard.writeText(referral.link).catch(() => {}); }}
+              style={{
+                padding: '8px 16px', borderRadius: 8,
+                border: '1px solid rgba(0,0,0,0.10)',
+                background: '#fff',
+                color: 'var(--ct-text-2)',
+                fontSize: 12.5, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              Copy link
+            </button>
+          </div>
         </div>
       )}
 
