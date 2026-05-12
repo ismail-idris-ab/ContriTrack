@@ -219,7 +219,12 @@ export default function GroupsPage() {
       setShowCreate(false);
       resetCreate();
     } catch (err) {
-      setCreateError(err.response?.data?.message || 'Failed to create group');
+      const code = err.response?.data?.code;
+      if (code === 'GROUP_LIMIT_REACHED' || code === 'MEMBER_LIMIT_REACHED') {
+        setCreateError('__UPGRADE__');
+      } else {
+        setCreateError(err.response?.data?.message || 'Failed to create group');
+      }
     } finally {
       setCreating(false);
     }
@@ -256,7 +261,12 @@ export default function GroupsPage() {
       setShowJoin(false);
       setInviteCode('');
     } catch (err) {
-      setJoinError(err.response?.data?.message || 'Failed to join group');
+      const code = err.response?.data?.code;
+      if (code === 'MEMBER_LIMIT_REACHED') {
+        setJoinError('__UPGRADE__');
+      } else {
+        setJoinError(err.response?.data?.message || 'Failed to join group');
+      }
     } finally {
       setJoining(false);
     }
@@ -338,11 +348,12 @@ export default function GroupsPage() {
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ct-text-1)', margin: '0 0 16px', letterSpacing: '-0.01em' }}>
             Join a Circle
           </h3>
-          {joinError && (
-            <div style={{ padding: '10px 14px', background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 9, color: '#be123c', fontSize: 13, marginBottom: 14 }}>
-              {joinError}
-            </div>
-          )}
+          {joinError === '__UPGRADE__'
+            ? <UpgradeErrorBanner onDismiss={() => setJoinError('')} />
+            : joinError
+            ? <div style={{ color: '#e11d48', fontSize: 13, marginBottom: 12 }}>{joinError}</div>
+            : null
+          }
           <form onSubmit={handleJoin} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <input
               value={inviteCode}
@@ -392,11 +403,12 @@ export default function GroupsPage() {
             />
           ) : (
             <>
-              {createError && (
-                <div style={{ padding: '10px 14px', background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 9, color: '#be123c', fontSize: 13, marginBottom: 14 }}>
-                  {createError}
-                </div>
-              )}
+              {createError === '__UPGRADE__'
+                ? <UpgradeErrorBanner onDismiss={() => setCreateError('')} />
+                : createError
+                ? <div style={{ color: '#e11d48', fontSize: 13, marginBottom: 12 }}>{createError}</div>
+                : null
+              }
               <form onSubmit={handleCreate}>
                 <div className="groups-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                   <div>
@@ -868,6 +880,51 @@ export default function GroupsPage() {
           onSaved={handleSettingsSaved}
         />
       )}
+    </div>
+  );
+}
+
+function UpgradeErrorBanner({ onDismiss }) {
+  return (
+    <div style={{
+      padding: '12px 16px',
+      borderRadius: 10,
+      marginBottom: 16,
+      background: 'rgba(212,160,23,0.08)',
+      border: '1px solid rgba(212,160,23,0.28)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      flexWrap: 'wrap',
+    }}>
+      <span style={{ color: '#92690a', fontSize: 13.5, fontWeight: 500 }}>
+        You've reached your plan limit.
+      </span>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <a
+          href="/subscription?upgrade=pro"
+          style={{
+            padding: '6px 14px', borderRadius: 8,
+            background: 'linear-gradient(135deg, #d4a017, #e8b820)',
+            color: '#1a1206',
+            fontSize: 12.5, fontWeight: 700,
+            textDecoration: 'none',
+          }}
+        >
+          Upgrade Plan →
+        </a>
+        <button
+          onClick={onDismiss}
+          style={{
+            background: 'none', border: 'none',
+            color: '#92690a', fontSize: 18,
+            cursor: 'pointer', lineHeight: 1, padding: '2px 4px',
+          }}
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }
