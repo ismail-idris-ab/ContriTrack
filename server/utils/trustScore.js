@@ -45,14 +45,14 @@ async function calculateTrustScore(userId, groupId, lookbackMonths = 12) {
 
   // Fetch contributions & penalties in parallel
   const [contributions, penalties] = await Promise.all([
-    Contribution.find({ user: userId, group: groupId }).select('month year status'),
+    Contribution.find({ user: userId, group: groupId }).select('month year status isLate'),
     Penalty.find({ user: userId, group: groupId, status: 'pending' }).select('amount'),
   ]);
 
-  // Build a map: "YYYY-MM" → status
+  // Build a map: "YYYY-MM" → contribution
   const contribByKey = {};
   contributions.forEach(c => {
-    contribByKey[`${c.year}-${c.month}`] = c.status;
+    contribByKey[`${c.year}-${c.month}`] = c;
   });
 
   // Score computation
@@ -61,15 +61,18 @@ async function calculateTrustScore(userId, groupId, lookbackMonths = 12) {
   let pendingCount   = 0;
   let rejectedCount  = 0;
   let unpaidCount    = 0;
+  let lateCount      = 0;
   let streak         = 0;
   let streakBroken   = false;
 
   for (const { month, year } of months) {
     const key    = `${year}-${month}`;
-    const status = contribByKey[key];
+    const contrib = contribByKey[key];
+    const status  = contrib?.status;
 
     if (status === 'verified') {
       verifiedCount++;
+      if (contrib.isLate) lateCount++;
       if (!streakBroken) streak++;
     } else if (status === 'pending') {
       pendingCount++;
@@ -103,6 +106,7 @@ async function calculateTrustScore(userId, groupId, lookbackMonths = 12) {
   raw -= rejectedCount  * 3;   // bad — rejected proof
   raw -= unpaidCount    * 2;   // missed month
   raw -= penaltyCount   * 5;   // active penalty
+  raw -= Math.min(lateCount, 10) * 1; // late payment deduction, capped at -10
 
   const score = Math.max(0, Math.min(100, Math.round(raw)));
   const gradeInfo = getGrade(score);
@@ -116,6 +120,7 @@ async function calculateTrustScore(userId, groupId, lookbackMonths = 12) {
     pendingCount,
     rejectedCount,
     unpaidCount,
+    lateCount,
     consecutiveStreak: streak,
     penaltyCount,
     totalMonths,
