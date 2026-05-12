@@ -525,12 +525,17 @@ const tdStyle = {
 // ── Audit Log tab ─────────────────────────────────────────────────────────────
 
 const ACTION_CONFIG = {
-  'contribution.verified':  { icon: '✅', color: '#059669', bg: 'rgba(5,150,105,0.10)',  label: 'verified contribution'    },
-  'contribution.rejected':  { icon: '❌', color: '#e11d48', bg: 'rgba(225,29,72,0.10)',  label: 'rejected contribution'    },
-  'member.role_changed':    { icon: '🛡️', color: '#4f46e5', bg: 'rgba(79,70,229,0.10)',  label: 'changed member role'      },
-  'penalty.issued':         { icon: '⚠️', color: '#d97706', bg: 'rgba(217,119,6,0.10)',  label: 'issued a penalty'         },
-  'penalty.status_changed': { icon: '📋', color: '#d97706', bg: 'rgba(217,119,6,0.10)',  label: 'updated penalty status'   },
-  'group.settings_changed': { icon: '⚙️', color: '#d4a017', bg: 'rgba(212,160,23,0.10)', label: 'changed circle settings'  },
+  'contribution.verified':      { icon: '✅', color: '#059669', bg: 'rgba(5,150,105,0.10)',  label: 'verified contribution'      },
+  'contribution.rejected':      { icon: '❌', color: '#e11d48', bg: 'rgba(225,29,72,0.10)',  label: 'rejected contribution'      },
+  'contribution.resubmitted':   { icon: '🔄', color: '#0284c7', bg: 'rgba(2,132,199,0.10)',  label: 'resubmitted contribution'   },
+  'contribution.proof_replaced':{ icon: '📎', color: '#0284c7', bg: 'rgba(2,132,199,0.10)',  label: 'replaced proof'             },
+  'member.added':               { icon: '👤', color: '#7c3aed', bg: 'rgba(124,58,237,0.10)', label: 'joined the circle'          },
+  'member.removed':             { icon: '🚪', color: '#64748b', bg: 'rgba(100,116,139,0.10)',label: 'was removed from circle'    },
+  'member.role_changed':        { icon: '🛡️', color: '#4f46e5', bg: 'rgba(79,70,229,0.10)',  label: 'changed member role'        },
+  'penalty.issued':             { icon: '⚠️', color: '#d97706', bg: 'rgba(217,119,6,0.10)',  label: 'issued a penalty'           },
+  'penalty.status_changed':     { icon: '📋', color: '#d97706', bg: 'rgba(217,119,6,0.10)',  label: 'updated penalty status'     },
+  'group.settings_changed':     { icon: '⚙️', color: '#d4a017', bg: 'rgba(212,160,23,0.10)', label: 'changed circle settings'    },
+  'payout.paid':                { icon: '💸', color: '#059669', bg: 'rgba(5,150,105,0.10)',  label: 'marked payout as paid'      },
 };
 
 function timeAgoAudit(dateStr) {
@@ -554,6 +559,18 @@ function metaSummary(action, meta) {
     if (meta.rejectionNote) parts.push(`"${meta.rejectionNote}"`);
     return parts.join(' · ') || null;
   }
+  if (action === 'contribution.resubmitted') {
+    const parts = [];
+    if (meta.month && meta.year) parts.push(`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][meta.month - 1]} ${meta.year}`);
+    if (meta.resubmissionCount) parts.push(`attempt #${meta.resubmissionCount + 1}`);
+    return parts.join(' · ') || null;
+  }
+  if (action === 'member.added') {
+    return meta.via === 'invite_code' ? 'via invite code' : null;
+  }
+  if (action === 'member.removed') {
+    return meta.removedBy === 'self' ? 'left the circle' : 'removed by admin';
+  }
   if (action === 'member.role_changed') {
     return `${meta.oldRole} → ${meta.newRole}`;
   }
@@ -566,22 +583,49 @@ function metaSummary(action, meta) {
   if (action === 'group.settings_changed') {
     return meta.fields?.length ? `Changed: ${meta.fields.join(', ')}` : null;
   }
+  if (action === 'payout.paid') {
+    const parts = [];
+    if (meta.month && meta.year) parts.push(`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][meta.month - 1]} ${meta.year}`);
+    if (meta.amount) parts.push(`₦${Number(meta.amount).toLocaleString('en-NG')}`);
+    return parts.join(' · ') || null;
+  }
   return null;
 }
 
-function AuditTab({ groupId }) {
-  const [logs,    setLogs]    = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page,    setPage]    = useState(1);
-  const [pages,   setPages]   = useState(1);
-  const [total,   setTotal]   = useState(0);
-  const [error,   setError]   = useState('');
+const AUDIT_ACTION_GROUPS = [
+  { value: '', label: 'All events' },
+  { value: 'contribution.verified', label: 'Verified' },
+  { value: 'contribution.rejected', label: 'Rejected' },
+  { value: 'contribution.resubmitted', label: 'Resubmitted' },
+  { value: 'member.added', label: 'Member joined' },
+  { value: 'member.removed', label: 'Member removed' },
+  { value: 'member.role_changed', label: 'Role changed' },
+  { value: 'penalty.issued', label: 'Penalty issued' },
+  { value: 'penalty.status_changed', label: 'Penalty updated' },
+  { value: 'payout.paid', label: 'Payout paid' },
+  { value: 'group.settings_changed', label: 'Settings changed' },
+];
 
-  const fetchLogs = (p = 1) => {
+function AuditTab({ groupId }) {
+  const [logs,       setLogs]       = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [page,       setPage]       = useState(1);
+  const [pages,      setPages]      = useState(1);
+  const [total,      setTotal]      = useState(0);
+  const [error,      setError]      = useState('');
+  const [actionFilter, setActionFilter] = useState('');
+  const [fromDate,   setFromDate]   = useState('');
+  const [toDate,     setToDate]     = useState('');
+
+  const fetchLogs = (p = 1, action = actionFilter, from = fromDate, to = toDate) => {
     if (!groupId) return;
     setLoading(true);
     setError('');
-    api.get(`/audit?groupId=${groupId}&page=${p}&limit=20`)
+    let url = `/audit?groupId=${groupId}&page=${p}&limit=20`;
+    if (action) url += `&action=${encodeURIComponent(action)}`;
+    if (from)   url += `&from=${encodeURIComponent(from)}`;
+    if (to)     url += `&to=${encodeURIComponent(to)}`;
+    api.get(url)
       .then(({ data }) => {
         setLogs(data.logs || []);
         setPages(data.pages || 1);
@@ -593,6 +637,14 @@ function AuditTab({ groupId }) {
   };
 
   useEffect(() => { fetchLogs(1); }, [groupId]);
+
+  const applyFilters = () => { fetchLogs(1, actionFilter, fromDate, toDate); };
+  const clearFilters = () => {
+    setActionFilter(''); setFromDate(''); setToDate('');
+    fetchLogs(1, '', '', '');
+  };
+
+  const hasFilters = actionFilter || fromDate || toDate;
 
   if (loading) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
@@ -611,84 +663,106 @@ function AuditTab({ groupId }) {
   if (error) return (
     <div style={{ textAlign: 'center', padding: '60px 20px' }}>
       <div style={{ fontSize: 13.5, color: 'var(--ct-rose)', marginBottom: 14 }}>{error}</div>
-      <button
-        onClick={() => fetchLogs(1)}
-        style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}
-      >
-        Try again
-      </button>
-    </div>
-  );
-  if (!logs.length) return (
-    <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-      <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
-      <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ct-text-1)', marginBottom: 6 }}>No activity yet</h3>
-      <p style={{ color: 'var(--ct-text-3)', fontSize: 13.5 }}>Admin actions on this circle will appear here.</p>
+      <button onClick={() => fetchLogs(1)} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}>Try again</button>
     </div>
   );
 
   return (
     <div>
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ct-text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Event type</label>
+          <select
+            value={actionFilter}
+            onChange={e => setActionFilter(e.target.value)}
+            style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', fontSize: 13, fontFamily: 'var(--font-sans)', background: '#fff', cursor: 'pointer' }}
+          >
+            {AUDIT_ACTION_GROUPS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ct-text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>From</label>
+          <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
+            style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', fontSize: 13, fontFamily: 'var(--font-sans)', background: '#fff' }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ct-text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>To</label>
+          <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
+            style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', fontSize: 13, fontFamily: 'var(--font-sans)', background: '#fff' }} />
+        </div>
+        <button onClick={applyFilters}
+          style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: 'var(--ct-gold)', color: '#0f0f14', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)', alignSelf: 'flex-end' }}>
+          Filter
+        </button>
+        {hasFilters && (
+          <button onClick={clearFilters}
+            style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', color: 'var(--ct-text-3)', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-sans)', alignSelf: 'flex-end' }}>
+            Clear
+          </button>
+        )}
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <p style={{ fontSize: 13.5, color: 'var(--ct-text-3)', margin: 0 }}>
-          {total} event{total !== 1 ? 's' : ''} recorded
+          {total} event{total !== 1 ? 's' : ''}{hasFilters ? ' (filtered)' : ''}
         </p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-        {logs.map(log => {
-          const cfg = ACTION_CONFIG[log.action] || { icon: '📝', color: '#52526e', bg: 'rgba(82,82,110,0.1)', label: log.action };
-          const summary = metaSummary(log.action, log.meta);
-          return (
-            <div key={log._id} style={{
-              background: '#fff', borderRadius: 12, padding: '14px 18px',
-              border: '1px solid rgba(0,0,0,0.05)', boxShadow: 'var(--ct-shadow)',
-              display: 'flex', alignItems: 'flex-start', gap: 14,
-            }}>
-              <div style={{
-                width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                background: cfg.bg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
+      {!logs.length ? (
+        <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
+          <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ct-text-1)', marginBottom: 6 }}>No activity yet</h3>
+          <p style={{ color: 'var(--ct-text-3)', fontSize: 13.5 }}>Admin actions on this circle will appear here.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+          {logs.map(log => {
+            const cfg = ACTION_CONFIG[log.action] || { icon: '📝', color: '#52526e', bg: 'rgba(82,82,110,0.1)', label: log.action };
+            const summary = metaSummary(log.action, log.meta);
+            return (
+              <div key={log._id} style={{
+                background: '#fff', borderRadius: 12, padding: '14px 18px',
+                border: '1px solid rgba(0,0,0,0.05)', boxShadow: 'var(--ct-shadow)',
+                display: 'flex', alignItems: 'flex-start', gap: 14,
               }}>
-                {cfg.icon}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ct-text-1)', lineHeight: 1.4 }}>
-                  <span style={{ color: cfg.color }}>{log.adminId?.name || 'Admin'}</span>
-                  {' '}{cfg.label}
-                  {log.targetUserId?.name && (
-                    <span style={{ color: 'var(--ct-text-2)' }}> — {log.targetUserId.name}</span>
+                <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>
+                  {cfg.icon}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ct-text-1)', lineHeight: 1.4 }}>
+                    <span style={{ color: cfg.color }}>{log.adminId?.name || 'Member'}</span>
+                    {' '}{cfg.label}
+                    {log.targetUserId?.name && (
+                      <span style={{ color: 'var(--ct-text-2)' }}> — {log.targetUserId.name}</span>
+                    )}
+                  </div>
+                  {summary && (
+                    <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>
+                      {summary}
+                    </div>
                   )}
                 </div>
-                {summary && (
-                  <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>
-                    {summary}
-                  </div>
-                )}
+                <div style={{ fontSize: 11.5, color: 'var(--ct-text-4)', whiteSpace: 'nowrap', flexShrink: 0, marginTop: 1 }}>
+                  {timeAgoAudit(log.createdAt)}
+                </div>
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--ct-text-4)', whiteSpace: 'nowrap', flexShrink: 0, marginTop: 1 }}>
-                {timeAgoAudit(log.createdAt)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {pages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
-          <button
-            onClick={() => fetchLogs(page - 1)}
-            disabled={page <= 1}
-            style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.09)', background: '#fff', cursor: page <= 1 ? 'not-allowed' : 'pointer', opacity: page <= 1 ? 0.4 : 1, fontSize: 12.5, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}
-          >← Prev</button>
-          <span style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--ct-text-3)' }}>
-            {page} / {pages}
-          </span>
-          <button
-            onClick={() => fetchLogs(page + 1)}
-            disabled={page >= pages}
-            style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.09)', background: '#fff', cursor: page >= pages ? 'not-allowed' : 'pointer', opacity: page >= pages ? 0.4 : 1, fontSize: 12.5, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}
-          >Next →</button>
+          <button onClick={() => fetchLogs(page - 1)} disabled={page <= 1}
+            style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.09)', background: '#fff', cursor: page <= 1 ? 'not-allowed' : 'pointer', opacity: page <= 1 ? 0.4 : 1, fontSize: 12.5, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}>
+            ← Prev
+          </button>
+          <span style={{ padding: '7px 12px', fontSize: 12.5, color: 'var(--ct-text-3)' }}>{page} / {pages}</span>
+          <button onClick={() => fetchLogs(page + 1)} disabled={page >= pages}
+            style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.09)', background: '#fff', cursor: page >= pages ? 'not-allowed' : 'pointer', opacity: page >= pages ? 0.4 : 1, fontSize: 12.5, fontFamily: 'var(--font-sans)', color: 'var(--ct-text-2)' }}>
+            Next →
+          </button>
         </div>
       )}
     </div>
