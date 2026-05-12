@@ -2,7 +2,7 @@ import StatusBadge from './StatusBadge';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-export default function ProofModal({ proofUrl, memberName, month, year, submittedDate, status, rejectionHistory, onClose }) {
+export default function ProofModal({ proofUrl, memberName, month, year, submittedDate, status, rejectionHistory, onClose, trustGrade, trustGradeColor, trustVerifiedCount, trustTotalMonths }) {
   if (!proofUrl) return null;
 
   const rows = [
@@ -54,7 +54,25 @@ export default function ProofModal({ proofUrl, memberName, month, year, submitte
               Payment Proof
             </h3>
             {memberName && (
-              <p style={{ fontSize: 12, color: 'var(--ct-text-3)', margin: '3px 0 0' }}>{memberName}</p>
+              <p style={{ fontSize: 12, color: 'var(--ct-text-3)', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {memberName}
+                {trustGrade && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center',
+                    padding: '2px 8px', borderRadius: 12,
+                    background: `${trustGradeColor}22`, color: trustGradeColor,
+                    fontSize: 11, fontWeight: 700,
+                    border: `1px solid ${trustGradeColor}44`,
+                  }}>
+                    {trustGrade}
+                    {trustVerifiedCount != null && trustTotalMonths != null && (
+                      <span style={{ marginLeft: 4, fontWeight: 400, opacity: 0.8 }}>
+                        · {trustVerifiedCount}/{trustTotalMonths}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </p>
             )}
           </div>
           <button

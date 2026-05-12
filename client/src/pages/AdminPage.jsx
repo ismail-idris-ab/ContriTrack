@@ -25,6 +25,18 @@ function ContributionsTab() {
   const [rejectNote,   setRejectNote]   = useState('');
   const [rejecting,    setRejecting]    = useState(false);
   const [verifying,    setVerifying]    = useState(null);
+  const [trustMap,     setTrustMap]     = useState({});
+
+  useEffect(() => {
+    if (!activeGroup?._id) return;
+    api.get(`/exports/trust-score-summary?groupId=${activeGroup._id}`)
+      .then(({ data }) => {
+        const map = {};
+        data.forEach(ts => { map[ts.userId] = ts; });
+        setTrustMap(map);
+      })
+      .catch(() => {});
+  }, [activeGroup]);
 
   // pagination
   const [page, setPage]   = useState(1);
@@ -102,6 +114,7 @@ function ContributionsTab() {
     setModal({
       proofUrl: c.proofImage,
       memberName: c.user?.name,
+      userId: c.user?._id,
       month, year,
       submittedDate: c.createdAt,
       status: c.status,
@@ -301,7 +314,22 @@ function ContributionsTab() {
         </>
       )}
 
-      {modal && <ProofModal {...modal} onClose={() => setModal(null)} />}
+      {modal && (
+        <ProofModal
+          proofUrl={modal.proofUrl}
+          memberName={modal.memberName}
+          month={modal.month}
+          year={modal.year}
+          submittedDate={modal.submittedDate}
+          status={modal.status}
+          rejectionHistory={modal.rejectionHistory}
+          onClose={() => setModal(null)}
+          trustGrade={trustMap[modal.userId]?.grade}
+          trustGradeColor={trustMap[modal.userId]?.gradeColor}
+          trustVerifiedCount={trustMap[modal.userId]?.verifiedCount}
+          trustTotalMonths={trustMap[modal.userId]?.totalMonths}
+        />
+      )}
 
       {/* Rejection note modal */}
       {rejectTarget && (
