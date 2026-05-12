@@ -39,6 +39,73 @@ function StatusPill({ status }) {
   );
 }
 
+function MemberScoreDrawer({ member, score, onClose }) {
+  if (!member || !score) return null;
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,16,0.5)', zIndex: 900, display: 'flex', justifyContent: 'flex-end' }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 340, background: '#fff', height: '100%',
+          overflowY: 'auto', padding: '28px 24px', boxShadow: '-8px 0 40px rgba(0,0,0,0.15)',
+          fontFamily: 'var(--font-sans)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ct-text-1)', margin: 0 }}>
+            Reliability Score
+          </h3>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', background: '#f5f2ec', cursor: 'pointer', fontSize: 16, color: 'var(--ct-text-2)' }}>×</button>
+        </div>
+
+        {/* Member name */}
+        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: getAvatarGradient(member.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 15 }}>
+            {getInitials(member.name)}
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ct-text-1)' }}>{member.name}</div>
+            <div style={{ fontSize: 12, color: 'var(--ct-text-3)' }}>{member.email}</div>
+          </div>
+        </div>
+
+        {/* Score circle */}
+        <div style={{ textAlign: 'center', marginBottom: 24, padding: '20px 0', background: '#faf9f6', borderRadius: 16, border: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 800, color: score.gradeColor, lineHeight: 1 }}>{score.score}</div>
+          <div style={{ fontSize: 12, color: 'var(--ct-text-3)', marginTop: 4 }}>out of 100</div>
+          <div style={{ display: 'inline-block', marginTop: 10, padding: '4px 14px', borderRadius: 20, background: `${score.gradeColor}22`, color: score.gradeColor, fontWeight: 700, fontSize: 14 }}>
+            {score.grade} · {score.gradeLabel}
+          </div>
+        </div>
+
+        {/* Breakdown */}
+        {[
+          { label: 'Verified payments',    value: `${score.verifiedCount} / ${score.totalMonths} months` },
+          { label: 'On-time streak',       value: `${score.consecutiveStreak} month${score.consecutiveStreak !== 1 ? 's' : ''}` },
+          { label: 'Late payments',        value: score.lateCount, warn: score.lateCount > 0 },
+          { label: 'Rejected submissions', value: score.rejectedCount, warn: score.rejectedCount > 0 },
+          { label: 'Missed months',        value: score.unpaidCount, warn: score.unpaidCount > 0 },
+          { label: 'Active penalties',     value: score.penaltyCount, warn: score.penaltyCount > 0 },
+        ].map((row, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+            <span style={{ fontSize: 13, color: 'var(--ct-text-3)' }}>{row.label}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: row.warn ? '#e11d48' : 'var(--ct-text-1)' }}>{row.value}</span>
+          </div>
+        ))}
+
+        <div style={{ marginTop: 20, padding: '12px 14px', background: 'rgba(212,160,23,0.08)', borderRadius: 10, border: '1px solid rgba(212,160,23,0.2)' }}>
+          <p style={{ fontSize: 12, color: 'var(--ct-text-3)', margin: 0, lineHeight: 1.5 }}>
+            Score based on last {score.totalMonths} months. Payment rate (70pts) + streak bonus (20pts) − deductions.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MembersPage() {
   useDocumentTitle('Members — ROTARA');
   const now = new Date();
@@ -47,6 +114,7 @@ export default function MembersPage() {
   const [tab, setTab]         = useState('members');
   const [exporting, setExporting] = useState(false);
   const [roleConfirm, setRoleConfirm] = useState(null); // { member, newRole }
+  const [drawerMember, setDrawerMember] = useState(null);
   const { activeGroup } = useGroup();
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -63,12 +131,16 @@ export default function MembersPage() {
   });
 
   const { data: trustScores = [], isLoading: trustLoading, isError: trustError, error: trustErr } = useQuery({
-    queryKey: ['trust-scores', activeGroup?._id],
-    queryFn: () => api.get(`/exports/trust-scores?groupId=${activeGroup._id}`).then(r => r.data),
-    enabled: tab === 'trust' && !!activeGroup,
+    queryKey: ['trust-score-summary', activeGroup?._id],
+    queryFn: () => api.get(`/exports/trust-score-summary?groupId=${activeGroup._id}`).then(r => r.data),
+    enabled: !!activeGroup,
     retry: (count, err) => err?.response?.status !== 403 && count < 1,
   });
   const trustLocked = trustError && trustErr?.response?.status === 403;
+
+  // Build a userId → score lookup
+  const trustMap = {};
+  trustScores.forEach(ts => { trustMap[ts.userId] = ts; });
 
   // Am I a group admin?
   const isGroupAdmin = members.some(m => m._id === user?._id && m.role === 'admin');
@@ -499,6 +571,24 @@ export default function MembersPage() {
                                 letterSpacing: '0.04em', verticalAlign: 'middle',
                               }}>ADMIN</span>
                             )}
+                            {trustScores.length > 0 && trustMap[m._id] && (
+                              <span
+                                onClick={e => { e.stopPropagation(); setDrawerMember(m); }}
+                                title="View reliability score"
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center',
+                                  padding: '2px 8px', borderRadius: 12,
+                                  background: `${trustMap[m._id].gradeColor}22`,
+                                  color: trustMap[m._id].gradeColor,
+                                  fontSize: 11, fontWeight: 700,
+                                  cursor: 'pointer', marginLeft: 6,
+                                  border: `1px solid ${trustMap[m._id].gradeColor}44`,
+                                  verticalAlign: 'middle',
+                                }}
+                              >
+                                {trustMap[m._id].grade}
+                              </span>
+                            )}
                           </div>
                           <StatusPill status={status} />
                         </div>
@@ -585,6 +675,23 @@ export default function MembersPage() {
                                 }}>
                                   {m.name}
                                 </span>
+                                {trustScores.length > 0 && trustMap[m._id] && (
+                                  <span
+                                    onClick={e => { e.stopPropagation(); setDrawerMember(m); }}
+                                    title="View reliability score"
+                                    style={{
+                                      display: 'inline-flex', alignItems: 'center',
+                                      padding: '2px 8px', borderRadius: 12,
+                                      background: `${trustMap[m._id].gradeColor}22`,
+                                      color: trustMap[m._id].gradeColor,
+                                      fontSize: 11, fontWeight: 700,
+                                      cursor: 'pointer', marginLeft: 6,
+                                      border: `1px solid ${trustMap[m._id].gradeColor}44`,
+                                    }}
+                                  >
+                                    {trustMap[m._id].grade}
+                                  </span>
+                                )}
                               </div>
                             </td>
 
@@ -775,6 +882,12 @@ export default function MembersPage() {
           </div>
         </div>
       )}
+
+      <MemberScoreDrawer
+        member={drawerMember}
+        score={drawerMember ? trustMap[drawerMember._id] : null}
+        onClose={() => setDrawerMember(null)}
+      />
     </div>
   );
 }
