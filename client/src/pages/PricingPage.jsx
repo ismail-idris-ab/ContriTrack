@@ -9,6 +9,7 @@ const PLANS = [
     name: 'Free',
     price: { monthly: 0, annual: 0 },
     tagline: 'Get your circle started',
+    ideal: 'Ideal for a single informal savings circle',
     color: '#52526e',
     border: 'rgba(82,82,110,0.3)',
     badge: null,
@@ -31,6 +32,7 @@ const PLANS = [
     name: 'Pro',
     price: { monthly: 3500, annual: 35000 },
     tagline: 'For growing circles',
+    ideal: 'Ideal for coordinators managing 2–4 active circles',
     color: '#d4a017',
     border: 'rgba(212,160,23,0.4)',
     badge: 'Most Popular',
@@ -51,7 +53,8 @@ const PLANS = [
     key: 'coordinator',
     name: 'Coordinator',
     price: { monthly: 10000, annual: 100000 },
-    tagline: 'For serious coordinators',
+    tagline: 'For professional coordinators',
+    ideal: 'Ideal for ajo/esusu coordinators running multiple groups',
     color: '#4f46e5',
     border: 'rgba(79,70,229,0.4)',
     badge: 'Best Value',
@@ -308,9 +311,14 @@ export default function PricingPage() {
                     </span>
                   )}
                 </div>
-                <p style={{ color: 'var(--ct-text-3)', fontSize: 13, margin: 0 }}>
+                <p style={{ color: 'var(--ct-text-3)', fontSize: 13, margin: '0 0 4px' }}>
                   {plan.tagline}
                 </p>
+                {plan.ideal && (
+                  <p style={{ color: 'var(--ct-text-3)', fontSize: 12, fontStyle: 'italic', margin: 0, opacity: 0.8 }}>
+                    {plan.ideal}
+                  </p>
+                )}
               </div>
 
               {/* Price */}
