@@ -5,18 +5,10 @@ const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const api = axios.create({
   baseURL: `${BASE}/api`,
   timeout: 30000, // 30s — gives Render cold start time to wake up
+  withCredentials: true, // send httpOnly auth cookie on every request
 });
 
-// Attach JWT token to every request automatically
-api.interceptors.request.use((config) => {
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  if (user?.token) {
-    config.headers.Authorization = `Bearer ${user.token}`;
-  }
-  return config;
-});
-
-// Auto-logout on 401 — token expired or invalid
+// Auto-logout on 401 — cookie expired or invalid
 api.interceptors.response.use(
   (response) => response,
   (error) => {

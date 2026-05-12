@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const errorHandler = require('./middleware/errorHandler');
@@ -32,6 +33,9 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+// Parse cookies (required for httpOnly auth cookie)
+app.use(cookieParser());
 
 // Body parsing — 1 MB cap prevents large-payload abuse
 app.use(express.json({ limit: '1mb' }));

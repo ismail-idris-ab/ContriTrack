@@ -9,6 +9,17 @@ const { send, fail } = require('../utils/response');
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
+const isProd = process.env.NODE_ENV === 'production';
+
+const setAuthCookie = (res, token) => {
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
+
 const userPayload = (u) => ({
   _id:           u._id,
   name:          u.name,
@@ -53,6 +64,7 @@ async function register(req, res) {
       body: 'Start by joining or creating a savings circle.', link: '/groups',
     }).catch(() => {});
 
+    setAuthCookie(res, generateToken(user._id));
     send(res, userPayload(user), 201);
   } catch (err) {
     console.error('[auth]', err.message);
@@ -73,6 +85,7 @@ async function login(req, res) {
       return fail(res, 'Invalid email or password', 401);
     }
 
+    setAuthCookie(res, generateToken(user._id));
     send(res, userPayload(user));
   } catch (err) {
     console.error('[auth]', err.message);
@@ -112,6 +125,7 @@ async function googleAuth(req, res) {
       }
     }
 
+    setAuthCookie(res, generateToken(user._id));
     send(res, userPayload(user));
   } catch (err) {
     console.error('[google auth]', err.message);
@@ -315,7 +329,16 @@ async function uploadAvatar(req, res) {
   }
 }
 
+function logout(req, res) {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+  });
+  send(res, { message: 'Logged out' });
+}
+
 module.exports = {
   register, login, googleAuth, getMe, updateProfile, changePassword,
-  forgotPassword, resetPassword, sendVerification, verifyEmail, uploadAvatar,
+  forgotPassword, resetPassword, sendVerification, verifyEmail, uploadAvatar, logout,
 };

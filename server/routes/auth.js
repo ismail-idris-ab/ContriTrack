@@ -42,6 +42,7 @@ const avatarUpload = multer({
 router.post('/register',             authLimiter, validate(registerSchema),      ctrl.register);
 router.post('/login',                authLimiter, validate(loginSchema),          ctrl.login);
 router.post('/google',               authLimiter, validate(googleSchema),         ctrl.googleAuth);
+router.post('/logout',                                                             ctrl.logout);
 router.get('/me',                    protect,                                      ctrl.getMe);
 router.patch('/profile',             protect,     validate(profileSchema),        ctrl.updateProfile);
 router.patch('/password',            protect,     validate(changePasswordSchema), ctrl.changePassword);

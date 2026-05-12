@@ -4,7 +4,10 @@ const User = require('../models/User');
 const protect = async (req, res, next) => {
   let token;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  // httpOnly cookie takes priority; Bearer header kept for backward compat
+  if (req.cookies?.token) {
+    token = req.cookies.token;
+  } else if (req.headers.authorization?.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
   }
 
@@ -28,9 +31,13 @@ const adminOnly = (req, res, next) => {
 
 // Like protect but calls next() instead of 401-ing — req.user is null if no/invalid token
 const softProtect = async (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return next();
-  const token = header.split(' ')[1];
+  let token;
+  if (req.cookies?.token) {
+    token = req.cookies.token;
+  } else if (req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  if (!token) return next();
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id).select('-password');
