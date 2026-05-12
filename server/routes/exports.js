@@ -261,4 +261,48 @@ router.get('/trust-scores', protect, requireFeature('trustScoring'), async (req,
   }
 });
 
+// ── GET /api/exports/trust-score-summary?groupId= ──────────────────────────────
+// Returns JSON array of trust scores for all group members.
+// Coordinator plan required (trustScoring feature).
+router.get('/trust-score-summary', protect, requireFeature('trustScoring'), async (req, res) => {
+  const { groupId } = req.query;
+  if (!groupId) return res.status(400).json({ message: 'groupId is required' });
+
+  try {
+    const group = await Group.findById(groupId).populate('members.user', 'name email');
+    if (!group || !group.isActive) return res.status(404).json({ message: 'Group not found' });
+    if (!isGroupMember(group, req.user._id))
+      return res.status(403).json({ message: 'You are not a member of this group' });
+
+    const scores = await Promise.all(
+      group.members.map(async m => {
+        const userId = m.user._id;
+        const ts = await calculateTrustScore(userId, groupId);
+        return {
+          userId,
+          name:              m.user.name,
+          email:             m.user.email,
+          score:             ts.score,
+          grade:             ts.grade,
+          gradeLabel:        ts.gradeLabel,
+          gradeColor:        ts.gradeColor,
+          verifiedCount:     ts.verifiedCount,
+          pendingCount:      ts.pendingCount,
+          rejectedCount:     ts.rejectedCount,
+          unpaidCount:       ts.unpaidCount,
+          lateCount:         ts.lateCount,
+          consecutiveStreak: ts.consecutiveStreak,
+          penaltyCount:      ts.penaltyCount,
+          totalMonths:       ts.totalMonths,
+        };
+      })
+    );
+
+    res.json(scores);
+  } catch (err) {
+    console.error('[exports/trust-score-summary]', err.message);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
+  }
+});
+
 module.exports = router;
