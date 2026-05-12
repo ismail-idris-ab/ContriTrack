@@ -250,6 +250,7 @@ function StatusBadge({ status, paid }) {
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function ReportPage() {
   useDocumentTitle('Reports — ROTARA');
+  useEffect(() => { localStorage.setItem('rotara_viewed_report', '1'); }, []);
   const { activeGroup } = useGroup();
   const { user } = useAuth();
   const planLocked = !canAccess(user, 'pro');

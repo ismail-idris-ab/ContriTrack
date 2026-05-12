@@ -879,3 +879,47 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 @media (min-width: 768px) {
   .members-card-view { display: none !important; }
 }
+
+/* ─── Mobile table responsiveness ───────────────────────────────────────────── */
+.ct-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--ct-radius);
+}
+
+@media (max-width: 640px) {
+  .ct-table-stack thead { display: none; }
+  .ct-table-stack tr {
+    display: block;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 12px 14px;
+    background: #fff;
+    box-shadow: var(--ct-shadow);
+  }
+  .ct-table-stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 12.5px;
+    border: none;
+  }
+  .ct-table-stack td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--ct-text-3);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+}
+
+/* ─── Stat grid: 2-column on very small screens ─────────────────────────────── */
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .dash-member-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}

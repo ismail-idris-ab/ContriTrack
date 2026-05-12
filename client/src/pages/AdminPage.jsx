@@ -230,8 +230,8 @@ function ContributionsTab() {
             <div style={{ textAlign: 'center', color: 'var(--ct-text-3)', padding: '48px 0', background: '#fff', borderRadius: 14, boxShadow: 'var(--ct-shadow)', fontSize: 14 }}>No submissions for this month.</div>
           ) : (
             <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--ct-shadow)' }}>
-              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 580 }}>
+              <div className="ct-table-wrap">
+              <table className="ct-table-stack" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 580 }}>
                 <thead>
                   <tr style={{ background: '#faf9f6' }}>
                     {['Member','Amount','Date','Status','Actions'].map(h => (
@@ -242,16 +242,16 @@ function ContributionsTab() {
                 <tbody>
                   {contributions.map((c, i) => (
                     <tr key={c._id} style={{ background: i % 2 === 0 ? '#fff' : '#fdfcfa' }}>
-                      <td style={tdStyle}>
+                      <td data-label="Member" style={tdStyle}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{ width: 30, height: 30, borderRadius: 8, background: getAvatarGradient(c.user?.name), display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{getInitials(c.user?.name)}</div>
                           <span style={{ fontWeight: 600 }}>{c.user?.name}</span>
                         </div>
                       </td>
-                      <td style={{ ...tdStyle, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ct-emerald)' }}>₦{c.amount.toLocaleString()}</td>
-                      <td style={{ ...tdStyle, color: 'var(--ct-text-3)' }}>{new Date(c.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                      <td style={tdStyle}><StatusBadge status={c.status} /></td>
-                      <td style={tdStyle}>
+                      <td data-label="Amount" style={{ ...tdStyle, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ct-emerald)' }}>₦{c.amount.toLocaleString()}</td>
+                      <td data-label="Date" style={{ ...tdStyle, color: 'var(--ct-text-3)' }}>{new Date(c.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                      <td data-label="Status" style={tdStyle}><StatusBadge status={c.status} /></td>
+                      <td data-label="Actions" style={tdStyle}>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {c.proofImage && <button onClick={() => openModal(c)} style={smallBtnStyle('#faf9f6','rgba(0,0,0,0.09)','var(--ct-text-2)')}>View</button>}
                           {c.status !== 'verified' && (

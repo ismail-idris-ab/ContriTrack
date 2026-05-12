@@ -144,6 +144,52 @@ export default function UploadPage() {
 
   const canSubmit = file && !loading && !compressing && !alreadySubmitted && !rejectedContribution && !!selectedGroupId;
 
+  if (groups.length === 0 && !loadingContributions) {
+    return (
+      <div style={{ fontFamily: 'var(--font-sans)' }}>
+        <div style={{
+          textAlign: 'center', padding: '72px 24px',
+          background: '#fff', borderRadius: 'var(--ct-radius)',
+          boxShadow: 'var(--ct-shadow)', border: '1px solid rgba(0,0,0,0.05)',
+        }}>
+          <div style={{
+            width: 60, height: 60, borderRadius: 16,
+            background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 20px', color: 'var(--ct-gold)',
+          }}>
+            <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+            </svg>
+          </div>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ct-text-1)', marginBottom: 10, letterSpacing: '-0.01em' }}>
+            Join a circle first
+          </h3>
+          <p style={{ fontSize: 14, color: 'var(--ct-text-3)', lineHeight: 1.7, maxWidth: 360, margin: '0 auto 24px' }}>
+            You need to be part of a savings circle before uploading proof of payment.
+          </p>
+          <a
+            href="/groups"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: '11px 24px', borderRadius: 10,
+              background: 'rgba(212,160,23,0.1)', border: '1.5px solid rgba(212,160,23,0.25)',
+              color: '#a07010', fontSize: 14, fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+            Browse circles
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <style>{`

@@ -209,7 +209,7 @@ export default function MembersPage() {
 
               {/* Trust score table */}
               <div className="ct-table-wrap">
-                <table className="ct-table">
+                <table className="ct-table ct-table-stack">
                   <thead>
                     <tr>
                       <th style={{ width: 40 }}>#</th>
@@ -222,10 +222,10 @@ export default function MembersPage() {
                   <tbody>
                     {trustScores.map((m, idx) => (
                       <tr key={m._id}>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ct-text-4)' }}>
+                        <td data-label="#" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ct-text-4)' }}>
                           {String(idx + 1).padStart(2, '0')}
                         </td>
-                        <td>
+                        <td data-label="Member">
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{
                               width: 36, height: 36, borderRadius: 10,
@@ -241,7 +241,7 @@ export default function MembersPage() {
                             </div>
                           </div>
                         </td>
-                        <td>
+                        <td data-label="Record">
                           <div style={{ fontSize: 12.5, color: 'var(--ct-text-2)' }}>
                             {m.verifiedCount}/{m.totalMonths} paid
                             {m.penaltyCount > 0 && (
@@ -251,7 +251,7 @@ export default function MembersPage() {
                             )}
                           </div>
                         </td>
-                        <td style={{ minWidth: 140 }}>
+                        <td data-label="Score" style={{ minWidth: 140 }}>
                           <div style={{ height: 6, background: 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden', marginBottom: 4 }}>
                             <div style={{
                               height: '100%', width: `${m.score}%`,
@@ -261,7 +261,7 @@ export default function MembersPage() {
                           </div>
                           <div style={{ fontSize: 10.5, color: 'var(--ct-text-3)' }}>{m.score}/100 — {m.gradeLabel}</div>
                         </td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Grade" style={{ textAlign: 'center' }}>
                           <div style={{
                             width: 38, height: 38, borderRadius: 9,
                             background: `${GRADE_COLORS[m.grade] || '#a8a8c0'}18`,
@@ -353,6 +353,70 @@ export default function MembersPage() {
           )}
           {!loading && (
             <>
+              {members.length === 0 && !activeGroup && (
+                <div style={{
+                  textAlign: 'center', padding: '60px 24px',
+                  background: '#fff', borderRadius: 'var(--ct-radius)',
+                  boxShadow: 'var(--ct-shadow)', border: '1px solid rgba(0,0,0,0.05)',
+                }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 16,
+                    background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 18px', color: 'var(--ct-gold)',
+                  }}>
+                    <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                    </svg>
+                  </div>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ct-text-1)', marginBottom: 8, letterSpacing: '-0.01em' }}>
+                    Select a circle
+                  </h3>
+                  <p style={{ fontSize: 13.5, color: 'var(--ct-text-3)', lineHeight: 1.7, maxWidth: 320, margin: '0 auto' }}>
+                    Choose a circle from the top bar to view its members.
+                  </p>
+                </div>
+              )}
+              {members.length === 0 && !!activeGroup && (
+                <div style={{
+                  textAlign: 'center', padding: '60px 24px',
+                  background: '#fff', borderRadius: 'var(--ct-radius)',
+                  boxShadow: 'var(--ct-shadow)', border: '1px solid rgba(0,0,0,0.05)',
+                }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 16,
+                    background: 'rgba(79,70,229,0.08)', border: '1px solid rgba(79,70,229,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 18px', color: 'var(--ct-indigo)',
+                  }}>
+                    <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                      <circle cx="8.5" cy="7" r="4"/>
+                      <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                  </div>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ct-text-1)', marginBottom: 8, letterSpacing: '-0.01em' }}>
+                    No members yet
+                  </h3>
+                  <p style={{ fontSize: 13.5, color: 'var(--ct-text-3)', lineHeight: 1.7, maxWidth: 340, margin: '0 auto 20px' }}>
+                    Share your invite code so people can join <strong style={{ color: 'var(--ct-text-2)' }}>{activeGroup.name}</strong>.
+                  </p>
+                  <a
+                    href="/groups"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '9px 20px', borderRadius: 10,
+                      background: 'rgba(79,70,229,0.08)', border: '1.5px solid rgba(79,70,229,0.18)',
+                      color: '#6366f1', fontSize: 13, fontWeight: 600,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    View invite code
+                  </a>
+                </div>
+              )}
               {/* Summary strip */}
               {members.length > 0 && (
                 <div className="members-summary" style={{
@@ -480,7 +544,7 @@ export default function MembersPage() {
 
                 {/* Desktop table (hidden on mobile via CSS) */}
                 <div className="members-table-view ct-table-wrap">
-                  <table className="ct-table">
+                  <table className="ct-table ct-table-stack">
                     <thead>
                       <tr>
                         <th style={{ width: 40 }}>#</th>
@@ -498,12 +562,12 @@ export default function MembersPage() {
                         return (
                           <tr key={m._id} className="animate-fade-up" style={{ animationDelay: `${idx * 0.03}s` }}>
                             {/* Rank */}
-                            <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ct-text-4)' }}>
+                            <td data-label="#" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ct-text-4)' }}>
                               {String(idx + 1).padStart(2, '0')}
                             </td>
 
                             {/* Member */}
-                            <td>
+                            <td data-label="Member">
                               <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                                 <div style={{
                                   width: 38, height: 38, borderRadius: 11,
@@ -525,17 +589,17 @@ export default function MembersPage() {
                             </td>
 
                             {/* Email */}
-                            <td className="hidden sm:table-cell" style={{ color: 'var(--ct-text-3)', fontSize: 13 }}>
+                            <td data-label="Email" className="hidden sm:table-cell" style={{ color: 'var(--ct-text-3)', fontSize: 13 }}>
                               {m.email}
                             </td>
 
                             {/* Status */}
-                            <td>
+                            <td data-label="Status">
                               <StatusPill status={status} />
                             </td>
 
                             {/* Amount */}
-                            <td style={{ textAlign: 'right' }}>
+                            <td data-label="Amount" style={{ textAlign: 'right' }}>
                               {m.contribution ? (
                                 <span style={{
                                   fontFamily: 'var(--font-mono)',
@@ -550,7 +614,7 @@ export default function MembersPage() {
                             </td>
 
                             {/* Role */}
-                            <td className="hidden md:table-cell">
+                            <td data-label="Role" className="hidden md:table-cell">
                               {m.role === 'admin' ? (
                                 <span style={{
                                   padding: '3px 9px', borderRadius: 6,

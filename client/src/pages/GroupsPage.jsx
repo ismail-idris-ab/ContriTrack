@@ -8,6 +8,7 @@ import useDocumentTitle from '../utils/useDocumentTitle';
 import TemplatePickerStep from '../components/TemplatePickerStep';
 import CircleSettingsDrawer from '../components/CircleSettingsDrawer';
 import { getInitials, getAvatarGradient } from '../utils/avatarUtils';
+import Skeleton from '../components/Skeleton';
 
 const isGroupAdmin = (grp, userId) =>
   grp?.members?.some(m => String(m.user?._id || m.user) === String(userId) && m.role === 'admin');
@@ -87,7 +88,7 @@ export default function GroupsPage() {
   useDocumentTitle('My Circles — ROTARA');
   const { user } = useAuth();
   const toast = useToast();
-  const { groups, activeGroup, selectGroup, loadGroups } = useGroup();
+  const { groups, activeGroup, selectGroup, loadGroups, loadingGroups } = useGroup();
   const [searchParams] = useSearchParams();
 
   const [showCreate, setShowCreate] = useState(false);
@@ -512,7 +513,22 @@ export default function GroupsPage() {
       )}
 
       {/* Groups grid */}
-      {groups.length === 0 ? (
+      {loadingGroups && (
+        <div className="groups-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          {[1,2,3].map(i => (
+            <div key={i} style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: 'var(--ct-shadow)', border: '1px solid rgba(0,0,0,0.05)' }}>
+              <Skeleton height={18} width={160} style={{ marginBottom: 10 }} />
+              <Skeleton height={12} width={220} style={{ marginBottom: 20 }} />
+              <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                <Skeleton height={28} width={80} borderRadius={8} />
+                <Skeleton height={28} width={80} borderRadius={8} />
+              </div>
+              <Skeleton height={36} borderRadius={10} />
+            </div>
+          ))}
+        </div>
+      )}
+      {!loadingGroups && groups.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: '72px 40px',
           background: '#fff', borderRadius: 18,
