@@ -25,7 +25,6 @@ router.get('/', protect, globalAdminOnly, async (req, res) => {
     let members;
 
     if (groupId) {
-      // Scoped to a specific group
       const group = await Group.findById(groupId)
         .populate('members.user', 'name email phone role avatar');
 
@@ -33,7 +32,6 @@ router.get('/', protect, globalAdminOnly, async (req, res) => {
         return res.status(404).json({ message: 'Group not found' });
       }
 
-      // Must be a group member to view
       const isMember = group.members.some(
         (m) => m.user._id.toString() === req.user._id.toString()
       );
@@ -41,8 +39,33 @@ router.get('/', protect, globalAdminOnly, async (req, res) => {
         return res.status(403).json({ message: 'You are not a member of this group' });
       }
 
-      const userIds = group.members.map((m) => m.user._id);
-      const contributions = await Contribution.find({ group: groupId, month, year });
+      // Period-aware contribution lookup
+      const freq        = group.contributionFrequency || 'monthly';
+      const periodStart = req.query.periodStart;
+      const periodEnd   = req.query.periodEnd;
+      const now         = new Date();
+      const month       = Number(req.query.month)  || now.getMonth() + 1;
+      const year        = Number(req.query.year)   || now.getFullYear();
+
+      let contribFilter = { group: groupId };
+      if (periodStart && periodEnd) {
+        const psDate = new Date(periodStart);
+        const peDate = new Date(periodEnd);
+        if (!isNaN(psDate) && !isNaN(peDate)) {
+          contribFilter.periodStart = { $gte: psDate };
+          contribFilter.periodEnd   = { $lte: peDate };
+        }
+      } else if (freq !== 'monthly') {
+        const { getCurrentPeriod } = require('../utils/cycleUtils');
+        const period = getCurrentPeriod(group, now);
+        contribFilter.periodStart = { $gte: period.periodStart };
+        contribFilter.periodEnd   = { $lte: period.periodEnd };
+      } else {
+        contribFilter.month = month;
+        contribFilter.year  = year;
+      }
+
+      const contributions = await Contribution.find(contribFilter);
       const contribMap = {};
       contributions.forEach((c) => { contribMap[c.user.toString()] = c; });
 
