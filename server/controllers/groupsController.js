@@ -14,7 +14,11 @@ function isGroupMember(group, userId) {
 }
 
 async function createGroup(req, res) {
-  const { name, description, contributionAmount, dueDay, graceDays, rotationType } = req.body;
+  const {
+    name, description, contributionAmount, dueDay, graceDays, rotationType,
+    contributionFrequency, startDate, cyclesPerMonth,
+    dueDayOfWeek, dueDayOfMonth, dueMonth,
+  } = req.body;
   const safeDescription = description
     ? String(description).replace(/<[^>]*>/g, '').trim().slice(0, 500)
     : '';
@@ -23,6 +27,12 @@ async function createGroup(req, res) {
       name: name.trim().slice(0, 100), description: safeDescription,
       contributionAmount: Number(contributionAmount) || 0,
       dueDay, graceDays, rotationType,
+      ...(contributionFrequency && { contributionFrequency }),
+      ...(startDate             && { startDate }),
+      ...(cyclesPerMonth        && { cyclesPerMonth: Number(cyclesPerMonth) }),
+      ...(dueDayOfWeek  != null && dueDayOfWeek  !== '' && { dueDayOfWeek:  Number(dueDayOfWeek) }),
+      ...(dueDayOfMonth != null && dueDayOfMonth !== '' && { dueDayOfMonth: Number(dueDayOfMonth) }),
+      ...(dueMonth      != null && dueMonth      !== '' && { dueMonth:      Number(dueMonth) }),
       createdBy: req.user._id,
       members: [{ user: req.user._id, role: 'admin' }],
     });
@@ -193,7 +203,11 @@ async function updateGroup(req, res) {
 }
 
 async function updateGroupSettings(req, res) {
-  const { name, description, contributionAmount, dueDay, graceDays, rotationType } = req.body;
+  const {
+    name, description, contributionAmount, dueDay, graceDays, rotationType,
+    contributionFrequency, startDate, cyclesPerMonth,
+    dueDayOfWeek, dueDayOfMonth, dueMonth,
+  } = req.body;
   try {
     const group = await Group.findById(req.params.id);
     if (!group || !group.isActive) return fail(res, 'Group not found', 404);
@@ -205,16 +219,24 @@ async function updateGroupSettings(req, res) {
     if (dueDay !== undefined)             group.dueDay             = Number(dueDay);
     if (graceDays !== undefined)          group.graceDays          = Number(graceDays);
     if (rotationType !== undefined)       group.rotationType       = rotationType;
+    if (contributionFrequency !== undefined) group.contributionFrequency = contributionFrequency;
+    if (startDate !== undefined)          group.startDate          = startDate || null;
+    if (cyclesPerMonth !== undefined)     group.cyclesPerMonth     = Number(cyclesPerMonth);
+    if (dueDayOfWeek  !== undefined)      group.dueDayOfWeek       = dueDayOfWeek  !== '' ? Number(dueDayOfWeek)  : null;
+    if (dueDayOfMonth !== undefined)      group.dueDayOfMonth      = dueDayOfMonth !== '' ? Number(dueDayOfMonth) : null;
+    if (dueMonth      !== undefined)      group.dueMonth           = dueMonth      !== '' ? Number(dueMonth)      : null;
 
     await group.save();
 
+    const auditableFields = [
+      'name','description','contributionAmount','dueDay','graceDays','rotationType',
+      'contributionFrequency','startDate','cyclesPerMonth','dueDayOfWeek','dueDayOfMonth','dueMonth',
+    ];
     logAudit({
       action: 'group.settings_changed', adminId: req.user._id, groupId: group._id,
       entityType: 'Group', entityId: group._id,
       meta: {
-        fields: Object.keys(req.body).filter(k =>
-          ['name','description','contributionAmount','dueDay','graceDays','rotationType'].includes(k)
-        ),
+        fields: Object.keys(req.body).filter(k => auditableFields.includes(k)),
       },
     });
 

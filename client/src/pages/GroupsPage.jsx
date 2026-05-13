@@ -115,7 +115,7 @@ export default function GroupsPage() {
 
   // Edit form
   const [editingGroup, setEditingGroup] = useState(null); // group object
-  const [editForm, setEditForm] = useState({ name: '', description: '', contributionAmount: '' });
+  const [editForm, setEditForm] = useState({ name: '', description: '', contributionAmount: '', contributionFrequency: 'monthly', startDate: '' });
   const [editError, setEditError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -152,7 +152,13 @@ export default function GroupsPage() {
 
   const openEdit = (group, e) => {
     e.stopPropagation();
-    setEditForm({ name: group.name, description: group.description || '', contributionAmount: String(group.contributionAmount || '') });
+    setEditForm({
+      name: group.name,
+      description: group.description || '',
+      contributionAmount: String(group.contributionAmount || ''),
+      contributionFrequency: group.contributionFrequency || 'monthly',
+      startDate: group.startDate ? new Date(group.startDate).toISOString().slice(0, 10) : '',
+    });
     setEditError('');
     setEditingGroup(group);
   };
@@ -167,6 +173,8 @@ export default function GroupsPage() {
         name: editForm.name.trim(),
         description: editForm.description,
         contributionAmount: editForm.contributionAmount,
+        contributionFrequency: editForm.contributionFrequency,
+        startDate: editForm.startDate || null,
       });
       await loadGroups();
       // Keep activeGroup in sync if this was the selected circle
@@ -938,7 +946,7 @@ export default function GroupsPage() {
                   />
                 </div>
               </div>
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 14 }}>
                 <label style={labelStyle}>Description <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400, fontSize: 11, color: 'var(--ct-text-3)' }}>(optional)</span></label>
                 <textarea
                   value={editForm.description}
@@ -947,6 +955,37 @@ export default function GroupsPage() {
                   style={{ ...inputStyle, resize: 'none' }}
                 />
               </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Contribution frequency</label>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {[
+                    { v: 'monthly', l: 'Monthly' },
+                    { v: 'weekly', l: 'Weekly' },
+                    { v: 'biweekly', l: 'Biweekly' },
+                    { v: 'yearly', l: 'Yearly' },
+                  ].map(({ v, l }) => (
+                    <button
+                      key={v} type="button"
+                      onClick={() => setEditForm(f => ({ ...f, contributionFrequency: v }))}
+                      className={editForm.contributionFrequency === v ? 'filter-pill active' : 'filter-pill'}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {(editForm.contributionFrequency === 'weekly' || editForm.contributionFrequency === 'biweekly') && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={labelStyle}>Circle start date</label>
+                  <input
+                    type="date"
+                    value={editForm.startDate}
+                    onChange={e => setEditForm(f => ({ ...f, startDate: e.target.value }))}
+                    style={{ ...inputStyle, fontFamily: 'var(--font-sans)' }}
+                  />
+                </div>
+              )}
+              <div style={{ marginBottom: 20 }} />
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   type="submit" disabled={saving}
