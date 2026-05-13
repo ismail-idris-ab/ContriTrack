@@ -30,6 +30,11 @@ const contributionSchema = new mongoose.Schema(
     cycleNumber:   { type: Number, default: 1, min: 1 },
     isLate:         { type: Boolean, default: false },
     lateDaysOverdue:{ type: Number,  default: 0 },
+    periodType:  { type: String, enum: ['weekly', 'biweekly', 'monthly', 'yearly'], default: null },
+    periodStart: { type: Date, default: null },
+    periodEnd:   { type: Date, default: null },
+    dueDate:     { type: Date, default: null },
+    periodLabel: { type: String, default: null },
   },
   { timestamps: true }
 );
@@ -42,5 +47,9 @@ contributionSchema.index({ month: 1, year: 1 });
 contributionSchema.index({ group: 1, month: 1, year: 1 });
 contributionSchema.index({ status: 1 });
 contributionSchema.index({ user: 1 });
+contributionSchema.index(
+  { user: 1, group: 1, periodStart: 1, periodEnd: 1 },
+  { unique: true, sparse: true }
+);
 
 module.exports = mongoose.model('Contribution', contributionSchema);
