@@ -9,7 +9,7 @@ import OnboardingChecklist from '../components/OnboardingChecklist';
 import useDocumentTitle from '../utils/useDocumentTitle';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
-import { MONTHS, MONTHS_SHORT } from '../utils/dateUtils';
+import { MONTHS, MONTHS_SHORT, getClientPeriod, getPrevPeriod, getNextPeriod } from '../utils/dateUtils';
 import { getInitials, getAvatarGradient } from '../utils/avatarUtils';
 
 const STATUS_RING = {
@@ -81,9 +81,8 @@ function StatCard({ label, value, sub, color, bg, icon, trend }) {
   );
 }
 
-// ─── Month Navigator ──────────────────────────────────────────────────────────
-function MonthNav({ month, year, onPrev, onNext, isCurrentMonth }) {
-
+// ─── Period Navigator ─────────────────────────────────────────────────────────
+function PeriodNav({ periodLabel, onPrev, onNext, isCurrentPeriod }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 4,
@@ -111,7 +110,7 @@ function MonthNav({ month, year, onPrev, onNext, isCurrentMonth }) {
       <div style={{
         display: 'flex', alignItems: 'center', gap: 7,
         padding: '0 10px',
-        minWidth: 140, justifyContent: 'center',
+        minWidth: 160, justifyContent: 'center',
       }}>
         <span style={{
           fontFamily: 'var(--font-display)',
@@ -119,9 +118,9 @@ function MonthNav({ month, year, onPrev, onNext, isCurrentMonth }) {
           color: 'var(--ct-text-1)',
           letterSpacing: '-0.01em',
         }}>
-          {MONTHS[month - 1]} {year}
+          {periodLabel}
         </span>
-        {isCurrentMonth && (
+        {isCurrentPeriod && (
           <span style={{
             fontSize: 9.5, fontWeight: 700,
             background: 'rgba(212,160,23,0.12)',
@@ -442,12 +441,12 @@ function NoMembersState({ groupName, navigate }) {
         fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700,
         color: 'var(--ct-text-1)', letterSpacing: '-0.01em', marginBottom: 8,
       }}>
-        No contributions this month
+        No contributions this period
       </h3>
       <p style={{ fontSize: 13.5, color: 'var(--ct-text-3)', lineHeight: 1.7, maxWidth: 360, margin: '0 auto 24px' }}>
         {groupName
-          ? <><strong style={{ color: 'var(--ct-text-2)' }}>{groupName}</strong> has no submissions for this month yet. Share the invite code so members can start uploading proof.</>
-          : 'No submissions for this month yet. Share the invite code so members can start uploading proof.'
+          ? <><strong style={{ color: 'var(--ct-text-2)' }}>{groupName}</strong> has no submissions for this period yet. Share the invite code so members can start uploading proof.</>
+          : 'No submissions for this period yet. Share the invite code so members can start uploading proof.'
         }
       </p>
       <button
@@ -473,34 +472,48 @@ export default function DashboardPage() {
   useDocumentTitle('Dashboard — ROTARA');
   const now = new Date();
   const navigate = useNavigate();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear]   = useState(now.getFullYear());
-  const [modal, setModal] = useState(null);
-  const [filter, setFilter] = useState('all');
   const { activeGroup, groups, loadingGroups } = useGroup();
   const { user } = useAuth();
+
+  const freq = activeGroup?.contributionFrequency || 'monthly';
+  const isMonthly = freq === 'monthly' || !activeGroup;
+
+  const [period, setPeriod] = useState(() =>
+    getClientPeriod(activeGroup || { contributionFrequency: 'monthly' }, now)
+  );
+
+  // Reset period when activeGroup changes
+  const [lastGroupId, setLastGroupId] = useState(activeGroup?._id);
+  if (activeGroup?._id !== lastGroupId) {
+    setLastGroupId(activeGroup?._id);
+    setPeriod(getClientPeriod(activeGroup || { contributionFrequency: 'monthly' }, now));
+  }
+
+  const [modal, setModal] = useState(null);
+  const [filter, setFilter] = useState('all');
+
   const isGroupAdmin = activeGroup?.members?.some(
     m => String(m.user?._id || m.user) === String(user?._id) && m.role === 'admin'
   );
 
+  const queryParams = isMonthly
+    ? `month=${period.periodStart.getUTCMonth() + 1}&year=${period.periodStart.getUTCFullYear()}&groupId=${activeGroup?._id}`
+    : `periodStart=${period.periodStart.toISOString()}&periodEnd=${period.periodEnd.toISOString()}&groupId=${activeGroup?._id}`;
+
   const { data: members = [], isLoading: loading, isError, error: fetchError, refetch } = useQuery({
-    queryKey: ['members', activeGroup?._id, month, year],
+    queryKey: ['members', activeGroup?._id, period.periodStart.toISOString()],
     queryFn: () =>
-      api.get(`/members?month=${month}&year=${year}&groupId=${activeGroup._id}`)
-         .then(r => r.data),
+      api.get(`/members?${queryParams}`).then(r => r.data),
     enabled: !!activeGroup && !loadingGroups,
   });
 
   const error = isError ? (fetchError?.response?.data?.message || 'Failed to load members.') : '';
 
-  const prevMonth = () => {
-    if (month === 1) { setMonth(12); setYear(y => y - 1); }
-    else setMonth(m => m - 1);
-  };
-  const nextMonth = () => {
-    if (month === 12) { setMonth(1); setYear(y => y + 1); }
-    else setMonth(m => m + 1);
-  };
+  const nowPeriod = getClientPeriod(activeGroup || { contributionFrequency: 'monthly' }, now);
+  const isCurrentPeriod = period.periodStart.getTime() === nowPeriod.periodStart.getTime();
+
+  const prevPeriod = () => setPeriod(p => getPrevPeriod(activeGroup || { contributionFrequency: 'monthly' }, p.periodStart));
+  const nextPeriod = () => setPeriod(p => getNextPeriod(activeGroup || { contributionFrequency: 'monthly' }, p.periodEnd));
 
   const verified    = members.filter(m => m.contribution?.status === 'verified');
   const pending     = members.filter(m => m.contribution?.status === 'pending');
@@ -515,9 +528,11 @@ export default function DashboardPage() {
     setModal({
       proofUrl: m.contribution.proofImage,
       memberName: m.name,
-      month, year,
+      month: period.periodStart.getUTCMonth() + 1,
+      year: period.periodStart.getUTCFullYear(),
       submittedDate: m.contribution.createdAt,
       status: m.contribution.status,
+      periodLabel: period.periodLabel,
     });
   };
 
@@ -614,10 +629,11 @@ export default function DashboardPage() {
         )}
 
         <div className="dash-month-nav-center">
-          <MonthNav
-            month={month} year={year}
-            onPrev={prevMonth} onNext={nextMonth}
-            isCurrentMonth={month === now.getMonth() + 1 && year === now.getFullYear()}
+          <PeriodNav
+            periodLabel={period.periodLabel}
+            onPrev={prevPeriod}
+            onNext={nextPeriod}
+            isCurrentPeriod={isCurrentPeriod}
           />
         </div>
       </div>
