@@ -49,13 +49,13 @@ function getPeriodForDate(group, date) {
     const anchorMs = Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), anchor.getUTCDate());
     const nowMs    = Date.UTC(utcYear, utcMonth, utcDay);
     const spanDays = freq === 'weekly' ? 7 : 14;
-    const n        = Math.floor((nowMs - anchorMs) / (spanDays * MS_PER_DAY));
+    const n        = Math.max(0, Math.floor((nowMs - anchorMs) / (spanDays * MS_PER_DAY)));
     const startMs  = anchorMs + n * spanDays * MS_PER_DAY;
     const endMs    = startMs + (spanDays - 1) * MS_PER_DAY;
     periodStart = new Date(startMs);
     periodEnd   = new Date(endMs);
 
-    // dueDate: the dueDayOfWeek within this period + graceDays
+    // dueDate: midnight after due day + grace buffer (matches old API semantics)
     // dueDayOfWeek 0=Sun…6=Sat
     const startDow = periodStart.getUTCDay();
     const targetDow = group.dueDayOfWeek ?? 5; // default Friday
