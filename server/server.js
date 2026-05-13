@@ -8,6 +8,28 @@ require('dotenv').config();
 
 const errorHandler = require('./middleware/errorHandler');
 
+// ─── Startup environment validation ───────────────────────────────────────────
+const REQUIRED_ENV = ['MONGO_URI', 'JWT_SECRET', 'CLIENT_URL'];
+const OPTIONAL_SERVICE_ENV = [
+  'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET',
+  'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS',
+  'PAYSTACK_SECRET_KEY',
+  'TERMII_API_KEY',
+];
+
+const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missing.length > 0) {
+  console.error(`[startup] FATAL: Missing required environment variables: ${missing.join(', ')}`);
+  console.error('[startup] Copy server/.env.example to server/.env and fill in all values.');
+  process.exit(1);
+}
+
+const missingOptional = OPTIONAL_SERVICE_ENV.filter((k) => !process.env[k]);
+if (missingOptional.length > 0) {
+  console.warn(`[startup] WARNING: Missing optional service variables: ${missingOptional.join(', ')}`);
+  console.warn('[startup] Some features (uploads, email, payments, WhatsApp) will be disabled.');
+}
+
 const app = express();
 
 // Trust the first proxy (fixes express-rate-limit IPv6 key generation on Render)

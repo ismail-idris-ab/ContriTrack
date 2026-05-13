@@ -17,4 +17,4 @@ Disallow: /notifications
 Disallow: /admin
 Disallow: /verify-email
 
-Sitemap: https://contritrack.vercel.app/sitemap.xml
+Sitemap: https://rotara.vercel.app/sitemap.xml
