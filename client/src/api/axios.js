@@ -15,7 +15,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('user');
       // Redirect to login without importing React Router (avoids circular deps)
-      if (!window.location.pathname.startsWith('/login')) {
+      const { pathname } = window.location;
+      const publicPaths = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/pricing'];
+      const isPublic = publicPaths.some(p => pathname === p || pathname.startsWith(p + '/'));
+      if (!isPublic) {
         window.location.href = '/login';
       }
     }
