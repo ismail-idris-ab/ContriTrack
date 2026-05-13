@@ -65,7 +65,7 @@ const heroFeatures = [
       </svg>
     ),
     title: "Group Management",
-    body: "Invite members with a single code. Track everyone's monthly status in one clean dashboard.",
+    body: "Invite members with a single code. Track everyone's contribution status in one clean dashboard.",
   },
   {
     icon: (
@@ -103,7 +103,7 @@ const trustedOrgs = [
 
 const stats = [
   { value: "20+", label: "Circles Created" },
-  { value: "₦5M+", label: "Tracked" },
+  { value: "₦5M+", label: "Tracked (sample)" },
   { value: "100%", label: "Transparent" },
 ];
 
@@ -328,9 +328,9 @@ export default function HeroSection({ navigate, scrollTo }) {
                 marginBottom: 44,
               }}
             >
-              Track monthly contributions, enforce penalties, manage payouts,
-              and bring full transparency to your Ajo, Esusu, or contribution
-              circle — all in one place.
+              Track contributions — weekly, biweekly, monthly, or yearly —
+              enforce penalties, manage payouts, and bring full transparency to
+              your Ajo, Esusu, Adashe, or thrift circle. All in one place.
             </p>
           </div>
 
@@ -345,7 +345,7 @@ export default function HeroSection({ navigate, scrollTo }) {
             }}
           >
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(user ? "/dashboard" : "/register")}
               className="btn-gold btn-gold-pulse"
               style={{ padding: "14px 28px", fontSize: 15 }}
             >
@@ -669,7 +669,7 @@ export default function HeroSection({ navigate, scrollTo }) {
               letterSpacing: "0.1em",
             }}
           >
-            Members transfer via Nigeria's trusted banks
+            Works with proof of transfer from Nigerian banks &amp; fintech apps
           </p>
         </div>
         <div style={{ overflow: "hidden", position: "relative" }}>

@@ -1218,7 +1218,7 @@ export default function FeaturesSection({ navigate: navigateProp, user }) {
                 every naira is accounted for.
               </p>
               <button
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate(currentUser ? "/dashboard" : "/register")}
                 className="btn-gold btn-gold-pulse"
                 style={{ padding: "14px 32px", fontSize: 15 }}
               >

@@ -6,8 +6,8 @@ const FAQS = [
     category: 'Getting Started',
     items: [
       {
-        q: 'How is Rotata different from managing on WhatsApp?',
-        a: 'Rotata gives your circle a dedicated platform with automatic payment tracking, proof uploads, admin dashboards, and audit logs. No more chasing screenshots in a group chat or arguing over who paid last month — every naira is recorded and verified in one place.',
+        q: 'How is ROTARA different from managing on WhatsApp?',
+        a: 'ROTARA gives your circle a dedicated platform with automatic payment tracking, proof uploads, admin dashboards, and audit logs. No more chasing screenshots in a group chat or arguing over who paid last month — every naira is recorded and verified in one place.',
       },
       {
         q: 'Do all members need smartphones?',
@@ -15,11 +15,11 @@ const FAQS = [
       },
       {
         q: 'What if my group already started on Excel or WhatsApp?',
-        a: 'You can migrate easily. An admin creates the circle, adds existing members, and sets the starting month. Past records can be uploaded as proof images to establish history from day one.',
+        a: 'You can migrate easily. An admin creates the circle, adds existing members, and sets the starting period. Past records can be uploaded as proof images to establish history from day one.',
       },
       {
         q: 'How many members can a circle have?',
-        a: 'There is no hard member limit. Rotata is designed to scale from small family Ajo groups of 5 to large office thrift societies with 100+ members. The Pro and Coordinator plans unlock larger circle sizes and multiple circles per account.',
+        a: 'The Free plan supports up to 10 members in 1 circle. The Pro plan removes this limit — up to 4 circles with unlimited members each. The Coordinator plan has no limits and is built for large thrift societies and networks.',
       },
     ],
   },
@@ -27,8 +27,8 @@ const FAQS = [
     category: 'Security',
     items: [
       {
-        q: 'Is my money safe? How does Rotata handle payments?',
-        a: 'Rotata does not hold or move your money. It tracks and verifies proof of payments made directly between members and the circle recipient. Your funds always stay in your own bank accounts — Rotata is the record-keeper, not the custodian.',
+        q: 'Is my money safe? How does ROTARA handle payments?',
+        a: 'ROTARA does not hold or move your money. It tracks and verifies proof of payments made directly between members and the circle recipient. Your funds always stay in your own bank accounts — ROTARA is the record-keeper, not the custodian.',
       },
       {
         q: 'Who can see my group\'s contributions?',
@@ -36,7 +36,7 @@ const FAQS = [
       },
       {
         q: 'What if someone claims they paid but didn\'t?',
-        a: 'Every contribution requires a proof image — bank receipt, transfer screenshot, or PDF — uploaded to Rotata. An admin reviews and verifies each proof before it is marked as paid. No proof, no verification. The audit log records every action with timestamps.',
+        a: 'Every contribution requires a proof image — bank receipt, transfer screenshot, or PDF — uploaded to ROTARA. An admin reviews and verifies each proof before it is marked as paid. No proof, no verification. The audit log records every action with timestamps.',
       },
     ],
   },
@@ -49,11 +49,11 @@ const FAQS = [
       },
       {
         q: 'What is a late submission?',
-        a: 'Each circle has a contribution due date and a grace period set by the admin. Submissions made after the grace period expires are automatically flagged as late. This helps admins track punctuality and apply penalties where the group has agreed to do so.',
+        a: 'Each circle has a contribution due date and a grace period set by the admin — whether the cycle is weekly, biweekly, monthly, or yearly. Submissions made after the grace period expires are automatically flagged as late, helping admins track punctuality and apply penalties.',
       },
       {
-        q: 'Can I submit proof for more than one cycle per month?',
-        a: 'Yes. If your circle is configured for multiple contribution cycles per month, you can submit separate proofs for each cycle. The cycle selector appears automatically on the upload form when your circle uses this setting.',
+        q: 'Can I submit proof for more than one contribution period?',
+        a: 'Yes. If your circle has multiple contribution periods (e.g. a weekly group with 4 periods in a month), you can submit separate proofs for each. The period selector appears automatically on the upload form.',
       },
     ],
   },
@@ -62,7 +62,7 @@ const FAQS = [
     items: [
       {
         q: 'What is included in the free plan?',
-        a: 'The free plan lets you join existing circles as a member, submit payment proofs, and view your contribution history. Creating and managing your own circles requires a Pro or Coordinator plan.',
+        a: 'The Free plan lets you create 1 circle with up to 10 members. You can track contributions, verify payment proofs, and use the basic dashboard. CSV/PDF exports, advanced reminders, and multiple circles require a Pro or Coordinator plan.',
       },
       {
         q: 'Can I upgrade or downgrade at any time?',
@@ -253,7 +253,7 @@ export default function FAQSection() {
               fontFamily: 'var(--font-sans, "Plus Jakarta Sans", sans-serif)',
             }}
           >
-            Everything you need to know about Rotata
+            Everything you need to know about ROTARA
           </p>
         </div>
 
@@ -311,7 +311,7 @@ export default function FAQSection() {
             Still have questions? We're happy to help.
           </p>
           <a
-            href="mailto:support@rotata.ng"
+            href="mailto:support@rotara.ng"
             style={{
               display: 'inline-flex',
               alignItems: 'center',

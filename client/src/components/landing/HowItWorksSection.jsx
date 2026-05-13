@@ -2,7 +2,7 @@ const steps = [
   {
     num: "01",
     title: "Create a Circle",
-    body: "Set up your Ajo or monthly contribution group. Choose contribution amount, cycle rules, and enable penalties or flexible pledges.",
+    body: "Set up your Ajo, Esusu, Adashe, or thrift group. Name your circle and set the contribution amount.",
     icon: (
       <svg
         width={28}
@@ -22,6 +22,29 @@ const steps = [
   },
   {
     num: "02",
+    title: "Choose Your Schedule",
+    body: "Pick the contribution frequency that works for your group — weekly, biweekly, monthly, or yearly. Enable penalties or flexible pledges.",
+    icon: (
+      <svg
+        width={28}
+        height={28}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    ),
+  },
+  {
+    num: "03",
     title: "Invite Members",
     body: "Share a simple invite code or link. Members join, view the group ledger, and submit payments with proof.",
     icon: (
@@ -43,8 +66,8 @@ const steps = [
     ),
   },
   {
-    num: "03",
-    title: "Track, Penalize & Pay Out",
+    num: "04",
+    title: "Track Proof & Manage Payouts",
     body: "Everyone sees the same transparent record — no more he-said-she-said.",
     bullets: [
       "Record verified contributions in real time",
@@ -121,7 +144,7 @@ export default function HowItWorksSection() {
         className="hiw-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
+          gridTemplateColumns: "1fr 1fr",
           gap: 28,
           maxWidth: 1100,
           margin: "0 auto",

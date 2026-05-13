@@ -76,7 +76,7 @@ export default function LandingNavbar({ scrollTo }) {
               color: "#0f0f14",
             }}
           >
-            C
+            R
           </div>
           <span
             style={{
@@ -130,7 +130,7 @@ export default function LandingNavbar({ scrollTo }) {
           style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}
         >
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/login")}
             style={{
               background: "none",
               border: "none",
@@ -254,7 +254,7 @@ export default function LandingNavbar({ scrollTo }) {
           >
             <button
               onClick={() => {
-                navigate("/dashboard");
+                navigate("/register");
                 setMobileOpen(false);
               }}
               className="btn-gold btn-gold-pulse"
@@ -269,7 +269,7 @@ export default function LandingNavbar({ scrollTo }) {
             </button>
             <button
               onClick={() => {
-                navigate("/dashboard");
+                navigate("/login");
                 setMobileOpen(false);
               }}
               style={{

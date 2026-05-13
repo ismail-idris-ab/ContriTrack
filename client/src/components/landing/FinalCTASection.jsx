@@ -90,14 +90,14 @@ export default function FinalCTASection({ navigate }) {
           }}
         >
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/register")}
             className="btn-gold btn-gold-pulse"
             style={{ padding: "18px 48px", fontSize: 16 }}
           >
             Create Your Free Circle Now
           </button>
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/login")}
             style={{
               padding: "18px 28px",
               fontSize: 15,

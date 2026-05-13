@@ -1,19 +1,20 @@
 const freeFeatures = [
   "1 Circle",
-  "Unlimited members",
+  "Up to 10 members",
   "Contribution tracking + receipt verification",
-  "Basic dashboard & reports",
+  "Basic dashboard",
   "Penalties & Pledge (limited)",
 ];
 
 const proFeatures = [
   "Up to 4 Circles",
-  "Unlimited members",
+  "Unlimited members per circle",
   "Contribution tracking + receipt verification",
   "CSV / PDF exports",
   "Advanced automation & reminders",
   "Penalty tracking & health scoring",
   "Multi-group overview dashboard",
+  "Weekly, biweekly, monthly & yearly schedules",
 ];
 
 export default function PricingSection({ navigate }) {
@@ -155,7 +156,7 @@ export default function PricingSection({ navigate }) {
             ))}
           </ul>
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/register")}
             style={{
               width: "100%",
               padding: 14,
@@ -305,7 +306,7 @@ export default function PricingSection({ navigate }) {
             ))}
           </ul>
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/register")}
             className="btn-gold"
             style={{
               width: "100%",

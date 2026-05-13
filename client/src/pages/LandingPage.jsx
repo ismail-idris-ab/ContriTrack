@@ -9,6 +9,7 @@ import FeaturesSection from '../components/landing/FeaturesSection';
 import TestimonialsSection from '../components/landing/TestimonialsSection';
 import PricingSection from '../components/landing/PricingSection';
 import FAQSection from '../components/landing/FAQSection';
+import SchedulesSection from '../components/landing/SchedulesSection';
 import FinalCTASection from '../components/landing/FinalCTASection';
 import LandingFooter from '../components/landing/LandingFooter';
 
@@ -26,6 +27,7 @@ export default function LandingPage() {
       <LandingNavbar scrollTo={scrollTo} />
       <HeroSection navigate={navigate} scrollTo={scrollTo} user={user} />
       <HowItWorksSection />
+      <SchedulesSection />
       <FeaturesSection navigate={navigate} user={user} />
       <TestimonialsSection />
       <PricingSection navigate={navigate} />
