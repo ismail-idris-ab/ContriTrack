@@ -99,6 +99,8 @@ export default function GroupsPage() {
   const [createForm, setCreateForm] = useState({
     name: '', description: '', contributionAmount: '',
     dueDay: '25', graceDays: '3', rotationType: 'fixed',
+    contributionFrequency: 'monthly',
+    startDate: '', dueDayOfWeek: '', dueDayOfMonth: '', dueMonth: '',
   });
   const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
@@ -130,7 +132,12 @@ export default function GroupsPage() {
 
   const resetCreate = () => {
     setCreateStep('template');
-    setCreateForm({ name: '', description: '', contributionAmount: '', dueDay: '25', graceDays: '3', rotationType: 'fixed' });
+    setCreateForm({
+      name: '', description: '', contributionAmount: '',
+      dueDay: '25', graceDays: '3', rotationType: 'fixed',
+      contributionFrequency: 'monthly',
+      startDate: '', dueDayOfWeek: '', dueDayOfMonth: '', dueMonth: '',
+    });
     setCreateError('');
   };
 
@@ -213,6 +220,11 @@ export default function GroupsPage() {
         dueDay:             Number(createForm.dueDay)    || 25,
         graceDays:          Number(createForm.graceDays) || 3,
         rotationType:       createForm.rotationType      || 'fixed',
+        contributionFrequency: createForm.contributionFrequency || 'monthly',
+        ...(createForm.startDate     && { startDate:     createForm.startDate }),
+        ...(createForm.dueDayOfWeek  !== '' && { dueDayOfWeek:  Number(createForm.dueDayOfWeek) }),
+        ...(createForm.dueDayOfMonth !== '' && { dueDayOfMonth: Number(createForm.dueDayOfMonth) }),
+        ...(createForm.dueMonth      !== '' && { dueMonth:      Number(createForm.dueMonth) }),
       });
       await loadGroups();
       selectGroup(newGroup);
@@ -422,7 +434,7 @@ export default function GroupsPage() {
                     />
                   </div>
                   <div>
-                    <label style={labelStyle}>Monthly Target (₦)</label>
+                    <label style={labelStyle}>Contribution Target (₦)</label>
                     <input
                       type="number"
                       value={createForm.contributionAmount}
@@ -443,31 +455,18 @@ export default function GroupsPage() {
                     style={{ ...inputStyle, resize: 'none' }}
                   />
                 </div>
-                {/* New settings fields */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
-                      Due day <span style={{ fontWeight: 400, color: 'var(--ct-text-3)' }}>(1–28)</span>
-                    </label>
-                    <input
-                      type="number" min="1" max="28"
-                      value={createForm.dueDay}
-                      onChange={e => setCreateForm(f => ({ ...f, dueDay: e.target.value }))}
-                      style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
-                      Grace period
-                    </label>
-                    <select
-                      value={createForm.graceDays}
-                      onChange={e => setCreateForm(f => ({ ...f, graceDays: e.target.value }))}
-                      style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
-                    >
-                      {[0,1,2,3,5,7].map(d => <option key={d} value={d}>{d === 0 ? 'None' : `${d} day${d > 1 ? 's' : ''}`}</option>)}
-                    </select>
-                  </div>
+                {/* Grace period */}
+                <div style={{ marginTop: 14, maxWidth: 200 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
+                    Grace period
+                  </label>
+                  <select
+                    value={createForm.graceDays}
+                    onChange={e => setCreateForm(f => ({ ...f, graceDays: e.target.value }))}
+                    style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
+                  >
+                    {[0,1,2,3,5,7].map(d => <option key={d} value={d}>{d === 0 ? 'None' : `${d} day${d > 1 ? 's' : ''}`}</option>)}
+                  </select>
                 </div>
 
                 <div style={{ marginTop: 14 }}>
@@ -489,6 +488,106 @@ export default function GroupsPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Contribution frequency */}
+                <div style={{ marginTop: 14 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 8 }}>
+                    Contribution frequency
+                  </label>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {[
+                      { v: 'monthly', l: 'Monthly' },
+                      { v: 'weekly', l: 'Weekly' },
+                      { v: 'biweekly', l: 'Biweekly' },
+                      { v: 'yearly', l: 'Yearly' },
+                    ].map(({ v, l }) => (
+                      <button
+                        key={v} type="button"
+                        onClick={() => setCreateForm(f => ({ ...f, contributionFrequency: v }))}
+                        className={createForm.contributionFrequency === v ? 'filter-pill active' : 'filter-pill'}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Conditional due-date fields */}
+                {(createForm.contributionFrequency === 'weekly' || createForm.contributionFrequency === 'biweekly') && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
+                        Circle start date
+                      </label>
+                      <input
+                        type="date"
+                        value={createForm.startDate}
+                        onChange={e => setCreateForm(f => ({ ...f, startDate: e.target.value }))}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
+                        Due day of week
+                      </label>
+                      <select
+                        value={createForm.dueDayOfWeek}
+                        onChange={e => setCreateForm(f => ({ ...f, dueDayOfWeek: e.target.value }))}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
+                      >
+                        <option value="">Select day</option>
+                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, i) => (
+                          <option key={i} value={i}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {createForm.contributionFrequency === 'monthly' && (
+                  <div style={{ marginTop: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
+                      Due day of month <span style={{ fontWeight: 400, color: 'var(--ct-text-3)' }}>(1–28)</span>
+                    </label>
+                    <input
+                      type="number" min="1" max="28"
+                      value={createForm.dueDayOfMonth || createForm.dueDay}
+                      onChange={e => setCreateForm(f => ({ ...f, dueDayOfMonth: e.target.value, dueDay: e.target.value }))}
+                      style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                )}
+
+                {createForm.contributionFrequency === 'yearly' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
+                        Due month
+                      </label>
+                      <select
+                        value={createForm.dueMonth}
+                        onChange={e => setCreateForm(f => ({ ...f, dueMonth: e.target.value }))}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
+                      >
+                        <option value="">Select month</option>
+                        {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                          <option key={i} value={i + 1}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-2)', display: 'block', marginBottom: 5 }}>
+                        Due day
+                      </label>
+                      <input
+                        type="number" min="1" max="28"
+                        value={createForm.dueDayOfMonth}
+                        onChange={e => setCreateForm(f => ({ ...f, dueDayOfMonth: e.target.value }))}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--ct-border)', borderRadius: 8, fontSize: 13.5, fontFamily: 'var(--font-sans)', background: '#fff', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
                   <button type="button" className="btn-outline" onClick={() => setCreateStep('template')} style={{ marginRight: 8 }}>
@@ -629,7 +728,11 @@ export default function GroupsPage() {
                   </div>
                   {group.contributionAmount > 0 && (
                     <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ct-text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Monthly Target</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ct-text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>
+                        {group.contributionFrequency
+                          ? group.contributionFrequency.charAt(0).toUpperCase() + group.contributionFrequency.slice(1) + ' Target'
+                          : 'Monthly Target'}
+                      </div>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700, color: 'var(--ct-emerald)' }}>
                         ₦{Number(group.contributionAmount).toLocaleString()}
                       </div>
@@ -820,7 +923,11 @@ export default function GroupsPage() {
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Monthly Target (₦)</label>
+                  <label style={labelStyle}>
+                    {editingGroup?.contributionFrequency && editingGroup.contributionFrequency !== 'monthly'
+                      ? editingGroup.contributionFrequency.charAt(0).toUpperCase() + editingGroup.contributionFrequency.slice(1) + ' Target (₦)'
+                      : 'Contribution Target (₦)'}
+                  </label>
                   <input
                     type="number"
                     value={editForm.contributionAmount}
