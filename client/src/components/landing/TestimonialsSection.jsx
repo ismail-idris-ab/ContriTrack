@@ -4,6 +4,7 @@ const testimonials = [
       "ROTARA saved me hours every month. My members now trust the system more than they trust me!",
     name: "Chisom A.",
     role: "Ajo Organizer, Lagos",
+    label: "Ajo Organizer",
     color: "#4f46e5",
   },
   {
@@ -11,12 +12,14 @@ const testimonials = [
       "The penalties feature finally made people pay on time. No more excuses.",
     name: "Jabir D.",
     role: "Thrift Coordinator, Port Harcourt",
+    label: "Thrift Coordinator",
     color: "#059669",
   },
   {
     quote: "Reports are so clean I can even show them to my bank.",
     name: "Fatima A.",
     role: "Circle Admin, Abuja",
+    label: "Circle Admin",
     color: "#d97706",
   },
 ];
@@ -262,11 +265,26 @@ export default function TestimonialsSection() {
                 >
                   {t.name.charAt(0)}
                 </div>
-                <div>
-                  <div
-                    style={{ fontWeight: 700, fontSize: 14, color: "#f5f2ec" }}
-                  >
-                    {t.name}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: "#f5f2ec" }}>
+                      {t.name}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: "#9898b4",
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        padding: "1px 7px",
+                        borderRadius: 20,
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Example {t.label}
+                    </span>
                   </div>
                   <div style={{ fontSize: 12, color: "#6868a4" }}>{t.role}</div>
                 </div>

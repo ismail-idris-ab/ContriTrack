@@ -75,7 +75,7 @@ export default function LandingFooter({ navigate, scrollTo }) {
                   color: "#0f0f14",
                 }}
               >
-                C
+                R
               </div>
               <span
                 style={{

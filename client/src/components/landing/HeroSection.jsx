@@ -452,10 +452,65 @@ export default function HeroSection({ navigate, scrollTo }) {
             </span>
           </div>
 
+          {/* Mobile dashboard preview — shown only on mobile */}
+          <div
+            className="landing-mobile-dash"
+            style={{ display: "none", marginTop: 40 }}
+          >
+            <div
+              style={{
+                borderRadius: 16,
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(212,160,23,0.2)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ct-gold)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                  Circle Summary
+                </span>
+                <span style={{ fontSize: 10, color: "#5a5a78", fontFamily: "var(--font-mono)" }}>Demo preview</span>
+              </div>
+              <div style={{ padding: "14px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {[
+                  { label: "Collected", value: "₦160,000", color: "#059669", bg: "rgba(5,150,105,0.1)" },
+                  { label: "Pending", value: "2 members", color: "#d97706", bg: "rgba(217,119,6,0.1)" },
+                  { label: "Unpaid", value: "1 member", color: "#e11d48", bg: "rgba(225,29,72,0.1)" },
+                  { label: "Proof Verified", value: "8 / 10", color: "var(--ct-gold)", bg: "rgba(212,160,23,0.1)" },
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      background: item.bg,
+                      border: `1px solid ${item.color}25`,
+                    }}
+                  >
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "#7a7a96", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+                      {item.label}
+                    </div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700, color: item.color }}>
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Mobile features list */}
           <div
             className="landing-mobile-features"
-            style={{ display: "none", marginTop: 64 }}
+            style={{ display: "none", marginTop: 32 }}
           >
             {heroFeatures.map((f, i) => (
               <div

@@ -47,10 +47,29 @@ export default function PricingSection({ navigate }) {
           Clear &amp; honest pricing.
         </h2>
         <p
-          style={{ fontSize: 16, color: "var(--ct-text-2)", lineHeight: 1.6 }}
+          style={{ fontSize: 16, color: "var(--ct-text-2)", lineHeight: 1.6, marginBottom: 20 }}
         >
           Start free. Go Pro when your circle is serious.
         </p>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            padding: "6px 14px",
+            borderRadius: 20,
+            background: "rgba(5,150,105,0.08)",
+            border: "1px solid rgba(5,150,105,0.2)",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--ct-emerald)",
+          }}
+        >
+          <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          ROTARA never holds or moves your money — funds transfer directly between members
+        </div>
       </div>
       <div
         className="pricing-grid"
