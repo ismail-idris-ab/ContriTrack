@@ -48,6 +48,23 @@ const groupSchema = new mongoose.Schema(
     cyclesPerMonth: {
       type: Number, default: 1, min: 1, max: 31,
     },
+    contributionFrequency: {
+      type: String,
+      enum: ['weekly', 'biweekly', 'monthly', 'yearly'],
+      default: 'monthly',
+    },
+    startDate: {
+      type: Date, default: null,
+    },
+    dueDayOfWeek: {
+      type: Number, min: 0, max: 6, default: null,
+    },
+    dueDayOfMonth: {
+      type: Number, min: 1, max: 28, default: null,
+    },
+    dueMonth: {
+      type: Number, min: 1, max: 12, default: null,
+    },
   },
   { timestamps: true }
 );
