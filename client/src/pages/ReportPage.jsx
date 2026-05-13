@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useGroup } from '../context/GroupContext';
 import { useAuth } from '../context/AuthContext';
@@ -249,6 +250,165 @@ function StatusBadge({ status, paid }) {
 }
 
 // ── Main Page ────────────────────────────────────────────────────────────────
+function CollapsibleSection({ title, icon, children, defaultOpen = false, planLock }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: 16 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-sans)', textAlign: 'left' }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 14, color: 'var(--ct-text-1)' }}>
+          <span style={{ fontSize: 17 }}>{icon}</span>{title}
+          {planLock && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 8, background: 'rgba(212,160,23,0.12)', color: '#b45309', fontWeight: 600 }}>{planLock}</span>}
+        </span>
+        <span style={{ color: 'var(--ct-text-3)', fontSize: 13, fontWeight: 500 }}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && <div style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>{children}</div>}
+    </div>
+  );
+}
+
+function ReliabilitySummary({ groupId }) {
+  const { user } = useAuth();
+  const canViewTrust = canAccess(user, 'coordinator');
+
+  const { data: scores = [], isLoading, isError, error } = useQuery({
+    queryKey: ['trust-score-summary', groupId],
+    queryFn: () => api.get(`/exports/trust-score-summary?groupId=${groupId}`).then(r => r.data),
+    enabled: !!groupId && canViewTrust,
+    retry: (count, err) => err?.response?.status !== 403 && count < 1,
+  });
+
+  if (!canViewTrust) {
+    return (
+      <UpgradeLock feature="Trust Scoring" requiredPlan="coordinator" />
+    );
+  }
+  if (isLoading) return <div style={{ padding: 20, color: 'var(--ct-text-3)', fontSize: 13 }}>Loading reliability data…</div>;
+  if (isError)   return <div style={{ padding: 20, color: 'var(--ct-rose)', fontSize: 13 }}>{error?.response?.data?.message || 'Failed to load'}</div>;
+  if (!scores.length) return null;
+
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <thead>
+          <tr style={{ background: '#faf9f6' }}>
+            {['Member','Grade','Payment Rate','Late','Penalties','Score'].map(h => (
+              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ct-text-3)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.07em', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {scores.sort((a, b) => b.score - a.score).map((s, i) => (
+            <tr key={s.userId} style={{ borderBottom: i < scores.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+              <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--ct-text-1)' }}>{s.name}</td>
+              <td style={{ padding: '12px 14px' }}>
+                <span style={{ padding: '3px 10px', borderRadius: 12, background: `${s.gradeColor}22`, color: s.gradeColor, fontWeight: 700, fontSize: 12 }}>{s.grade}</span>
+              </td>
+              <td style={{ padding: '12px 14px', color: 'var(--ct-text-2)' }}>
+                {s.totalMonths > 0 ? Math.round((s.verifiedCount / s.totalMonths) * 100) : 0}%
+              </td>
+              <td style={{ padding: '12px 14px', color: s.lateCount > 0 ? '#d97706' : 'var(--ct-text-3)' }}>{s.lateCount}</td>
+              <td style={{ padding: '12px 14px', color: s.penaltyCount > 0 ? '#e11d48' : 'var(--ct-text-3)' }}>{s.penaltyCount}</td>
+              <td style={{ padding: '12px 14px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: s.gradeColor }}>{s.score}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function PayoutSummary({ groupId, year }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['payouts', groupId, year],
+    queryFn: () => api.get(`/payouts?groupId=${groupId}&year=${year}`).then(r => r.data),
+    enabled: !!groupId,
+  });
+
+  const payouts = data?.payouts || [];
+  if (isLoading) return <div style={{ padding: 20, color: 'var(--ct-text-3)', fontSize: 13 }}>Loading payout data…</div>;
+  if (!payouts.length) return <div style={{ padding: 20, color: 'var(--ct-text-3)', fontSize: 13 }}>No payout records for this year.</div>;
+
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <thead>
+          <tr style={{ background: '#faf9f6' }}>
+            {['Month','Recipient','Expected','Actual','Status'].map(h => (
+              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ct-text-3)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.07em', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {payouts.map((p, i) => {
+            const statusColor = p.status === 'paid' ? '#059669' : p.status === 'skipped' ? '#64748b' : '#d97706';
+            const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return (
+              <tr key={p._id} style={{ borderBottom: i < payouts.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                <td style={{ padding: '12px 14px', color: 'var(--ct-text-2)' }}>{MONTHS_SHORT[p.month - 1]} {p.year}</td>
+                <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--ct-text-1)' }}>{p.recipient?.name || '—'}</td>
+                <td style={{ padding: '12px 14px', fontFamily: 'var(--font-mono)', color: 'var(--ct-text-2)' }}>₦{Number(p.expectedAmount || 0).toLocaleString('en-NG')}</td>
+                <td style={{ padding: '12px 14px', fontFamily: 'var(--font-mono)', color: 'var(--ct-text-2)' }}>{p.actualAmount ? `₦${Number(p.actualAmount).toLocaleString('en-NG')}` : '—'}</td>
+                <td style={{ padding: '12px 14px' }}>
+                  <span style={{ padding: '3px 10px', borderRadius: 12, background: `${statusColor}18`, color: statusColor, fontWeight: 700, fontSize: 11.5, textTransform: 'capitalize' }}>{p.status}</span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function PenaltySummary({ groupId }) {
+  const { data: penalties = [], isLoading } = useQuery({
+    queryKey: ['penalties-summary', groupId],
+    queryFn: () => api.get(`/penalties?groupId=${groupId}`).then(r => r.data),
+    enabled: !!groupId,
+  });
+
+  const list = Array.isArray(penalties) ? penalties : (penalties.penalties || []);
+  if (isLoading) return <div style={{ padding: 20, color: 'var(--ct-text-3)', fontSize: 13 }}>Loading penalty data…</div>;
+  if (!list.length) return <div style={{ padding: 20, color: 'var(--ct-text-3)', fontSize: 13 }}>No penalties recorded.</div>;
+
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <thead>
+          <tr style={{ background: '#faf9f6' }}>
+            {['Member','Amount','Reason','Issued','Status'].map(h => (
+              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ct-text-3)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.07em', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((p, i) => {
+            const statusColor = p.status === 'paid' ? '#059669' : p.status === 'waived' ? '#64748b' : '#e11d48';
+            return (
+              <tr key={p._id} style={{ borderBottom: i < list.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--ct-text-1)' }}>{p.user?.name || '—'}</td>
+                <td style={{ padding: '12px 14px', fontFamily: 'var(--font-mono)', color: '#e11d48', fontWeight: 600 }}>₦{Number(p.amount || 0).toLocaleString('en-NG')}</td>
+                <td style={{ padding: '12px 14px', color: 'var(--ct-text-2)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.reason || '—'}</td>
+                <td style={{ padding: '12px 14px', color: 'var(--ct-text-3)', whiteSpace: 'nowrap' }}>
+                  {p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                </td>
+                <td style={{ padding: '12px 14px' }}>
+                  <span style={{ padding: '3px 10px', borderRadius: 12, background: `${statusColor}18`, color: statusColor, fontWeight: 700, fontSize: 11.5, textTransform: 'capitalize' }}>{p.status}</span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function ReportPage() {
   useDocumentTitle('Reports — ROTARA');
   useEffect(() => { localStorage.setItem('rotara_viewed_report', '1'); }, []);
@@ -930,6 +1090,25 @@ export default function ReportPage() {
           )}
         </div>
       )}
+
+      {/* Reliability Summary */}
+      <CollapsibleSection title="Reliability Summary" icon="🏆" planLock="Coordinator">
+        <ReliabilitySummary groupId={activeGroup?._id} />
+      </CollapsibleSection>
+
+      {/* Payout Summary */}
+      <CollapsibleSection title="Payout Summary" icon="💸">
+        <UpgradeLock feature="reports" requiredPlan="pro" user={user}>
+          <PayoutSummary groupId={activeGroup?._id} year={yearlyYear} />
+        </UpgradeLock>
+      </CollapsibleSection>
+
+      {/* Penalty Summary */}
+      <CollapsibleSection title="Penalty Summary" icon="⚠️">
+        <UpgradeLock feature="reports" requiredPlan="pro" user={user}>
+          <PenaltySummary groupId={activeGroup?._id} />
+        </UpgradeLock>
+      </CollapsibleSection>
     </div>
   );
 }
