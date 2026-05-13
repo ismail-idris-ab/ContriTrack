@@ -392,7 +392,7 @@ export default function Topbar({ onMenuClick }) {
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '5px 10px 5px 5px',
-              borderRadius: 11, border: 'none', cursor: 'pointer',
+              borderRadius: 11, cursor: 'pointer',
               border: `1.5px solid ${profileOpen ? 'rgba(0,0,0,0.10)' : 'transparent'}`,
               background: profileOpen ? 'rgba(0,0,0,0.03)' : 'transparent',
               fontFamily: 'var(--font-sans)',
