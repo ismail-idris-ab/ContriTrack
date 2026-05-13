@@ -8,6 +8,7 @@ import { downloadCsv } from '../utils/exportDownload';
 import Skeleton from '../components/Skeleton';
 import useDocumentTitle from '../utils/useDocumentTitle';
 import { getInitials, getAvatarGradient } from '../utils/avatarUtils';
+import { getClientPeriod } from '../utils/dateUtils';
 
 const STATUS_CONFIG = {
   verified: { color: '#047857', bg: 'rgba(5,150,105,0.10)',  border: 'rgba(5,150,105,0.22)',  label: 'Verified',  dot: '#10b981' },
@@ -120,13 +121,19 @@ export default function MembersPage() {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
-  const qMonth = now.getMonth() + 1;
-  const qYear  = now.getFullYear();
+  const freq      = activeGroup?.contributionFrequency || 'monthly';
+  const isMonthly = freq === 'monthly' || !activeGroup;
+  const period    = getClientPeriod(activeGroup || { contributionFrequency: 'monthly' }, now);
+
   const { data: members = [], isLoading: loading } = useQuery({
-    queryKey: ['members', activeGroup?._id, qMonth, qYear],
+    queryKey: ['members', activeGroup?._id, period.periodStart.toISOString()],
     queryFn: () => {
-      const groupParam = activeGroup ? `&groupId=${activeGroup._id}` : '';
-      return api.get(`/members?month=${qMonth}&year=${qYear}${groupParam}`).then(r => r.data);
+      if (!activeGroup) return Promise.resolve([]);
+      const groupParam = `&groupId=${activeGroup._id}`;
+      const periodParam = isMonthly
+        ? `month=${period.periodStart.getUTCMonth() + 1}&year=${period.periodStart.getUTCFullYear()}`
+        : `periodStart=${period.periodStart.toISOString()}&periodEnd=${period.periodEnd.toISOString()}`;
+      return api.get(`/members?${periodParam}${groupParam}`).then(r => r.data);
     },
   });
 
