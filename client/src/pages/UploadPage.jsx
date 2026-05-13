@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useGroup } from '../context/GroupContext';
 import useDocumentTitle from '../utils/useDocumentTitle';
+import { getClientPeriod } from '../utils/dateUtils';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -61,6 +62,11 @@ export default function UploadPage() {
   }, []);
 
   const cyclesPerMonth = selectedGroup?.cyclesPerMonth ?? 1;
+  const freq = selectedGroup?.contributionFrequency || 'monthly';
+  const isMonthly = freq === 'monthly' || !selectedGroup;
+  const currentPeriod = (!isMonthly && selectedGroup)
+    ? getClientPeriod(selectedGroup, now)
+    : null;
 
   useEffect(() => {
     if (loadingContributions) return;
@@ -83,12 +89,26 @@ export default function UploadPage() {
     String(c.group?._id ?? c.group ?? null) === String(selectedGroupId ?? null);
 
   const rejectedContribution = !loadingContributions
-    ? myContributions.find(c => matchesSelected(c) && c.status === 'rejected')
+    ? myContributions.find(c => {
+        if (!isMonthly && currentPeriod) {
+          return c.periodStart &&
+            new Date(c.periodStart).getTime() === currentPeriod.periodStart.getTime() &&
+            String(c.group?._id ?? c.group ?? null) === String(selectedGroupId ?? null) &&
+            c.status === 'rejected';
+        }
+        return matchesSelected(c) && c.status === 'rejected';
+      })
     : null;
 
-  const alreadySubmitted = !loadingContributions && myContributions.some(c =>
-    matchesSelected(c) && c.status !== 'rejected'
-  );
+  const alreadySubmitted = !loadingContributions && myContributions.some(c => {
+    if (!isMonthly && currentPeriod) {
+      return c.periodStart &&
+        new Date(c.periodStart).getTime() === currentPeriod.periodStart.getTime() &&
+        String(c.group?._id ?? c.group ?? null) === String(selectedGroupId ?? null) &&
+        c.status !== 'rejected';
+    }
+    return matchesSelected(c) && c.status !== 'rejected';
+  });
 
   const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -113,18 +133,29 @@ export default function UploadPage() {
     setError(''); setSuccess('');
     if (!selectedGroupId) return setError('Please select a circle before submitting.');
     if (rejectedContribution) return setError('This payment was rejected. Go to My Payments to resubmit your proof.');
-    if (alreadySubmitted) return setError(`Already submitted for ${MONTHS[Number(form.month) - 1]} ${form.year}${selectedGroup ? ` — ${selectedGroup.name}` : ''}.`);
+    if (alreadySubmitted) {
+      const label = isMonthly
+        ? `${MONTHS[Number(form.month) - 1]} ${form.year}${selectedGroup ? ` — ${selectedGroup.name}` : ''}`
+        : `${currentPeriod?.periodLabel ?? 'this period'}${selectedGroup ? ` — ${selectedGroup.name}` : ''}`;
+      return setError(`Already submitted for ${label}.`);
+    }
     if (!file) return setError('Please select a proof of payment image');
     if (!form.amount || Number(form.amount) <= 0) return setError('Enter a valid amount');
 
     const formData = new FormData();
     formData.append('proof', file);
     formData.append('amount', form.amount);
-    formData.append('month', form.month);
-    formData.append('year', form.year);
-    formData.append('cycleNumber', form.cycleNumber);
     formData.append('note', form.note);
     if (selectedGroupId) formData.append('groupId', selectedGroupId);
+
+    if (isMonthly) {
+      formData.append('month', form.month);
+      formData.append('year', form.year);
+      formData.append('cycleNumber', form.cycleNumber);
+    } else if (currentPeriod) {
+      formData.append('periodStart', currentPeriod.periodStart.toISOString());
+      formData.append('periodEnd',   currentPeriod.periodEnd.toISOString());
+    }
 
     setLoading(true);
     try {
@@ -781,45 +812,71 @@ export default function UploadPage() {
               <span className="vault-section-title">Contribution Period</span>
             </div>
             <div className="vault-section-body">
-              <div className="vault-period-grid">
-                <div>
-                  <label className="vault-label">Month</label>
-                  <div className="vault-select-wrap">
-                    <select name="month" value={form.month} onChange={handleChange} className="vault-select">
-                      {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-                    </select>
-                    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
+              {isMonthly ? (
+                <>
+                  <div className="vault-period-grid">
+                    <div>
+                      <label className="vault-label">Month</label>
+                      <div className="vault-select-wrap">
+                        <select name="month" value={form.month} onChange={handleChange} className="vault-select">
+                          {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                        </select>
+                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="vault-label">Year</label>
+                      <input type="number" name="year" value={form.year}
+                        onChange={handleChange} min="2020" max="2100"
+                        className="vault-input" inputMode="numeric"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="vault-label">Year</label>
-                  <input type="number" name="year" value={form.year}
-                    onChange={handleChange} min="2020" max="2100"
-                    className="vault-input" inputMode="numeric"
-                  />
-                </div>
-              </div>
-              <div className="vault-summary">
-                <div className="vault-summary-tag">Summary</div>
-                <div className="vault-summary-item">
-                  <span className="vault-summary-lbl">Period</span>
-                  <span className="vault-summary-val">{MONTHS[form.month - 1].slice(0,3)} {form.year}</span>
-                </div>
-                <div className="vault-summary-item">
-                  <span className="vault-summary-lbl">Amount</span>
-                  <span className="vault-summary-val" style={{ color: form.amount ? '#6ee7b7' : 'rgba(242,236,224,0.22)' }}>
-                    {form.amount ? `₦${Number(form.amount).toLocaleString()}` : '—'}
-                  </span>
-                </div>
-                {selectedGroup && (
+                  <div className="vault-summary">
+                    <div className="vault-summary-tag">Summary</div>
+                    <div className="vault-summary-item">
+                      <span className="vault-summary-lbl">Period</span>
+                      <span className="vault-summary-val">{MONTHS[form.month - 1].slice(0,3)} {form.year}</span>
+                    </div>
+                    <div className="vault-summary-item">
+                      <span className="vault-summary-lbl">Amount</span>
+                      <span className="vault-summary-val" style={{ color: form.amount ? '#6ee7b7' : 'rgba(242,236,224,0.22)' }}>
+                        {form.amount ? `₦${Number(form.amount).toLocaleString()}` : '—'}
+                      </span>
+                    </div>
+                    {selectedGroup && (
+                      <div className="vault-summary-item">
+                        <span className="vault-summary-lbl">Circle</span>
+                        <span className="vault-summary-val" style={{ color: '#d4a017', fontSize: 11 }}>{selectedGroup.name}</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="vault-summary">
+                  <div className="vault-summary-tag">Period</div>
+                  <div className="vault-summary-item" style={{ flex: 2 }}>
+                    <span className="vault-summary-lbl">Current period</span>
+                    <span className="vault-summary-val" style={{ color: '#d4a017' }}>
+                      {currentPeriod?.periodLabel ?? '—'}
+                    </span>
+                  </div>
                   <div className="vault-summary-item">
-                    <span className="vault-summary-lbl">Circle</span>
-                    <span className="vault-summary-val" style={{ color: '#d4a017', fontSize: 11 }}>{selectedGroup.name}</span>
+                    <span className="vault-summary-lbl">Amount</span>
+                    <span className="vault-summary-val" style={{ color: form.amount ? '#6ee7b7' : 'rgba(242,236,224,0.22)' }}>
+                      {form.amount ? `₦${Number(form.amount).toLocaleString()}` : '—'}
+                    </span>
                   </div>
-                )}
-              </div>
+                  {selectedGroup && (
+                    <div className="vault-summary-item">
+                      <span className="vault-summary-lbl">Circle</span>
+                      <span className="vault-summary-val" style={{ color: '#d4a017', fontSize: 11 }}>{selectedGroup.name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
