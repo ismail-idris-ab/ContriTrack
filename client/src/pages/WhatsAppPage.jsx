@@ -22,6 +22,45 @@ const avatarGradients = [
 const avatarGrad = (name = '') => avatarGradients[name.charCodeAt(0) % 5];
 const initials   = (name = '') => name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
+function generateReminderText(member, groupName, month, year, amount) {
+  const monthName = MONTHS[month - 1];
+  const formatted = Number(amount || 0).toLocaleString('en-NG');
+  return `Hi ${member.name}, this is a reminder that your contribution of ₦${formatted} for *${groupName}* — ${monthName} ${year} is still pending. Please pay at your earliest convenience. Thank you! 🙏`;
+}
+
+// ── Reminder preview modal ────────────────────────────────────────────────────
+function ReminderPreviewModal({ members, groupName, month, year, amount, onClose, onConfirm, sending }) {
+  const monthName = MONTHS[month - 1];
+  const sampleText = members[0] ? generateReminderText(members[0], groupName, month, year, amount) : '';
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,16,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, maxWidth: 440, width: '100%', overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.3)', fontFamily: 'var(--font-sans)' }}>
+        <div style={{ height: 3, background: 'linear-gradient(90deg,#25D366,#128C7E)' }} />
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ct-text-1)', margin: '0 0 4px' }}>Send Reminders</h3>
+          <p style={{ fontSize: 13, color: 'var(--ct-text-3)', margin: 0 }}>{members.length} member{members.length !== 1 ? 's' : ''} will be reminded for {monthName} {year}</p>
+        </div>
+        <div style={{ padding: '20px 24px' }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--ct-text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Sample message</p>
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '12px 14px', fontSize: 13.5, color: '#166534', lineHeight: 1.6, marginBottom: 20 }}>
+            {sampleText}
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--ct-text-3)', marginBottom: 16 }}>Members without a phone number will be skipped.</p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', color: 'var(--ct-text-2)', fontFamily: 'var(--font-sans)' }}>
+              Cancel
+            </button>
+            <button onClick={onConfirm} disabled={sending} style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: '#25D366', fontSize: 13.5, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', color: '#fff', fontFamily: 'var(--font-sans)', opacity: sending ? 0.6 : 1 }}>
+              {sending ? 'Sending…' : 'Send All'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── WhatsApp icon ─────────────────────────────────────────────────────────────
 function WhatsAppIcon({ size = 18, color = '#25D366' }) {
   return (
@@ -73,10 +112,12 @@ export default function WhatsAppPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year,  setYear]  = useState(now.getFullYear());
 
-  const [members,   setMembers]   = useState([]);
-  const [loading,   setLoading]   = useState(false);
-  const [reminding, setReminding] = useState(false);
-  const [result,    setResult]    = useState(null);
+  const [members,     setMembers]     = useState([]);
+  const [loading,     setLoading]     = useState(false);
+  const [reminding,   setReminding]   = useState(false);
+  const [result,      setResult]      = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [copied,      setCopied]      = useState(null);
 
   const isAdmin = (() => {
     if (!activeGroup || !user) return false;
@@ -101,6 +142,7 @@ export default function WhatsAppPage() {
     try {
       const { data } = await api.post('/reports/remind', { groupId: activeGroup._id, month, year });
       setResult(data);
+      setPreviewOpen(false);
       showToast(data.message, 'success');
     } catch (err) {
       showToast(
@@ -112,6 +154,15 @@ export default function WhatsAppPage() {
     } finally {
       setReminding(false);
     }
+  };
+
+  const handleCopy = (member) => {
+    if (!activeGroup) return;
+    const text = generateReminderText(member, activeGroup.name, month, year, activeGroup.contributionAmount);
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(member._id);
+      setTimeout(() => setCopied(null), 2000);
+    });
   };
 
   const membersWithPhone    = members.filter(m => m.phone);
@@ -288,8 +339,8 @@ export default function WhatsAppPage() {
 
             {/* Send button */}
             <button
-              onClick={sendReminders}
-              disabled={reminding}
+              onClick={() => setPreviewOpen(true)}
+              disabled={reminding || !membersWithPhone.length}
               style={{
                 flex: '0 0 auto',
                 display: 'flex', alignItems: 'center', gap: 9,
@@ -447,12 +498,12 @@ export default function WhatsAppPage() {
 
           {/* Column labels */}
           <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 140px 100px',
+            display: 'grid', gridTemplateColumns: '1fr 140px 100px 100px',
             padding: '9px 24px',
             background: '#faf9f6',
             borderBottom: '1px solid rgba(0,0,0,0.04)',
           }}>
-            {['Member', 'Phone', 'Status'].map(h => (
+            {['Member', 'Phone', 'Status', ''].map(h => (
               <span key={h} style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--ct-text-3)', letterSpacing: '0.09em', textTransform: 'uppercase' }}>{h}</span>
             ))}
           </div>
@@ -465,7 +516,7 @@ export default function WhatsAppPage() {
               <div
                 key={m._id || i}
                 style={{
-                  display: 'grid', gridTemplateColumns: '1fr 140px 100px',
+                  display: 'grid', gridTemplateColumns: '1fr 140px 100px 100px',
                   padding: '13px 24px', alignItems: 'center',
                   borderBottom: i < total - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
                   background: !hasPhone ? 'rgba(217,119,6,0.02)' : 'transparent',
@@ -529,6 +580,25 @@ export default function WhatsAppPage() {
                     Skipped
                   </span>
                 )}
+
+                {/* Copy reminder message */}
+                {hasPhone ? (
+                  <button
+                    onClick={() => handleCopy(m)}
+                    title="Copy reminder message"
+                    style={{
+                      padding: '4px 10px', borderRadius: 7,
+                      border: '1px solid rgba(37,211,102,0.3)',
+                      background: copied === m._id ? '#f0fdf4' : 'transparent',
+                      color: copied === m._id ? '#166534' : '#25D366',
+                      fontSize: 11.5, fontWeight: 600,
+                      cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {copied === m._id ? '✓ Copied' : 'Copy msg'}
+                  </button>
+                ) : <span />}
               </div>
             );
           })}
@@ -577,6 +647,19 @@ export default function WhatsAppPage() {
           </svg>
         </Link>
       </div>
+
+      {previewOpen && (
+        <ReminderPreviewModal
+          members={membersWithPhone}
+          groupName={activeGroup?.name || ''}
+          month={month}
+          year={year}
+          amount={activeGroup?.contributionAmount || 0}
+          onClose={() => setPreviewOpen(false)}
+          onConfirm={sendReminders}
+          sending={reminding}
+        />
+      )}
     </div>
   );
 }
