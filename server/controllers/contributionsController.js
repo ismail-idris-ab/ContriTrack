@@ -5,7 +5,7 @@ const Contribution = require('../models/Contribution');
 const Pledge = require('../models/Pledge');
 const Group = require('../models/Group');
 const { sendStatusNotification } = require('../utils/mailer');
-const { isLateSubmission } = require('../utils/cycleUtils');
+const { isLateSubmission, getCurrentPeriod, isLateSubmissionForPeriod } = require('../utils/cycleUtils');
 const { logAudit } = require('../utils/audit');
 const { send, fail } = require('../utils/response');
 
@@ -32,44 +32,77 @@ function uploadSingle(req, res, next) {
 
 async function createContribution(req, res) {
   if (!req.file) return fail(res, 'Proof image is required', 400);
-  const { amount, month, year, note, groupId, cycleNumber } = req.body;
+  const { amount, month, year, note, groupId, cycleNumber, periodStart: psRaw, periodEnd: peRaw } = req.body;
 
   const parsedAmount = Number(amount);
-  const parsedMonth  = Number(month);
-  const parsedYear   = Number(year);
-  const parsedCycle  = Number(cycleNumber) || 1;
-
   const safeNote = note ? String(note).replace(/<[^>]*>/g, '').trim().slice(0, 500) : '';
 
   try {
-    let dueDay = 25, graceDays = 3, cyclesPerMonth = 1;
+    let group = null;
     if (groupId) {
-      const grp = await Group.findById(groupId).select('dueDay graceDays isActive cyclesPerMonth');
-      if (!grp || !grp.isActive) return fail(res, 'Group not found', 404);
-      dueDay         = grp.dueDay         ?? 25;
-      graceDays      = grp.graceDays      ?? 3;
-      cyclesPerMonth = grp.cyclesPerMonth ?? 1;
+      group = await Group.findById(groupId).select(
+        'dueDay graceDays isActive cyclesPerMonth contributionFrequency startDate dueDayOfWeek dueDayOfMonth dueMonth'
+      );
+      if (!group || !group.isActive) return fail(res, 'Group not found', 404);
     }
 
-    if (!Number.isInteger(parsedCycle) || parsedCycle < 1 || parsedCycle > cyclesPerMonth) {
-      return fail(res, `Cycle number must be between 1 and ${cyclesPerMonth}`, 400);
-    }
+    const freq = group?.contributionFrequency || 'monthly';
+    const now  = new Date();
 
-    const now = new Date();
-    const late = isLateSubmission(now, parsedYear, parsedMonth, dueDay, graceDays);
+    let parsedMonth, parsedYear, parsedCycle, isLate, lateDaysOverdue, periodData;
 
-    let lateDaysOverdue = 0;
-    if (late) {
-      const deadline = new Date(parsedYear, parsedMonth - 1, dueDay + graceDays, 23, 59, 59);
-      lateDaysOverdue = Math.max(0, Math.ceil((now - deadline) / 86400000));
+    if (freq !== 'monthly' && group) {
+      const period = getCurrentPeriod(group, now);
+      periodData   = period;
+      parsedMonth  = period.periodStart.getUTCMonth() + 1;
+      parsedYear   = period.periodStart.getUTCFullYear();
+      parsedCycle  = 1;
+      isLate       = isLateSubmissionForPeriod(now, group, period);
+      lateDaysOverdue = isLate
+        ? Math.max(0, Math.ceil((now - period.dueDate) / 86400000))
+        : 0;
+
+    } else {
+      parsedMonth  = Number(month);
+      parsedYear   = Number(year);
+      parsedCycle  = Number(cycleNumber) || 1;
+      const dueDay        = group?.dueDay        ?? 25;
+      const graceDays     = group?.graceDays      ?? 3;
+      const cyclesPerMonth = group?.cyclesPerMonth ?? 1;
+
+      if (!parsedMonth || !parsedYear) {
+        return fail(res, 'month and year are required for monthly groups', 400);
+      }
+      if (!Number.isInteger(parsedCycle) || parsedCycle < 1 || parsedCycle > cyclesPerMonth) {
+        return fail(res, `Cycle number must be between 1 and ${cyclesPerMonth}`, 400);
+      }
+
+      isLate = isLateSubmission(now, parsedYear, parsedMonth, dueDay, graceDays);
+      lateDaysOverdue = isLate
+        ? Math.max(0, Math.ceil((now - new Date(parsedYear, parsedMonth - 1, dueDay + graceDays, 23, 59, 59)) / 86400000))
+        : 0;
     }
 
     const data = {
-      user: req.user._id, amount: parsedAmount, month: parsedMonth,
-      year: parsedYear, cycleNumber: parsedCycle, note: safeNote,
-      proofImage: req.file.path, isLate: late, lateDaysOverdue,
+      user: req.user._id,
+      amount: parsedAmount,
+      month: parsedMonth,
+      year: parsedYear,
+      cycleNumber: parsedCycle,
+      note: safeNote,
+      proofImage: req.file.path,
+      isLate,
+      lateDaysOverdue,
     };
     if (groupId) data.group = groupId;
+
+    if (periodData) {
+      data.periodType  = periodData.periodType;
+      data.periodStart = periodData.periodStart;
+      data.periodEnd   = periodData.periodEnd;
+      data.dueDate     = periodData.dueDate;
+      data.periodLabel = periodData.periodLabel;
+    }
 
     const contribution = await Contribution.create(data);
     await contribution.populate('user', 'name email');
@@ -90,12 +123,23 @@ async function createContribution(req, res) {
 }
 
 async function getContributions(req, res) {
-  const { month, year, groupId } = req.query;
+  const { month, year, groupId, periodStart, periodEnd } = req.query;
   const page  = Math.max(1, parseInt(req.query.page,  10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
   const filter = {};
-  if (month)   filter.month = Number(month);
-  if (year)    filter.year  = Number(year);
+
+  if (periodStart && periodEnd) {
+    const psDate = new Date(periodStart);
+    const peDate = new Date(periodEnd);
+    if (isNaN(psDate) || isNaN(peDate)) {
+      return fail(res, 'Invalid periodStart or periodEnd date', 400);
+    }
+    filter.periodStart = { $gte: psDate };
+    filter.periodEnd   = { $lte: peDate };
+  } else {
+    if (month) filter.month = Number(month);
+    if (year)  filter.year  = Number(year);
+  }
   if (groupId) filter.group = groupId;
 
   try {
